@@ -1,0 +1,1200 @@
+import fs from 'fs'
+import path from 'path'
+import crypto from 'crypto'
+import 'dotenv/config'
+import express from 'express'
+import cors from 'cors'
+import multer from 'multer'
+import { fileURLToPath } from 'url'
+import { parseQuestions } from './lib/mdParser.js'
+import { getExamMarkdownTemplate } from './lib/examTemplate.js'
+import {
+  COURSE_LEVELS,
+  DEFAULT_EXAM_LEVEL,
+  DEFAULT_USER_LEVEL,
+  canAccessExamLevel,
+  normalizeCourseLevel,
+} from '../shared/courseAccess.js'
+
+const app = express()
+app.use(cors({
+  origin: '*',
+  credentials: true
+}))
+app.use(express.json())
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const dataDir = path.join(__dirname, 'data')
+const usersFile = path.join(dataDir, 'users.json')
+const questionsFile = path.join(dataDir, 'questions.json')
+const examsFile = path.join(dataDir, 'exams.json')
+const wrongBookFile = path.join(dataDir, 'wrong_book.json')
+const attemptsFile = path.join(dataDir, 'attempts.json')
+
+// 配置 multer 上传
+const upload = multer({ dest: path.join(__dirname, 'uploads') })
+const sessions = new Map()
+const revokedTokens = new Set()
+const TOKEN_SECRET = process.env.AUTH_TOKEN_SECRET || 'cpp-camp-local-secret'
+
+function migrateOldDataDir() {
+  const oldDir = path.join(process.cwd(), 'server', 'data')
+  const reallyOldDir = path.join(process.cwd(), 'server', 'server', 'data')
+  const candidates = [oldDir, reallyOldDir]
+  for (const dir of candidates) {
+    const src = path.join(dir, 'users.json')
+    if (fs.existsSync(src) && !fs.existsSync(usersFile)) {
+      if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true })
+      try {
+        fs.copyFileSync(src, usersFile)
+      } catch {}
+    }
+  }
+}
+
+function ensureData() {
+  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true })
+  migrateOldDataDir()
+  if (!fs.existsSync(usersFile)) {
+    const seed = {
+      admin: {
+        username: 'admin',
+        password: '123456',
+        nickname: '管理员',
+        role: 'admin',
+        level: '高级',
+        createdAt: new Date().toISOString(),
+      },
+    }
+    fs.writeFileSync(usersFile, JSON.stringify(seed, null, 2))
+  }
+  if (!fs.existsSync(questionsFile)) {
+    fs.writeFileSync(questionsFile, JSON.stringify([], null, 2))
+  }
+  if (!fs.existsSync(examsFile)) {
+    fs.writeFileSync(examsFile, JSON.stringify([], null, 2))
+  }
+  if (!fs.existsSync(wrongBookFile)) {
+    fs.writeFileSync(wrongBookFile, JSON.stringify([], null, 2))
+  }
+  if (!fs.existsSync(attemptsFile)) {
+    fs.writeFileSync(attemptsFile, JSON.stringify([], null, 2))
+  }
+}
+
+function readUsers() {
+  ensureData()
+  try {
+    const raw = fs.readFileSync(usersFile, 'utf-8')
+    const data = JSON.parse(raw)
+    let changed = false
+    Object.keys(data).forEach(k => {
+      const u = data[k]
+      if (u) {
+        const newLevel = normalizeCourseLevel(u.level, DEFAULT_USER_LEVEL)
+        if (u.level !== newLevel) {
+          u.level = newLevel
+          data[k] = u
+          changed = true
+        }
+      }
+    })
+    if (changed) writeUsers(data)
+    return data
+  } catch {
+    return {}
+  }
+}
+
+function writeUsers(data) {
+  ensureData()
+  fs.writeFileSync(usersFile, JSON.stringify(data, null, 2))
+}
+
+function readQuestions() {
+  ensureData()
+  try {
+    return JSON.parse(fs.readFileSync(questionsFile, 'utf-8'))
+  } catch {
+    return []
+  }
+}
+
+function writeQuestions(data) {
+  ensureData()
+  fs.writeFileSync(questionsFile, JSON.stringify(data, null, 2))
+}
+
+function readExams() {
+  ensureData()
+  try {
+    const data = JSON.parse(fs.readFileSync(examsFile, 'utf-8'))
+    let changed = false
+    const normalized = data.map(item => {
+      const levelRequired = normalizeCourseLevel(item.levelRequired, DEFAULT_EXAM_LEVEL)
+      if (levelRequired !== item.levelRequired) {
+        changed = true
+        return { ...item, levelRequired }
+      }
+      return item
+    })
+    if (changed) writeExams(normalized)
+    return normalized
+  } catch {
+    return []
+  }
+}
+
+function writeExams(data) {
+  ensureData()
+  fs.writeFileSync(examsFile, JSON.stringify(data, null, 2))
+}
+
+function readWrongBook() {
+  ensureData()
+  try {
+    return JSON.parse(fs.readFileSync(wrongBookFile, 'utf-8'))
+  } catch {
+    return []
+  }
+}
+
+function writeWrongBook(data) {
+  ensureData()
+  fs.writeFileSync(wrongBookFile, JSON.stringify(data, null, 2))
+}
+
+function readAttempts() {
+  ensureData()
+  try {
+    return JSON.parse(fs.readFileSync(attemptsFile, 'utf-8'))
+  } catch {
+    return []
+  }
+}
+
+function writeAttempts(data) {
+  ensureData()
+  fs.writeFileSync(attemptsFile, JSON.stringify(data, null, 2))
+}
+
+function hasSubmittedExam(attempts, username, examId) {
+  return attempts.some(item => item.username === username && item.examId === examId)
+}
+
+const LEVELS = COURSE_LEVELS
+const ROLES = ['user', 'admin']
+const DEFAULT_TOTAL_SCORE = 100
+
+function toPositiveInt(value, fallback) {
+  const n = Number(value)
+  if (!Number.isFinite(n) || n <= 0) return fallback
+  return Math.floor(n)
+}
+
+function normalizeExamWindow(payload = {}) {
+  const startTime = payload.startTime || payload.activeStartTime || payload.activateFrom
+  const endTime = payload.endTime || payload.activeEndTime || payload.activateTo
+  return { startTime, endTime }
+}
+
+function toPublicUser(user) {
+  return {
+    username: user.username,
+    nickname: user.nickname,
+    role: user.role || 'user',
+    level: normalizeCourseLevel(user.level, DEFAULT_USER_LEVEL),
+    createdAt: user.createdAt,
+  }
+}
+
+function sanitizeQuestionText(value) {
+  return String(value || '')
+    .replace(/\*\*/g, '')
+    .replace(/\s*[（(]\s*[　 ]*[√×][　 ]*[）)]\s*$/g, '')
+    .trim()
+}
+
+function normalizeOptionText(value) {
+  return String(value || '')
+    .replace(/`/g, '')
+    .replace(/^['"“”‘’]+|['"“”‘’]+$/g, '')
+    .trim()
+}
+
+function hasSubmittedAnswer(value) {
+  return typeof value === 'string' ? value.trim().length > 0 : value !== undefined && value !== null
+}
+
+function buildFallbackAnalysis(item) {
+  const userAnswer = item.yourAnswer || '未作答'
+  const correctAnswer = item.correctAnswer || '未设置'
+  const optionHint = Array.isArray(item.options)
+    ? item.options.find(opt => opt?.label === correctAnswer)?.text
+    : ''
+  const suffix = optionHint ? `正确项内容是“${normalizeOptionText(optionHint)}”。` : ''
+
+  return `这道题的正确答案是 ${correctAnswer}，你本次作答为 ${userAnswer}。建议先回到题干里定位考点，再重点对比正确选项和你所选项的关键词差异。${suffix}`.trim()
+}
+
+async function requestDeepSeekAnalyses(items) {
+  const apiKey = process.env.DEEPSEEK_API_KEY
+  if (!apiKey || !Array.isArray(items) || items.length === 0) return null
+
+  const promptItems = items.map(item => ({
+    questionId: item.questionId,
+    title: sanitizeQuestionText(item.title),
+    type: item.type,
+    options: (item.options || []).map(opt => ({
+      label: opt.label,
+      text: normalizeOptionText(opt.text),
+    })),
+    yourAnswer: item.yourAnswer || '未作答',
+    correctAnswer: item.correctAnswer || '未设置',
+  }))
+
+  const response = await fetch('https://api.deepseek.com/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
+      temperature: 0.3,
+      response_format: {
+        type: 'json_object',
+      },
+      messages: [
+        {
+          role: 'system',
+          content: '你是一名少儿编程考试助教。请仅返回 JSON，不要输出额外说明。每道题给出一句到两句中文解析，语气清晰、友好、简短。',
+        },
+        {
+          role: 'user',
+          content: JSON.stringify({
+            task: '请根据错题信息，生成错题解析。',
+            outputSchema: {
+              analyses: [
+                {
+                  questionId: 'string',
+                  analysis: 'string',
+                },
+              ],
+            },
+            items: promptItems,
+          }),
+        },
+      ],
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`deepseek request failed: ${response.status}`)
+  }
+
+  const data = await response.json()
+  const content = data?.choices?.[0]?.message?.content
+  if (!content) return null
+
+  const parsed = JSON.parse(content)
+  const analyses = Array.isArray(parsed?.analyses) ? parsed.analyses : []
+  return analyses
+}
+
+async function buildWrongQuestionAnalyses(items) {
+  if (!Array.isArray(items) || items.length === 0) return []
+
+  try {
+    const remoteAnalyses = await requestDeepSeekAnalyses(items)
+    if (Array.isArray(remoteAnalyses) && remoteAnalyses.length > 0) {
+      const analysisMap = new Map(
+        remoteAnalyses
+          .filter(item => item?.questionId && item?.analysis)
+          .map(item => [item.questionId, String(item.analysis).trim()])
+      )
+
+      return items.map(item => ({
+        ...item,
+        analysis: analysisMap.get(item.questionId) || buildFallbackAnalysis(item),
+      }))
+    }
+  } catch {}
+
+  return items.map(item => ({
+    ...item,
+    analysis: buildFallbackAnalysis(item),
+  }))
+}
+
+function createSession(user) {
+  const payload = {
+    username: user.username,
+    role: user.role || 'user',
+    issuedAt: Date.now(),
+  }
+  const encoded = Buffer.from(JSON.stringify(payload)).toString('base64url')
+  const signature = crypto
+    .createHmac('sha256', TOKEN_SECRET)
+    .update(encoded)
+    .digest('base64url')
+  const token = `${encoded}.${signature}`
+  sessions.set(token, payload)
+  return token
+}
+
+function verifySessionToken(token) {
+  if (!token || revokedTokens.has(token)) return null
+  const [encoded, signature] = token.split('.')
+  if (!encoded || !signature) return null
+
+  const expected = crypto
+    .createHmac('sha256', TOKEN_SECRET)
+    .update(encoded)
+    .digest('base64url')
+
+  if (signature !== expected) return null
+
+  try {
+    return JSON.parse(Buffer.from(encoded, 'base64url').toString('utf-8'))
+  } catch {
+    return null
+  }
+}
+
+function getTokenFromRequest(req) {
+  const header = req.headers.authorization || ''
+  if (!header.startsWith('Bearer ')) return ''
+  return header.slice(7).trim()
+}
+
+function attachAuthUser(req, res, next) {
+  const token = getTokenFromRequest(req)
+  if (!token) {
+    req.authUser = null
+    return next()
+  }
+
+  const session = sessions.get(token) || verifySessionToken(token)
+  if (!session) {
+    req.authUser = null
+    return next()
+  }
+
+  sessions.set(token, session)
+
+  const users = readUsers()
+  const user = users[session.username]
+  if (!user) {
+    sessions.delete(token)
+    req.authUser = null
+    return next()
+  }
+
+  req.authUser = toPublicUser(user)
+  req.authToken = token
+  next()
+}
+
+function requireAuth(req, res, next) {
+  if (!req.authUser) {
+    return res.status(401).json({ error: 'unauthorized' })
+  }
+  next()
+}
+
+function requireAdmin(req, res, next) {
+  if (!req.authUser) {
+    return res.status(401).json({ error: 'unauthorized' })
+  }
+
+  if (req.authUser.role !== 'admin') {
+    return res.status(403).json({ error: 'forbidden' })
+  }
+
+  next()
+}
+
+app.use(attachAuthUser)
+
+function validatePassword(password) {
+  if (!password || password.length < 6) {
+    return '密码至少需要 6 个字符'
+  }
+
+  return ''
+}
+
+function parseCsvLine(line = '') {
+  const values = []
+  let current = ''
+  let inQuotes = false
+
+  for (let i = 0; i < line.length; i += 1) {
+    const char = line[i]
+    const next = line[i + 1]
+
+    if (char === '"') {
+      if (inQuotes && next === '"') {
+        current += '"'
+        i += 1
+      } else {
+        inQuotes = !inQuotes
+      }
+      continue
+    }
+
+    if (char === ',' && !inQuotes) {
+      values.push(current)
+      current = ''
+      continue
+    }
+
+    current += char
+  }
+
+  values.push(current)
+  return values.map(value => value.trim())
+}
+
+function parseUsersCsv(content = '') {
+  const lines = String(content)
+    .replace(/^\uFEFF/, '')
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(Boolean)
+
+  if (lines.length === 0) {
+    return { headers: [], rows: [] }
+  }
+
+  const headers = parseCsvLine(lines[0])
+  const rows = lines.slice(1).map(line => {
+    const values = parseCsvLine(line)
+    return headers.reduce((acc, header, index) => {
+      acc[header] = values[index] || ''
+      return acc
+    }, {})
+  })
+
+  return { headers, rows }
+}
+
+function escapeCsvValue(value) {
+  const text = String(value ?? '')
+  if (!/[",\n]/.test(text)) return text
+  return `"${text.replace(/"/g, '""')}"`
+}
+
+function toUserCsv(users = []) {
+  const headers = ['username', 'password', 'nickname', 'role', 'level', 'createdAt']
+  const lines = [
+    headers.join(','),
+    ...users.map(user => headers.map(header => escapeCsvValue(user[header] || '')).join(',')),
+  ]
+  return lines.join('\n')
+}
+
+function toUserTemplateCsv() {
+  return [
+    'username,password,nickname,role,level',
+    'student01,123456,示例学员,user,试用',
+  ].join('\n')
+}
+
+function buildExamPreview(payload = {}, metadata = {}, questions = []) {
+  const title = payload.title || metadata.title || '未命名考试'
+  const sectionCounts = {
+    single: questions.filter(item => item.section === 'single').length,
+    judge: questions.filter(item => item.section === 'judge').length,
+    code_completion: questions.filter(item => item.section === 'code_completion').length,
+  }
+
+  return {
+    title,
+    language: metadata.language || 'C++',
+    questionCount: questions.length,
+    sectionCounts,
+    previewQuestions: questions.slice(0, 8).map(item => ({
+      id: item.id,
+      title: item.title,
+      section: item.section,
+      type: item.type,
+      optionCount: Array.isArray(item.options) ? item.options.length : 0,
+      answer: item.answer,
+    })),
+  }
+}
+
+function buildUser(payload = {}) {
+  const { username, password, nickname, role, level } = payload
+
+  if (!username || username.length < 3) {
+    return { error: '用户名至少需要 3 个字符' }
+  }
+
+  const passwordError = validatePassword(password)
+  if (passwordError) return { error: passwordError }
+
+  return {
+    user: {
+      username,
+      password,
+      nickname: nickname || username,
+      role: ROLES.includes(role) ? role : 'user',
+      level: normalizeCourseLevel(level, DEFAULT_USER_LEVEL),
+      createdAt: new Date().toISOString(),
+    }
+  }
+}
+
+app.get('/api/health', (req, res) => {
+  res.json({ ok: true, time: Date.now() })
+})
+
+app.post('/api/users', (req, res) => {
+  const users = readUsers()
+  const result = buildUser(req.body || {})
+  if (result.error) return res.status(400).json({ error: result.error })
+  const { user } = result
+  if (users[user.username]) return res.status(409).json({ error: 'exists' })
+  users[user.username] = user
+  writeUsers(users)
+  const token = createSession(user)
+  res.status(201).json({ user: toPublicUser(user), token })
+})
+
+app.post('/api/admin/users', requireAdmin, (req, res) => {
+  const users = readUsers()
+  const result = buildUser(req.body || {})
+  if (result.error) return res.status(400).json({ error: result.error })
+  const { user } = result
+  if (users[user.username]) return res.status(409).json({ error: 'exists' })
+  users[user.username] = user
+  writeUsers(users)
+  res.status(201).json(toPublicUser(user))
+})
+
+app.post('/api/admin/users/import', requireAdmin, upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'no file' })
+  }
+
+  try {
+    const content = fs.readFileSync(req.file.path, 'utf-8')
+    const { rows } = parseUsersCsv(content)
+    const users = readUsers()
+    const createdUsers = []
+    const skippedUsers = []
+    const errors = []
+
+    rows.forEach((row, index) => {
+      const result = buildUser({
+        username: row.username,
+        password: row.password,
+        nickname: row.nickname,
+        role: row.role,
+        level: row.level,
+      })
+
+      if (result.error) {
+        errors.push(`第 ${index + 2} 行：${result.error}`)
+        return
+      }
+
+      const { user } = result
+      if (users[user.username]) {
+        skippedUsers.push(user.username)
+        return
+      }
+
+      users[user.username] = user
+      createdUsers.push(user.username)
+    })
+
+    writeUsers(users)
+    res.json({
+      ok: true,
+      createdCount: createdUsers.length,
+      skippedCount: skippedUsers.length,
+      errorCount: errors.length,
+      createdUsers,
+      skippedUsers,
+      errors,
+    })
+  } catch (e) {
+    res.status(500).json({ error: 'import parse error: ' + e.message })
+  } finally {
+    try { fs.unlinkSync(req.file.path) } catch {}
+  }
+})
+
+app.get('/api/admin/users/export', requireAdmin, (req, res) => {
+  const users = Object.values(readUsers()).sort((a, b) => {
+    if ((a.role || 'user') !== (b.role || 'user')) return (a.role || 'user') === 'admin' ? -1 : 1
+    return String(a.username).localeCompare(String(b.username))
+  })
+
+  const csv = toUserCsv(users)
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+  res.setHeader('Content-Disposition', 'attachment; filename="users.csv"')
+  res.send(csv)
+})
+
+app.get('/api/admin/users/template', requireAdmin, (req, res) => {
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+  res.setHeader('Content-Disposition', 'attachment; filename="users-template.csv"')
+  res.send(toUserTemplateCsv())
+})
+
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body || {}
+  if (!username || !password) {
+    return res.status(400).json({ success: false, error: '用户名和密码不能为空' })
+  }
+  const users = readUsers()
+  const user = users[username]
+  if (!user) {
+    return res.status(401).json({ success: false, error: '用户不存在' })
+  }
+  if (user.password !== password) {
+    return res.status(401).json({ success: false, error: '密码错误' })
+  }
+  const token = createSession(user)
+  res.json({ 
+    success: true, 
+    token,
+    user: toPublicUser(user)
+  })
+})
+
+app.post('/api/logout', requireAuth, (req, res) => {
+  if (req.authToken) {
+    sessions.delete(req.authToken)
+    revokedTokens.add(req.authToken)
+  }
+  res.json({ success: true })
+})
+
+app.get('/api/users', requireAdmin, (req, res) => {
+  const users = readUsers()
+  const list = Object.values(users).map(toPublicUser)
+  res.json(list)
+})
+
+app.get('/api/users/:username', requireAuth, (req, res) => {
+  if (req.authUser.role !== 'admin' && req.authUser.username !== req.params.username) {
+    return res.status(403).json({ error: 'forbidden' })
+  }
+  const users = readUsers()
+  const user = users[req.params.username]
+  if (!user) {
+    return res.status(404).json({ error: 'user not found' })
+  }
+  res.json(toPublicUser(user))
+})
+
+app.patch('/api/users/:username/level', requireAdmin, (req, res) => {
+  const { username } = req.params
+  const { level } = req.body || {}
+  if (!LEVELS.includes(level)) {
+    return res.status(400).json({ error: 'invalid level' })
+  }
+  const users = readUsers()
+  const u = users[username]
+  if (!u) {
+    return res.status(404).json({ error: 'user not found' })
+  }
+  u.level = level
+  users[username] = u
+  writeUsers(users)
+  res.json({ ok: true, username, level })
+})
+
+app.patch('/api/users/:username/role', requireAdmin, (req, res) => {
+  const { username } = req.params
+  const { role } = req.body || {}
+  if (!ROLES.includes(role)) {
+    return res.status(400).json({ error: 'invalid role' })
+  }
+
+  if (req.authUser.username === username && role !== 'admin') {
+    return res.status(400).json({ error: 'current admin cannot demote self' })
+  }
+
+  const users = readUsers()
+  const target = users[username]
+  if (!target) {
+    return res.status(404).json({ error: 'user not found' })
+  }
+
+  target.role = role
+  users[username] = target
+  writeUsers(users)
+  res.json({ ok: true, username, role })
+})
+
+app.patch('/api/users/:username/password', requireAdmin, (req, res) => {
+  const { username } = req.params
+  const { password } = req.body || {}
+  const passwordError = validatePassword(password)
+  if (passwordError) {
+    return res.status(400).json({ error: passwordError })
+  }
+
+  const users = readUsers()
+  const target = users[username]
+  if (!target) {
+    return res.status(404).json({ error: 'user not found' })
+  }
+
+  target.password = password
+  users[username] = target
+  writeUsers(users)
+  res.json({ ok: true, username })
+})
+
+app.delete('/api/users/:username', requireAdmin, (req, res) => {
+  const { username } = req.params
+  const users = readUsers()
+  const user = users[username]
+
+  if (!user) {
+    return res.status(404).json({ error: 'user not found' })
+  }
+
+  if (user.role === 'admin') {
+    return res.status(400).json({ error: 'admin user cannot be deleted' })
+  }
+
+  delete users[username]
+  writeUsers(users)
+
+  const attempts = readAttempts().filter(item => item.username !== username)
+  const wrongBook = readWrongBook().filter(item => item.username !== username)
+  writeAttempts(attempts)
+  writeWrongBook(wrongBook)
+
+  res.json({ ok: true, username })
+})
+
+// 题库上传接口
+app.post('/api/admin/banks/upload', requireAdmin, upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'no file' })
+  
+  try {
+    const content = fs.readFileSync(req.file.path, 'utf-8')
+    const { metadata, questions } = parseQuestions(content)
+    
+    // 简单校验
+    if (!questions.length) {
+      return res.status(400).json({ error: '解析失败：未找到有效题目' })
+    }
+    
+    // 存入题库
+    const allQuestions = readQuestions()
+    const bankId = Date.now().toString()
+    
+    const newQuestions = questions.map((q, idx) => ({
+      ...q,
+      bankId,
+      order: Number.isFinite(q.order) ? q.order : (idx + 1),
+      language: metadata.language || 'C++',
+      bankTitle: metadata.title || '未命名题库',
+      createdAt: new Date().toISOString()
+    }))
+    
+    allQuestions.push(...newQuestions)
+    writeQuestions(allQuestions)
+    
+    // 清理临时文件
+    fs.unlinkSync(req.file.path)
+    
+    res.json({ 
+      success: true, 
+      count: questions.length, 
+      bankId,
+      metadata 
+    })
+  } catch (e) {
+    res.status(500).json({ error: '解析异常: ' + e.message })
+  }
+})
+
+// 获取所有题目（管理员预览）
+app.get('/api/admin/questions', requireAdmin, (req, res) => {
+  const questions = readQuestions()
+  res.json(questions)
+})
+
+// 发起考试
+app.post('/api/admin/exams', requireAdmin, (req, res) => {
+  const { title, duration, questionCount, bankIds, levelRequired, totalScore } = req.body || {}
+  const { startTime, endTime } = normalizeExamWindow(req.body || {})
+  
+  if (!title || !startTime || !endTime) {
+    return res.status(400).json({ error: 'missing fields' })
+  }
+  
+  const exams = readExams()
+  const newExam = {
+    id: Date.now().toString(),
+    title,
+    startTime,
+    endTime,
+    duration: toPositiveInt(duration, 60), // 秒
+    questionCount: toPositiveInt(questionCount, 10),
+    totalScore: toPositiveInt(totalScore, DEFAULT_TOTAL_SCORE),
+    bankIds: bankIds || [], // 指定从哪些题库抽题
+    levelRequired: normalizeCourseLevel(levelRequired, DEFAULT_EXAM_LEVEL),
+    createdAt: new Date().toISOString(),
+    status: 'scheduled',
+    source: 'manual'
+  }
+  
+  exams.push(newExam)
+  writeExams(exams)
+  
+  res.json({ success: true, exam: newExam })
+})
+
+app.post('/api/admin/exams/preview', requireAdmin, upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'no file' })
+
+  try {
+    const content = fs.readFileSync(req.file.path, 'utf-8')
+    const { metadata, questions } = parseQuestions(content)
+    if (!questions.length) {
+      return res.status(400).json({ error: '解析失败：未找到有效题目' })
+    }
+
+    res.json(buildExamPreview(req.body || {}, metadata, questions))
+  } catch (e) {
+    res.status(500).json({ error: 'preview parse error: ' + e.message })
+  } finally {
+    try { fs.unlinkSync(req.file.path) } catch {}
+  }
+})
+
+// 管理员上传考试文件并创建考试
+app.post('/api/admin/exams/upload', requireAdmin, upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'no file' })
+  const payload = req.body || {}
+  const title = payload.title || req.file.originalname?.replace(/\.md$/i, '') || '未命名考试'
+  const duration = toPositiveInt(payload.duration, 180)
+  const levelRequired = normalizeCourseLevel(payload.levelRequired, DEFAULT_EXAM_LEVEL)
+  const totalScore = toPositiveInt(payload.totalScore, DEFAULT_TOTAL_SCORE)
+  const { startTime, endTime } = normalizeExamWindow(payload)
+  const requestedCount = toPositiveInt(payload.questionCount, 0)
+
+  if (!startTime || !endTime) {
+    try { fs.unlinkSync(req.file.path) } catch {}
+    return res.status(400).json({ error: 'missing start/end time' })
+  }
+
+  try {
+    const content = fs.readFileSync(req.file.path, 'utf-8')
+    const { metadata, questions } = parseQuestions(content)
+    if (!questions.length) {
+      return res.status(400).json({ error: '解析失败：未找到有效题目' })
+    }
+
+    const allQuestions = readQuestions()
+    const exams = readExams()
+    const bankId = Date.now().toString()
+
+    const newQuestions = questions.map((q, idx) => ({
+      ...q,
+      bankId,
+      order: Number.isFinite(q.order) ? q.order : (idx + 1),
+      language: metadata.language || 'C++',
+      bankTitle: metadata.title || title,
+      createdAt: new Date().toISOString()
+    }))
+    allQuestions.push(...newQuestions)
+    writeQuestions(allQuestions)
+
+    const exam = {
+      id: (Date.now() + 1).toString(),
+      title,
+      startTime,
+      endTime,
+      duration,
+      questionCount: requestedCount > 0 ? Math.min(requestedCount, newQuestions.length) : newQuestions.length,
+      totalScore,
+      bankIds: [bankId],
+      levelRequired,
+      createdAt: new Date().toISOString(),
+      status: 'scheduled',
+      source: 'upload',
+    }
+    exams.push(exam)
+    writeExams(exams)
+
+    res.status(201).json({
+      success: true,
+      bankId,
+      parsedCount: newQuestions.length,
+      exam,
+      preview: buildExamPreview(payload, metadata, newQuestions),
+    })
+  } catch (e) {
+    res.status(500).json({ error: 'upload parse error: ' + e.message })
+  } finally {
+    try { fs.unlinkSync(req.file.path) } catch {}
+  }
+})
+
+app.get('/api/admin/exams/template-md', requireAdmin, (req, res) => {
+  res.setHeader('Content-Type', 'text/markdown; charset=utf-8')
+  res.setHeader('Content-Disposition', 'attachment; filename="exam-template.md"')
+  res.send(getExamMarkdownTemplate())
+})
+
+app.get('/api/admin/exams', requireAdmin, (req, res) => {
+  const exams = readExams()
+  const list = exams
+    .slice()
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+  res.json(list)
+})
+
+app.patch('/api/admin/exams/:id', requireAdmin, (req, res) => {
+  const { id } = req.params
+  const payload = req.body || {}
+  const exams = readExams()
+  const idx = exams.findIndex(e => e.id === id)
+  if (idx < 0) return res.status(404).json({ error: 'exam not found' })
+
+  const current = exams[idx]
+  const next = {
+    ...current,
+    title: payload.title ?? current.title,
+    duration: toPositiveInt(payload.duration, current.duration || 60),
+    questionCount: toPositiveInt(payload.questionCount, current.questionCount || 10),
+    totalScore: toPositiveInt(payload.totalScore, current.totalScore || DEFAULT_TOTAL_SCORE),
+    levelRequired: normalizeCourseLevel(payload.levelRequired || current.levelRequired, DEFAULT_EXAM_LEVEL),
+    status: payload.status || current.status || 'scheduled'
+  }
+  const windowPayload = normalizeExamWindow(payload)
+  if (windowPayload.startTime) next.startTime = windowPayload.startTime
+  if (windowPayload.endTime) next.endTime = windowPayload.endTime
+  if (Array.isArray(payload.bankIds) && payload.bankIds.length > 0) next.bankIds = payload.bankIds
+
+  exams[idx] = next
+  writeExams(exams)
+  res.json({ success: true, exam: next })
+})
+
+app.delete('/api/admin/exams/:id', requireAdmin, (req, res) => {
+  const { id } = req.params
+  const exams = readExams()
+  const next = exams.filter(e => e.id !== id)
+  if (next.length === exams.length) return res.status(404).json({ error: 'exam not found' })
+  writeExams(next)
+  res.json({ success: true })
+})
+
+// 获取可用考试列表（学生端）
+app.get('/api/exams/available', requireAuth, (req, res) => {
+  const exams = readExams()
+  const attempts = readAttempts()
+  const username = req.authUser.username
+  const now = new Date()
+  
+  // 返回未结束考试（含未开始和进行中），方便学生提前看到新发布考试
+  const available = exams
+    .filter(e => new Date(e.endTime) >= now)
+    .filter(e => !hasSubmittedExam(attempts, username, e.id))
+    .map(e => ({
+      ...e,
+      availability: new Date(e.startTime) > now ? 'upcoming' : 'active'
+    }))
+    .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
+  res.json(available)
+})
+
+// 获取考试试卷（开始考试）
+app.get('/api/exams/:id/start', requireAuth, (req, res) => {
+  const { id } = req.params
+  const username = req.authUser.username
+  
+  const exams = readExams()
+  const exam = exams.find(e => e.id === id)
+  if (!exam) return res.status(404).json({ error: 'exam not found' })
+  const attempts = readAttempts()
+  if (hasSubmittedExam(attempts, username, id)) {
+    return res.status(409).json({ error: 'already_submitted' })
+  }
+  
+  // 检查时间
+  const now = new Date()
+  if (now < new Date(exam.startTime)) return res.status(400).json({ error: 'not started' })
+  if (now > new Date(exam.endTime)) return res.status(400).json({ error: 'ended' })
+  
+  if (!canAccessExamLevel(req.authUser.level, exam.levelRequired || DEFAULT_EXAM_LEVEL)) {
+    return res.status(403).json({ error: 'insufficient_level' })
+  }
+  
+  // 抽取题目（按试卷顺序，不打乱）
+  const allQuestions = readQuestions()
+  const bankOrder = new Map((exam.bankIds || []).map((bid, index) => [bid, index]))
+  const candidates = allQuestions
+    .filter(q => exam.bankIds.includes(q.bankId))
+    .sort((a, b) => {
+      const bankDiff = (bankOrder.get(a.bankId) ?? 9999) - (bankOrder.get(b.bankId) ?? 9999)
+      if (bankDiff !== 0) return bankDiff
+      return (a.order || 0) - (b.order || 0)
+    })
+
+  const count = exam.questionCount || candidates.length
+  const selected = count >= candidates.length ? candidates : candidates.slice(0, count)
+  
+  // 屏蔽答案后返回
+  const paper = selected.map(q => {
+    const { answer, ...rest } = q
+    return rest
+  })
+  
+  res.json({ 
+    examId: exam.id, 
+    title: exam.title, 
+    duration: exam.duration,
+    totalScore: exam.totalScore || DEFAULT_TOTAL_SCORE,
+    questions: paper 
+  })
+})
+
+// 提交试卷与判分
+app.post('/api/exams/:id/submit', requireAuth, async (req, res) => {
+  const { id } = req.params
+  const { answers, questionIds } = req.body // answers: { qId: 'A', qId2: 'T' }
+  const username = req.authUser.username
+  
+  const exams = readExams()
+  const exam = exams.find(e => e.id === id)
+  if (!exam) return res.status(404).json({ error: 'exam not found' })
+  
+  const allQuestions = readQuestions()
+  const wrongBook = readWrongBook()
+  const attempts = readAttempts()
+  if (hasSubmittedExam(attempts, username, id)) {
+    return res.status(409).json({ error: 'already_submitted' })
+  }
+  
+  const validQuestionIds = Array.isArray(questionIds) ? questionIds : Object.keys(answers || {})
+  let totalRawScore = 0
+  let earnedRawScore = 0
+  const results = []
+  const wrongQuestions = []
+
+  validQuestionIds.forEach(qId => {
+    const question = allQuestions.find(q => q.id === qId)
+    if (!question) return
+
+    totalRawScore += question.score
+    const userAns = answers?.[qId]
+    const isCorrect = userAns === question.answer
+    const answered = hasSubmittedAnswer(userAns)
+
+    if (isCorrect) {
+      earnedRawScore += question.score
+    } else if (answered) {
+      // 记录错题
+      const record = {
+        username,
+        questionId: qId,
+        questionTitle: question.title,
+        yourAnswer: userAns,
+        correctAnswer: question.answer,
+        examId: id,
+        examTitle: exam.title,
+        at: new Date().toISOString()
+      }
+      wrongBook.push(record)
+      wrongQuestions.push({
+        questionId: qId,
+        title: question.title,
+        type: question.type || 'single',
+        options: question.options || [],
+        yourAnswer: userAns,
+        correctAnswer: question.answer,
+      })
+    }
+    
+    results.push({
+      questionId: qId,
+      isCorrect,
+      score: isCorrect ? question.score : 0,
+      correctAnswer: question.answer // 返回正确答案供查看
+    })
+  })
+
+  const configuredTotalScore = toPositiveInt(exam.totalScore, DEFAULT_TOTAL_SCORE)
+  const scoreScaled = totalRawScore > 0 ? Math.round((earnedRawScore / totalRawScore) * configuredTotalScore) : 0
+  
+  // 记录本次尝试
+  const attempt = {
+    id: Date.now().toString(),
+    examId: id,
+    username,
+    score: scoreScaled,
+    rawScore: earnedRawScore,
+    rawTotal: totalRawScore,
+    totalScore: configuredTotalScore,
+    at: new Date().toISOString()
+  }
+  attempts.push(attempt)
+  
+  writeWrongBook(wrongBook)
+  writeAttempts(attempts)
+  const wrongQuestionsWithAnalysis = await buildWrongQuestionAnalyses(wrongQuestions)
+  
+  res.json({
+    success: true,
+    score: scoreScaled,
+    totalScore: configuredTotalScore,
+    rawScore: earnedRawScore,
+    rawTotal: totalRawScore,
+    results,
+    wrongQuestions: wrongQuestionsWithAnalysis,
+  })
+})
+
+// 获取错题本
+app.get('/api/my/wrong-book', requireAuth, (req, res) => {
+  const username = req.authUser.username
+  const wrongBook = readWrongBook().filter(w => w.username === username)
+  const allQuestions = readQuestions()
+  const map = new Map()
+  wrongBook.forEach(item => {
+    const prev = map.get(item.questionId)
+    if (!prev) {
+      const q = allQuestions.find(x => x.id === item.questionId) || {}
+      map.set(item.questionId, {
+        questionId: item.questionId,
+        title: item.questionTitle || q.title || '',
+        type: q.type || 'single',
+        options: q.options || [],
+        codeSnippet: q.codeSnippet || '',
+        correctAnswer: item.correctAnswer,
+        wrongCount: 1,
+        firstWrongAt: item.at,
+        lastWrongAt: item.at,
+        lastYourAnswer: item.yourAnswer,
+        examTitle: item.examTitle,
+      })
+    } else {
+      prev.wrongCount += 1
+      prev.lastWrongAt = item.at
+      prev.lastYourAnswer = item.yourAnswer
+    }
+  })
+  const list = Array.from(map.values()).sort((a, b) => new Date(b.lastWrongAt) - new Date(a.lastWrongAt))
+  res.json(list)
+})
+
+const PORT = process.env.PORT || 8787
+app.listen(PORT, () => {
+  process.stdout.write(`server at http://localhost:${PORT}\n`)
+})

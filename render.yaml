@@ -1,0 +1,20 @@
+# Render.com 部署配置文件
+# 文档: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: cpp-winter-camp
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=31536000
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

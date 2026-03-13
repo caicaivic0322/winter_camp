@@ -1,0 +1,2080 @@
+[
+  {
+    "username": "student-a",
+    "questionId": "q-1",
+    "questionTitle": "样例题",
+    "yourAnswer": "A",
+    "correctAnswer": "B",
+    "examId": "exam-1",
+    "examTitle": "样例卷",
+    "at": "2026-03-13T00:03:00.000Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_ij6s2gyqt",
+    "questionTitle": "十进制数 100 转换成二进制数的结果是（　　）",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.761Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_4nkfhpz2j",
+    "questionTitle": "在 C++ 中，下列数据类型中占用内存最大的是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_4g6qaq0d6",
+    "questionTitle": "下列标志符中，不合法的是（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_i5hv6m7nj",
+    "questionTitle": "设 `int a = 1, b = 2, c = 3;`，执行 `a += b *= c;` 后，`a` 的值是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_szq7icrmo",
+    "questionTitle": "关于 C++ 中的 `switch` 语句，下列说法正确的是（　　）",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_jgdz4qiix",
+    "questionTitle": "下面哪个是用于输入一整行字符串（包含空格）的正确语法？（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_cmmrrt7fp",
+    "questionTitle": "已知 `int a[10];`，则访问 `a[10]` 时程序通常会发生（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_6howe3zti",
+    "questionTitle": "在 C++ 中，一维数组的长度必须（　　）",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_mpq3uy2yi",
+    "questionTitle": "下列哪种排序算法通常使用分治法实现？（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_093bsvafo",
+    "questionTitle": "计算机系统中的 RAM 指的是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_7lrkosw4e",
+    "questionTitle": "以下代码的输出结果是（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_7ktqzzrvq",
+    "questionTitle": "设 `arr` 是一个 $4 \\times 5$ 的二维数组，`arr[0][0]` 的地址为 $1000$，每个元素占 4 字节，则 `arr[2][3]` 的地址为（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_pdvkdsfdd",
+    "questionTitle": "下面哪个不是 C++ 的逻辑运算符？（　　）",
+    "correctAnswer": "D",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_w4hljutab",
+    "questionTitle": "在递归函数中，必须存在（　　）以防止无限循环。",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_flezoq45p",
+    "questionTitle": "关于 C++ 中的结构体 `struct`，下列说法错误的是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_purw6riyw",
+    "questionTitle": "ASCII 码中，小写字母 'a' 和大写字母 'A' 之间的数值关系是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_a1sskrglh",
+    "questionTitle": "一个文件名为 `test.cpp` 的源代码文件，经过编译后通常会产生后缀名为（　　）的目标文件。",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_37bly7fie",
+    "questionTitle": "如果 `std::string s = \"GESP Level 4\";`，执行 `s.substr(0, 4)` 的结果是（　　）",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_jo2broelt",
+    "questionTitle": "满二叉树的第 $i$ 层（根为第 1 层）最多有多少个节点？（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_tbqmgqqx7",
+    "questionTitle": "快速排序最理想的时间复杂度是（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_e2ee9o2n3",
+    "questionTitle": "关于 C++ 中的 `break` 和 `continue`，下列说法正确的是（　　）",
+    "correctAnswer": "D",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_o2s1f4f85",
+    "questionTitle": "在 32 位操作系统中，`int` 类型通常占用（　　）字节。",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_hxtw5zwmc",
+    "questionTitle": "十六进制数 $F$ 对应的二进制数是（　　）",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_o2rna1lkm",
+    "questionTitle": "若有 `int a = 10; int &b = a;`，则修改 `b = 20;` 后，`a` 的值变为（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_f17dfy8uv",
+    "questionTitle": "万维网（World Wide Web）的简称是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_ihxs9tucf",
+    "questionTitle": "逻辑表达式 `(A || B)` 中，只要 `A` 为真，整个表达式的结果即为真。",
+    "correctAnswer": "F",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_ychdtp9x9",
+    "questionTitle": "数组名在 C++ 中可以作为常量指针，指向数组的首地址。",
+    "correctAnswer": "T",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_8i2buc1xr",
+    "questionTitle": "如果不使用 `using namespace std;`，则必须在 `cout` 前加上 `std::` 前缀。",
+    "correctAnswer": "F",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_zf6t7xy7h",
+    "questionTitle": "C++ 中定义的局部变量如果不初始化，其值默认为 0。",
+    "correctAnswer": "T",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_8oh7cpu7w",
+    "questionTitle": "位运算 `~` 是按位取反，它是一个单目运算符。",
+    "correctAnswer": "F",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_69sd82g5b",
+    "questionTitle": "第1题：二分查找实现 - 填空 ①",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_5r4rm6yxj",
+    "questionTitle": "第1题：二分查找实现 - 填空 ②",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_nkcxlk3qt",
+    "questionTitle": "第1题：二分查找实现 - 填空 ③",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_1mqrrrbix",
+    "questionTitle": "第2题：求两个正整数的最大公约数（递归法） - 填空 ④",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_k81ff9sep",
+    "questionTitle": "第2题：求两个正整数的最大公约数（递归法） - 填空 ⑤",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_40cjpu8l4",
+    "questionTitle": "第3题：结构体数组排序（按分降序） - 填空 ⑥",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_blxmggqoc",
+    "questionTitle": "第3题：结构体数组排序（按分降序） - 填空 ⑦",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_p63b22yd9",
+    "questionTitle": "第4题：计算数组平均值（保留两位小数） - 填空 ⑧",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.762Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_ij6s2gyqt",
+    "questionTitle": "十进制数 100 转换成二进制数的结果是（　　）",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_4nkfhpz2j",
+    "questionTitle": "在 C++ 中，下列数据类型中占用内存最大的是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_4g6qaq0d6",
+    "questionTitle": "下列标志符中，不合法的是（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_i5hv6m7nj",
+    "questionTitle": "设 `int a = 1, b = 2, c = 3;`，执行 `a += b *= c;` 后，`a` 的值是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_szq7icrmo",
+    "questionTitle": "关于 C++ 中的 `switch` 语句，下列说法正确的是（　　）",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_jgdz4qiix",
+    "questionTitle": "下面哪个是用于输入一整行字符串（包含空格）的正确语法？（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_cmmrrt7fp",
+    "questionTitle": "已知 `int a[10];`，则访问 `a[10]` 时程序通常会发生（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_6howe3zti",
+    "questionTitle": "在 C++ 中，一维数组的长度必须（　　）",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_mpq3uy2yi",
+    "questionTitle": "下列哪种排序算法通常使用分治法实现？（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_093bsvafo",
+    "questionTitle": "计算机系统中的 RAM 指的是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_7lrkosw4e",
+    "questionTitle": "以下代码的输出结果是（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_7ktqzzrvq",
+    "questionTitle": "设 `arr` 是一个 $4 \\times 5$ 的二维数组，`arr[0][0]` 的地址为 $1000$，每个元素占 4 字节，则 `arr[2][3]` 的地址为（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_pdvkdsfdd",
+    "questionTitle": "下面哪个不是 C++ 的逻辑运算符？（　　）",
+    "correctAnswer": "D",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_w4hljutab",
+    "questionTitle": "在递归函数中，必须存在（　　）以防止无限循环。",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_flezoq45p",
+    "questionTitle": "关于 C++ 中的结构体 `struct`，下列说法错误的是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_purw6riyw",
+    "questionTitle": "ASCII 码中，小写字母 'a' 和大写字母 'A' 之间的数值关系是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_a1sskrglh",
+    "questionTitle": "一个文件名为 `test.cpp` 的源代码文件，经过编译后通常会产生后缀名为（　　）的目标文件。",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_37bly7fie",
+    "questionTitle": "如果 `std::string s = \"GESP Level 4\";`，执行 `s.substr(0, 4)` 的结果是（　　）",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_jo2broelt",
+    "questionTitle": "满二叉树的第 $i$ 层（根为第 1 层）最多有多少个节点？（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_tbqmgqqx7",
+    "questionTitle": "快速排序最理想的时间复杂度是（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_e2ee9o2n3",
+    "questionTitle": "关于 C++ 中的 `break` 和 `continue`，下列说法正确的是（　　）",
+    "correctAnswer": "D",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_o2s1f4f85",
+    "questionTitle": "在 32 位操作系统中，`int` 类型通常占用（　　）字节。",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_hxtw5zwmc",
+    "questionTitle": "十六进制数 $F$ 对应的二进制数是（　　）",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_o2rna1lkm",
+    "questionTitle": "若有 `int a = 10; int &b = a;`，则修改 `b = 20;` 后，`a` 的值变为（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_f17dfy8uv",
+    "questionTitle": "万维网（World Wide Web）的简称是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_ihxs9tucf",
+    "questionTitle": "逻辑表达式 `(A || B)` 中，只要 `A` 为真，整个表达式的结果即为真。",
+    "correctAnswer": "F",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_ychdtp9x9",
+    "questionTitle": "数组名在 C++ 中可以作为常量指针，指向数组的首地址。",
+    "correctAnswer": "T",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_8i2buc1xr",
+    "questionTitle": "如果不使用 `using namespace std;`，则必须在 `cout` 前加上 `std::` 前缀。",
+    "correctAnswer": "F",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_zf6t7xy7h",
+    "questionTitle": "C++ 中定义的局部变量如果不初始化，其值默认为 0。",
+    "correctAnswer": "T",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.767Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_8oh7cpu7w",
+    "questionTitle": "位运算 `~` 是按位取反，它是一个单目运算符。",
+    "correctAnswer": "F",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.768Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_69sd82g5b",
+    "questionTitle": "第1题：二分查找实现 - 填空 ①",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.768Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_5r4rm6yxj",
+    "questionTitle": "第1题：二分查找实现 - 填空 ②",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.768Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_nkcxlk3qt",
+    "questionTitle": "第1题：二分查找实现 - 填空 ③",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.768Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_1mqrrrbix",
+    "questionTitle": "第2题：求两个正整数的最大公约数（递归法） - 填空 ④",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.768Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_k81ff9sep",
+    "questionTitle": "第2题：求两个正整数的最大公约数（递归法） - 填空 ⑤",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.768Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_40cjpu8l4",
+    "questionTitle": "第3题：结构体数组排序（按分降序） - 填空 ⑥",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.768Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_blxmggqoc",
+    "questionTitle": "第3题：结构体数组排序（按分降序） - 填空 ⑦",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.768Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_p63b22yd9",
+    "questionTitle": "第4题：计算数组平均值（保留两位小数） - 填空 ⑧",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:28:08.768Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_mpq3uy2yi",
+    "questionTitle": "下列哪种排序算法通常使用分治法实现？（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_093bsvafo",
+    "questionTitle": "计算机系统中的 RAM 指的是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_7lrkosw4e",
+    "questionTitle": "以下代码的输出结果是（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_7ktqzzrvq",
+    "questionTitle": "设 `arr` 是一个 $4 \\times 5$ 的二维数组，`arr[0][0]` 的地址为 $1000$，每个元素占 4 字节，则 `arr[2][3]` 的地址为（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_pdvkdsfdd",
+    "questionTitle": "下面哪个不是 C++ 的逻辑运算符？（　　）",
+    "correctAnswer": "D",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_w4hljutab",
+    "questionTitle": "在递归函数中，必须存在（　　）以防止无限循环。",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_flezoq45p",
+    "questionTitle": "关于 C++ 中的结构体 `struct`，下列说法错误的是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_purw6riyw",
+    "questionTitle": "ASCII 码中，小写字母 'a' 和大写字母 'A' 之间的数值关系是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_a1sskrglh",
+    "questionTitle": "一个文件名为 `test.cpp` 的源代码文件，经过编译后通常会产生后缀名为（　　）的目标文件。",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_37bly7fie",
+    "questionTitle": "如果 `std::string s = \"GESP Level 4\";`，执行 `s.substr(0, 4)` 的结果是（　　）",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_jo2broelt",
+    "questionTitle": "满二叉树的第 $i$ 层（根为第 1 层）最多有多少个节点？（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_tbqmgqqx7",
+    "questionTitle": "快速排序最理想的时间复杂度是（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_e2ee9o2n3",
+    "questionTitle": "关于 C++ 中的 `break` 和 `continue`，下列说法正确的是（　　）",
+    "correctAnswer": "D",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_o2s1f4f85",
+    "questionTitle": "在 32 位操作系统中，`int` 类型通常占用（　　）字节。",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_hxtw5zwmc",
+    "questionTitle": "十六进制数 $F$ 对应的二进制数是（　　）",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_o2rna1lkm",
+    "questionTitle": "若有 `int a = 10; int &b = a;`，则修改 `b = 20;` 后，`a` 的值变为（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_f17dfy8uv",
+    "questionTitle": "万维网（World Wide Web）的简称是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_ihxs9tucf",
+    "questionTitle": "逻辑表达式 `(A || B)` 中，只要 `A` 为真，整个表达式的结果即为真。",
+    "correctAnswer": "F",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_ychdtp9x9",
+    "questionTitle": "数组名在 C++ 中可以作为常量指针，指向数组的首地址。",
+    "correctAnswer": "T",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_8i2buc1xr",
+    "questionTitle": "如果不使用 `using namespace std;`，则必须在 `cout` 前加上 `std::` 前缀。",
+    "correctAnswer": "F",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_zf6t7xy7h",
+    "questionTitle": "C++ 中定义的局部变量如果不初始化，其值默认为 0。",
+    "correctAnswer": "T",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_8oh7cpu7w",
+    "questionTitle": "位运算 `~` 是按位取反，它是一个单目运算符。",
+    "correctAnswer": "F",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_69sd82g5b",
+    "questionTitle": "第1题：二分查找实现 - 填空 ①",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_5r4rm6yxj",
+    "questionTitle": "第1题：二分查找实现 - 填空 ②",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_nkcxlk3qt",
+    "questionTitle": "第1题：二分查找实现 - 填空 ③",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_1mqrrrbix",
+    "questionTitle": "第2题：求两个正整数的最大公约数（递归法） - 填空 ④",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_k81ff9sep",
+    "questionTitle": "第2题：求两个正整数的最大公约数（递归法） - 填空 ⑤",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_40cjpu8l4",
+    "questionTitle": "第3题：结构体数组排序（按分降序） - 填空 ⑥",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_blxmggqoc",
+    "questionTitle": "第3题：结构体数组排序（按分降序） - 填空 ⑦",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_p63b22yd9",
+    "questionTitle": "第4题：计算数组平均值（保留两位小数） - 填空 ⑧",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.600Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_mpq3uy2yi",
+    "questionTitle": "下列哪种排序算法通常使用分治法实现？（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_093bsvafo",
+    "questionTitle": "计算机系统中的 RAM 指的是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_7lrkosw4e",
+    "questionTitle": "以下代码的输出结果是（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_7ktqzzrvq",
+    "questionTitle": "设 `arr` 是一个 $4 \\times 5$ 的二维数组，`arr[0][0]` 的地址为 $1000$，每个元素占 4 字节，则 `arr[2][3]` 的地址为（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_pdvkdsfdd",
+    "questionTitle": "下面哪个不是 C++ 的逻辑运算符？（　　）",
+    "correctAnswer": "D",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_w4hljutab",
+    "questionTitle": "在递归函数中，必须存在（　　）以防止无限循环。",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_flezoq45p",
+    "questionTitle": "关于 C++ 中的结构体 `struct`，下列说法错误的是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_purw6riyw",
+    "questionTitle": "ASCII 码中，小写字母 'a' 和大写字母 'A' 之间的数值关系是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_a1sskrglh",
+    "questionTitle": "一个文件名为 `test.cpp` 的源代码文件，经过编译后通常会产生后缀名为（　　）的目标文件。",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_37bly7fie",
+    "questionTitle": "如果 `std::string s = \"GESP Level 4\";`，执行 `s.substr(0, 4)` 的结果是（　　）",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_jo2broelt",
+    "questionTitle": "满二叉树的第 $i$ 层（根为第 1 层）最多有多少个节点？（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_tbqmgqqx7",
+    "questionTitle": "快速排序最理想的时间复杂度是（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_e2ee9o2n3",
+    "questionTitle": "关于 C++ 中的 `break` 和 `continue`，下列说法正确的是（　　）",
+    "correctAnswer": "D",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_o2s1f4f85",
+    "questionTitle": "在 32 位操作系统中，`int` 类型通常占用（　　）字节。",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_hxtw5zwmc",
+    "questionTitle": "十六进制数 $F$ 对应的二进制数是（　　）",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_o2rna1lkm",
+    "questionTitle": "若有 `int a = 10; int &b = a;`，则修改 `b = 20;` 后，`a` 的值变为（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_f17dfy8uv",
+    "questionTitle": "万维网（World Wide Web）的简称是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_ihxs9tucf",
+    "questionTitle": "逻辑表达式 `(A || B)` 中，只要 `A` 为真，整个表达式的结果即为真。",
+    "correctAnswer": "F",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_ychdtp9x9",
+    "questionTitle": "数组名在 C++ 中可以作为常量指针，指向数组的首地址。",
+    "correctAnswer": "T",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_8i2buc1xr",
+    "questionTitle": "如果不使用 `using namespace std;`，则必须在 `cout` 前加上 `std::` 前缀。",
+    "correctAnswer": "F",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_zf6t7xy7h",
+    "questionTitle": "C++ 中定义的局部变量如果不初始化，其值默认为 0。",
+    "correctAnswer": "T",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_8oh7cpu7w",
+    "questionTitle": "位运算 `~` 是按位取反，它是一个单目运算符。",
+    "correctAnswer": "F",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_69sd82g5b",
+    "questionTitle": "第1题：二分查找实现 - 填空 ①",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_5r4rm6yxj",
+    "questionTitle": "第1题：二分查找实现 - 填空 ②",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_nkcxlk3qt",
+    "questionTitle": "第1题：二分查找实现 - 填空 ③",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_1mqrrrbix",
+    "questionTitle": "第2题：求两个正整数的最大公约数（递归法） - 填空 ④",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_k81ff9sep",
+    "questionTitle": "第2题：求两个正整数的最大公约数（递归法） - 填空 ⑤",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_40cjpu8l4",
+    "questionTitle": "第3题：结构体数组排序（按分降序） - 填空 ⑥",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_blxmggqoc",
+    "questionTitle": "第3题：结构体数组排序（按分降序） - 填空 ⑦",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_p63b22yd9",
+    "questionTitle": "第4题：计算数组平均值（保留两位小数） - 填空 ⑧",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T01:55:44.604Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_4nkfhpz2j",
+    "questionTitle": "在 C++ 中，下列数据类型中占用内存最大的是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.254Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_4g6qaq0d6",
+    "questionTitle": "下列标志符中，不合法的是（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.254Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_i5hv6m7nj",
+    "questionTitle": "设 `int a = 1, b = 2, c = 3;`，执行 `a += b *= c;` 后，`a` 的值是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.254Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_szq7icrmo",
+    "questionTitle": "关于 C++ 中的 `switch` 语句，下列说法正确的是（　　）",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.254Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_jgdz4qiix",
+    "questionTitle": "下面哪个是用于输入一整行字符串（包含空格）的正确语法？（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.254Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_cmmrrt7fp",
+    "questionTitle": "已知 `int a[10];`，则访问 `a[10]` 时程序通常会发生（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.254Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_6howe3zti",
+    "questionTitle": "在 C++ 中，一维数组的长度必须（　　）",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.254Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_mpq3uy2yi",
+    "questionTitle": "下列哪种排序算法通常使用分治法实现？（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.254Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_093bsvafo",
+    "questionTitle": "计算机系统中的 RAM 指的是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.254Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_7lrkosw4e",
+    "questionTitle": "以下代码的输出结果是（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.254Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_7ktqzzrvq",
+    "questionTitle": "设 `arr` 是一个 $4 \\times 5$ 的二维数组，`arr[0][0]` 的地址为 $1000$，每个元素占 4 字节，则 `arr[2][3]` 的地址为（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.254Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_pdvkdsfdd",
+    "questionTitle": "下面哪个不是 C++ 的逻辑运算符？（　　）",
+    "correctAnswer": "D",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_w4hljutab",
+    "questionTitle": "在递归函数中，必须存在（　　）以防止无限循环。",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_flezoq45p",
+    "questionTitle": "关于 C++ 中的结构体 `struct`，下列说法错误的是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_purw6riyw",
+    "questionTitle": "ASCII 码中，小写字母 'a' 和大写字母 'A' 之间的数值关系是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_a1sskrglh",
+    "questionTitle": "一个文件名为 `test.cpp` 的源代码文件，经过编译后通常会产生后缀名为（　　）的目标文件。",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_37bly7fie",
+    "questionTitle": "如果 `std::string s = \"GESP Level 4\";`，执行 `s.substr(0, 4)` 的结果是（　　）",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_jo2broelt",
+    "questionTitle": "满二叉树的第 $i$ 层（根为第 1 层）最多有多少个节点？（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_tbqmgqqx7",
+    "questionTitle": "快速排序最理想的时间复杂度是（　　）",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_e2ee9o2n3",
+    "questionTitle": "关于 C++ 中的 `break` 和 `continue`，下列说法正确的是（　　）",
+    "correctAnswer": "D",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_o2s1f4f85",
+    "questionTitle": "在 32 位操作系统中，`int` 类型通常占用（　　）字节。",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_hxtw5zwmc",
+    "questionTitle": "十六进制数 $F$ 对应的二进制数是（　　）",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_o2rna1lkm",
+    "questionTitle": "若有 `int a = 10; int &b = a;`，则修改 `b = 20;` 后，`a` 的值变为（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_f17dfy8uv",
+    "questionTitle": "万维网（World Wide Web）的简称是（　　）",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_ihxs9tucf",
+    "questionTitle": "逻辑表达式 `(A || B)` 中，只要 `A` 为真，整个表达式的结果即为真。",
+    "correctAnswer": "F",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_ychdtp9x9",
+    "questionTitle": "数组名在 C++ 中可以作为常量指针，指向数组的首地址。",
+    "correctAnswer": "T",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_8i2buc1xr",
+    "questionTitle": "如果不使用 `using namespace std;`，则必须在 `cout` 前加上 `std::` 前缀。",
+    "correctAnswer": "F",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_zf6t7xy7h",
+    "questionTitle": "C++ 中定义的局部变量如果不初始化，其值默认为 0。",
+    "correctAnswer": "T",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_8oh7cpu7w",
+    "questionTitle": "位运算 `~` 是按位取反，它是一个单目运算符。",
+    "correctAnswer": "F",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_69sd82g5b",
+    "questionTitle": "第1题：二分查找实现 - 填空 ①",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_5r4rm6yxj",
+    "questionTitle": "第1题：二分查找实现 - 填空 ②",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_nkcxlk3qt",
+    "questionTitle": "第1题：二分查找实现 - 填空 ③",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_1mqrrrbix",
+    "questionTitle": "第2题：求两个正整数的最大公约数（递归法） - 填空 ④",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_k81ff9sep",
+    "questionTitle": "第2题：求两个正整数的最大公约数（递归法） - 填空 ⑤",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_40cjpu8l4",
+    "questionTitle": "第3题：结构体数组排序（按分降序） - 填空 ⑥",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_blxmggqoc",
+    "questionTitle": "第3题：结构体数组排序（按分降序） - 填空 ⑦",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_p63b22yd9",
+    "questionTitle": "第4题：计算数组平均值（保留两位小数） - 填空 ⑧",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:28:56.255Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_qkz9rl7t2",
+    "questionTitle": "一个 $2048 \\times 1024$ 像素、24 位真彩色的位图文件，不计文件头，占用的存储空间大小约为（　　）",
+    "correctAnswer": "C",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:36:05.796Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_3eyf1m6ze",
+    "questionTitle": "冒泡排序（优化前）对 $n$ 个元素进行排序，总共需要进行的外部循环闭次数为（　　）",
+    "yourAnswer": "D",
+    "correctAnswer": "B",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:36:05.796Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_nkb9unypj",
+    "questionTitle": "十六进制数 $1A$ 转换为十进制数的结果是（　　）",
+    "correctAnswer": "B",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.322Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_lg9x0yhkz",
+    "questionTitle": "在计算机内部，数据的存储和运算都是采用（　　）",
+    "correctAnswer": "C",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.322Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_0xnetz8gh",
+    "questionTitle": "下列说法中，不符合 C++ 变量命名规则的是（　　）",
+    "correctAnswer": "C",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.322Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_p3ecyi5wg",
+    "questionTitle": "表达式 `7 % -2` 的计算结果通常在现代 C++ 标准中为（　　）",
+    "correctAnswer": "A",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.322Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_kqlfr12h4",
+    "questionTitle": "设 `int a = 5, b = 10, c = 15;`，表达式 `!a && b || c` 的逻辑值是（　　）",
+    "correctAnswer": "A",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.322Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_qkz9rl7t2",
+    "questionTitle": "一个 $2048 \\times 1024$ 像素、24 位真彩色的位图文件，不计文件头，占用的存储空间大小约为（　　）",
+    "correctAnswer": "C",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.322Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_ibjj7fuzp",
+    "questionTitle": "在 C++ 中，`char` 类型的变量通常占用（　　）个字节。",
+    "correctAnswer": "A",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.322Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_i7c79xx1v",
+    "questionTitle": "已知字符 'A' 的 ASCII 码为 65，则字符 'D' 的 ASCII 码为（　　）",
+    "correctAnswer": "C",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.322Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_14rczljun",
+    "questionTitle": "下面哪种排序算法在最坏情况下的时间复杂度是 $O(n^2)$？（　　）",
+    "correctAnswer": "C",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.322Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_famznw0r4",
+    "questionTitle": "数组 `int arr[3][4];` 中，元素 `arr[1][2]` 是该数组的第（　　）个元素（按行优先存储，索引从 0 开始计数）。",
+    "correctAnswer": "B",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.322Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_4atxtfd6c",
+    "questionTitle": "如果一个递归函数没有设置正确的终止条件（边界条件），执行时最可能发生的错误是（　　）",
+    "correctAnswer": "B",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.322Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_xbkwdut7j",
+    "questionTitle": "下列关于 C++ 函数的描述中，错误的是（　　）",
+    "correctAnswer": "C",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.322Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_qwluwflzk",
+    "questionTitle": "设 `int x = 12;`，执行 `x >>= 2;` 后，`x` 的值是（　　）",
+    "correctAnswer": "A",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.322Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_724v5i0pz",
+    "questionTitle": "在 C++ 中，`std::string` 类的 `length()` 方法返回的是（　　）",
+    "correctAnswer": "B",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.322Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_3eyf1m6ze",
+    "questionTitle": "冒泡排序（优化前）对 $n$ 个元素进行排序，总共需要进行的外部循环闭次数为（　　）",
+    "correctAnswer": "B",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.322Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_ql04spyeg",
+    "questionTitle": "关于浮点数 `double` 和 `float`，下列说法正确的是（　　）",
+    "correctAnswer": "B",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.322Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_6tqhps4vi",
+    "questionTitle": "下列哪种存储介质的读写速度最快？（　　）",
+    "correctAnswer": "C",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.322Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_9me335op4",
+    "questionTitle": "表达式 `(5 > 3) ? (4 < 2 ? 1 : 2) : 3` 的结果是（　　）",
+    "correctAnswer": "B",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.322Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_bz0muusyv",
+    "questionTitle": "如果想要在程序中使用 `cin` 和 `cout`，必须包含的头文件是（　　）",
+    "correctAnswer": "C",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.322Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_lh6qp41i0",
+    "questionTitle": "使用二分查找算法在包含 1000 个元素的有序数组中查找一个数，最多需要比较（　　）次。",
+    "correctAnswer": "A",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.323Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_em0kmiru8",
+    "questionTitle": "执行代码 `int a = 3, b = 4; swap(a, b);` 后，如果 `swap` 是按值传递的，则 `a` 的值是（　　）",
+    "correctAnswer": "A",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.323Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_3gkh9lyge",
+    "questionTitle": "在 C++ 结构体中，默认的访问修饰符是（　　）",
+    "correctAnswer": "A",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.323Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_3jweu2pz0",
+    "questionTitle": "二进制数 $1101$ 与 $1011$ 进行按位与（&）运算后的结果是（　　）",
+    "correctAnswer": "A",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.323Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_avvcgv5v7",
+    "questionTitle": "若有定义 `int a[5] = {1, 2, 3};`，则 `a[3]` 的值是（　　）",
+    "correctAnswer": "C",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.323Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_1hwev0kli",
+    "questionTitle": "下列哪项不属于操作系统的功能？（　　）",
+    "correctAnswer": "C",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.323Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_dmh7z5wx9",
+    "questionTitle": "在 C++ 中，`while` 循环的循环体至少会被执行一次。",
+    "correctAnswer": "F",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.323Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_63ww49nlc",
+    "questionTitle": "所有的递归程序都可以改写为非递归（迭代）程序。",
+    "correctAnswer": "T",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.323Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_88yqskv2r",
+    "questionTitle": "如果一个数组定义为 `int a[10]`，那么尝试访问 `a[10]` 会导致编译错误。",
+    "correctAnswer": "F",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.323Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_aawg0xupq",
+    "questionTitle": "`struct` 结构体中可以定义另一个 `struct` 类型的变量。",
+    "correctAnswer": "T",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.323Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_uda07bw80",
+    "questionTitle": "在现代计算机中，CPU 可以直接从硬盘中读取指令并执行。",
+    "correctAnswer": "F",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.323Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_3g180bf6r",
+    "questionTitle": "第1题：二维数组转置 - 填空 ①",
+    "correctAnswer": "A",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.323Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_ad0bqrb0c",
+    "questionTitle": "第1题：二维数组转置 - 填空 ②",
+    "correctAnswer": "B",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.323Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_ngjiontma",
+    "questionTitle": "第2题：斐波那契数列（递归实现） - 填空 ③",
+    "correctAnswer": "B",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.323Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_p7l447nxq",
+    "questionTitle": "第2题：斐波那契数列（递归实现） - 填空 ④",
+    "correctAnswer": "A",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.323Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_dbffnipio",
+    "questionTitle": "第3题：选择排序查找最小值索引 - 填空 ⑤",
+    "correctAnswer": "C",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.323Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_u034mytv0",
+    "questionTitle": "第3题：选择排序查找最小值索引 - 填空 ⑥",
+    "correctAnswer": "A",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.323Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_lkgfzenty",
+    "questionTitle": "第4题：判断一个数是否为质数 - 填空 ⑦",
+    "correctAnswer": "C",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.323Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_5hg2p324v",
+    "questionTitle": "第4题：判断一个数是否为质数 - 填空 ⑧",
+    "correctAnswer": "B",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:37:24.323Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_nkb9unypj",
+    "questionTitle": "十六进制数 $1A$ 转换为十进制数的结果是（　　）",
+    "yourAnswer": "__wrong__",
+    "correctAnswer": "B",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:40:51.129Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_lg9x0yhkz",
+    "questionTitle": "在计算机内部，数据的存储和运算都是采用（　　）",
+    "yourAnswer": "__wrong__",
+    "correctAnswer": "C",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:40:51.129Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_nkb9unypj",
+    "questionTitle": "十六进制数 $1A$ 转换为十进制数的结果是（　　）",
+    "yourAnswer": "__wrong__",
+    "correctAnswer": "B",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:42:01.628Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773368219774_lg9x0yhkz",
+    "questionTitle": "在计算机内部，数据的存储和运算都是采用（　　）",
+    "yourAnswer": "__wrong__",
+    "correctAnswer": "C",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T02:42:01.628Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_jo2broelt",
+    "questionTitle": "满二叉树的第 $i$ 层（根为第 1 层）最多有多少个节点？（　　）",
+    "yourAnswer": "D",
+    "correctAnswer": "C",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:43:02.639Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_f17dfy8uv",
+    "questionTitle": "万维网（World Wide Web）的简称是（　　）",
+    "yourAnswer": "C",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:43:02.639Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_ihxs9tucf",
+    "questionTitle": "逻辑表达式 `(A || B)` 中，只要 `A` 为真，整个表达式的结果即为真。",
+    "yourAnswer": "T",
+    "correctAnswer": "F",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:43:02.639Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_8i2buc1xr",
+    "questionTitle": "如果不使用 `using namespace std;`，则必须在 `cout` 前加上 `std::` 前缀。",
+    "yourAnswer": "T",
+    "correctAnswer": "F",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:43:02.639Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_zf6t7xy7h",
+    "questionTitle": "C++ 中定义的局部变量如果不初始化，其值默认为 0。",
+    "yourAnswer": "F",
+    "correctAnswer": "T",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:43:02.639Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_8oh7cpu7w",
+    "questionTitle": "位运算 `~` 是按位取反，它是一个单目运算符。",
+    "yourAnswer": "T",
+    "correctAnswer": "F",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:43:02.639Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_69sd82g5b",
+    "questionTitle": "第1题：二分查找实现 - 填空 ①",
+    "yourAnswer": "B",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:43:02.639Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_40cjpu8l4",
+    "questionTitle": "第3题：结构体数组排序（按分降序） - 填空 ⑥",
+    "yourAnswer": "C",
+    "correctAnswer": "A",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:43:02.639Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1772888476776_p63b22yd9",
+    "questionTitle": "第4题：计算数组平均值（保留两位小数） - 填空 ⑧",
+    "yourAnswer": "A",
+    "correctAnswer": "B",
+    "examId": "1772888493343",
+    "examTitle": "Set2 代码展示修复版",
+    "at": "2026-03-13T02:43:02.639Z"
+  },
+  {
+    "username": "vic",
+    "questionId": "1773368219774_qkz9rl7t2",
+    "questionTitle": "一个 $2048 \\times 1024$ 像素、24 位真彩色的位图文件，不计文件头，占用的存储空间大小约为（　　）",
+    "yourAnswer": "A",
+    "correctAnswer": "C",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T04:54:05.510Z"
+  },
+  {
+    "username": "vic",
+    "questionId": "1773368219774_p7l447nxq",
+    "questionTitle": "第2题：斐波那契数列（递归实现） - 填空 ④",
+    "yourAnswer": "B",
+    "correctAnswer": "A",
+    "examId": "1773368219782",
+    "examTitle": "考试测试004",
+    "at": "2026-03-13T04:54:05.511Z"
+  }
+]

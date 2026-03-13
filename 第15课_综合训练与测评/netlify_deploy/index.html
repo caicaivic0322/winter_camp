@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>计算机基础与程序设计综合测试卷</title>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        .paper {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 40px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 20px;
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            font-size: 16px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            background-color: #ecf0f1;
+            padding: 10px;
+            border-left: 5px solid #3498db;
+        }
+
+        .question {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #ecf0f1;
+        }
+
+        .question-content {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .question-number {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .option {
+            flex: 1 1 calc(50% - 15px);
+            min-width: 200px;
+        }
+
+        .program-box {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .program-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #e67e22;
+        }
+
+        .program-code {
+            font-family: Consolas, monospace;
+            background-color: #272822;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            margin-bottom: 15px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        @media print {
+            body {
+                background-color: #fff;
+                padding: 0;
+            }
+            .paper {
+                box-shadow: none;
+                margin: 0;
+                max-width: none;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="paper">
+        <div class="header">
+            <h1 class="title">计算机基础与程序设计综合测试卷</h1>
+            <div class="info">
+                <span>考试时间：60 分钟　　满分：100 分</span>
+            </div>
+            <div class="info">
+                <span>姓名：____________________</span>
+                <span>得分：____________________</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">一、单选题（每题 4 分，共 60 分）</div>
+            
+            <div class="question">
+                <div class="question-content">
+                    <span class="question-number">1.</span> 若 <code>int x = 5;</code>，则表达式 <code>x & (x - 1)</code> 的结果为（　　）
+                </div>
+                <div class="options">
+                    <span class="option">A. 4</span>
+                    <span class="option">B. 5</span>
+                    <span class="option">C. 0</span>
+                    <span class="option">D. 1</span>
+                </div>
+            </div>
+
+            <div class="question">
+                <div class="question-content">
+                    <span class="question-number">2.</span> 在 C++ 中，如果需要通过函数内修改外部传入的变量本身，应采用哪种传参方式？（　　）
+                </div>
+                <div class="options">
+                    <span class="option">A. 值传递</span>
+                    <span class="option">B. 引用（或指针）传递</span>
+                    <span class="option">C. 无法修改</span>
+                    <span class="option">D. 静态传递</span>
+                </div>
+            </div>
+
+            <div class="question">
+                <div class="question-content">
+                    <span class="question-number">3.</span> 定义结构体 <code>struct Node { int data; Node* next; };</code>，已知指针 <code>p</code> 指向某个节点，想要访问该节点中存储的数据，正确的写法是（　　）
+                </div>
+                <div class="options">
+                    <span class="option">A. <code>p.data</code></span>
+                    <span class="option">B. <code>p->data</code></span>
+                    <span class="option">C. <code>*p.data</code></span>
+                    <span class="option">D. <code>Node.data</code></span>
+                </div>
+            </div>
+
+            <div class="question">
+                <div class="question-content">
+                    <span class="question-number">4.</span> 对于一个长度为 \(N\) 的数组进行冒泡排序，在最坏情况下，需要进行的比较总次数为（　　）
+                </div>
+                <div class="options">
+                    <span class="option">A. \(N\)</span>
+                    <span class="option">B. \(N - 1\)</span>
+                    <span class="option">C. \(rac{N(N-1)}{2}\)</span>
+                    <span class="option">D. \(N^2\)</span>
+                </div>
+            </div>
+
+            <div class="question">
+                <div class="question-content">
+                    <span class="question-number">5.</span> 表达式 <code>! (4 >= 6 || 3 != 3)</code> 的逻辑真值是（　　）
+                </div>
+                <div class="options">
+                    <span class="option">A. true</span>
+                    <span class="option">B. false</span>
+                    <span class="option">C. 1</span>
+                    <span class="option">D. 编译错误</span>
+                </div>
+            </div>
+
+            <div class="question">
+                <div class="question-content">
+                    <span class="question-number">6.</span> 将十进制数 27 转换为二进制数，结果是（　　）
+                </div>
+                <div class="options">
+                    <span class="option">A. 11011</span>
+                    <span class="option">B. 11001</span>
+                    <span class="option">C. 10111</span>
+                    <span class="option">D. 11101</span>
+                </div>
+            </div>
+
+            <div class="question">
+                <div class="question-content">
+                    <span class="question-number">7.</span> 在一棵深度为 \(k\) 的满二叉树中，总结点数最多有（　　）个。
+                </div>
+                <div class="options">
+                    <span class="option">A. \(2^k\)</span>
+                    <span class="option">B. \(2^{k-1}\)</span>
+                    <span class="option">C. \(2^k - 1\)</span>
+                    <span class="option">D. \(2^{k+1} - 1\)</span>
+                </div>
+            </div>
+
+            <div class="question">
+                <div class="question-content">
+                    <span class="question-number">8.</span> 单向链表中，若要将指针 <code>p</code> 的当前节点从链表中断开并跳过它（假设 <code>pre</code> 是 <code>p</code> 的前驱节点），正确的操作是（　　）
+                </div>
+                <div class="options" style="flex-direction: column;">
+                    <span class="option" style="width: 100%;">A. <code>pre->next = p;</code></span>
+                    <span class="option" style="width: 100%;">B. <code>p->next = pre;</code></span>
+                    <span class="option" style="width: 100%;">C. <code>pre->next = p->next;</code></span>
+                    <span class="option" style="width: 100%;">D. <code>p = p->next;</code></span>
+                </div>
+            </div>
+
+            <div class="question">
+                <div class="question-content">
+                    <span class="question-number">9.</span> 执行以下代码段后，变量 <code>b</code> 的值为（　　）<br>
+                    <code>int a = 10; int b = a >> 1; b = b ^ 1;</code>
+                </div>
+                <div class="options">
+                    <span class="option">A. 5</span>
+                    <span class="option">B. 4</span>
+                    <span class="option">C. 6</span>
+                    <span class="option">D. 2</span>
+                </div>
+            </div>
+
+            <div class="question">
+                <div class="question-content">
+                    <span class="question-number">10.</span> 设数组 <code>int arr[5] = {1, 3, 5, 7, 9};</code>，则 <code>arr[arr[1]]</code> 的值为（　　）
+                </div>
+                <div class="options">
+                    <span class="option">A. 3</span>
+                    <span class="option">B. 5</span>
+                    <span class="option">C. 7</span>
+                    <span class="option">D. 9</span>
+                </div>
+            </div>
+
+            <div class="question">
+                <div class="question-content">
+                    <span class="question-number">11.</span> 关于全局变量和局部变量，下列说法正确的是（　　）
+                </div>
+                <div class="options" style="flex-direction: column;">
+                    <span class="option" style="width: 100%;">A. 局部变量在整个程序运行期间都存在</span>
+                    <span class="option" style="width: 100%;">B. 全局变量的默认初始值为 0</span>
+                    <span class="option" style="width: 100%;">C. 局部变量不能和全局变量同名</span>
+                    <span class="option" style="width: 100%;">D. 全局变量存放在栈区</span>
+                </div>
+            </div>
+
+            <div class="question">
+                <div class="question-content">
+                    <span class="question-number">12.</span> 若整型变量 <code>a = 7, b = 2</code>，则表达式 <code>(a % b) + (a / b)</code> 的值是（　　）
+                </div>
+                <div class="options">
+                    <span class="option">A. 3</span>
+                    <span class="option">B. 4</span>
+                    <span class="option">C. 4.5</span>
+                    <span class="option">D. 5</span>
+                </div>
+            </div>
+
+            <div class="question">
+                <div class="question-content">
+                    <span class="question-number">13.</span> 关于 C++ 中的 <code>sizeof</code> 运算符，下列说法错误的是（　　）
+                </div>
+                <div class="options" style="flex-direction: column;">
+                    <span class="option" style="width: 100%;">A. 它可以用于数据类型（如 <code>sizeof(int)</code>）</span>
+                    <span class="option" style="width: 100%;">B. 它可以用于变量名（如 <code>sizeof(x)</code>）</span>
+                    <span class="option" style="width: 100%;">C. 它的计算是在程序运行时（Runtime）执行的</span>
+                    <span class="option" style="width: 100%;">D. 它的返回值通常表示所占用的内存字节数</span>
+                </div>
+            </div>
+
+            <div class="question">
+                <div class="question-content">
+                    <span class="question-number">14.</span> 在包含 \(N\) 个元素的有序数组中，使用二分查找寻找一个不存在的元素，最坏情况下的时间复杂度为（　　）
+                </div>
+                <div class="options">
+                    <span class="option">A. \(O(1)\)</span>
+                    <span class="option">B. \(O(\log N)\)</span>
+                    <span class="option">C. \(O(N)\)</span>
+                    <span class="option">D. \(O(N \log N)\)</span>
+                </div>
+            </div>
+
+            <div class="question">
+                <div class="question-content">
+                    <span class="question-number">15.</span> 下列哪一个标识符是合法的 C++ 变量名？（　　）
+                </div>
+                <div class="options">
+                    <span class="option">A. <code>2nd_number</code></span>
+                    <span class="option">B. <code>my-var</code></span>
+                    <span class="option">C. <code>_index0</code></span>
+                    <span class="option">D. <code>int</code></span>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="section">
+            <div class="section-title">二、判断题（每题 2 分，共 10 分）</div>
+            
+            <div class="question">
+                <div class="question-content">
+                    <span class="question-number">1.</span> 两个相同的整数进行按位异或（XOR）运算，其结果必定为 0。（　　）
+                </div>
+            </div>
+            
+            <div class="question">
+                <div class="question-content">
+                    <span class="question-number">2.</span> 在 C++ 中，结构体（struct）只能包含数据变量，不能包含成员函数。（　　）
+                </div>
+            </div>
+
+            <div class="question">
+                <div class="question-content">
+                    <span class="question-number">3.</span> 二分查找算法既可以用于有序数组，也可以用于任何无序数组。（　　）
+                </div>
+            </div>
+
+            <div class="question">
+                <div class="question-content">
+                    <span class="question-number">4.</span> C++ 中通过指针传递数组参数时，实际上传递的是数组首元素的内存地址。（　　）
+                </div>
+            </div>
+
+            <div class="question">
+                <div class="question-content">
+                    <span class="question-number">5.</span> 逻辑运算表达式 <code>(A && B)</code> 中，如果 <code>A</code> 的值为 false，则程序根本不会进一步去求解 <code>B</code> 的真假，这称作“短路求值”。（　　）
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">三、完善程序题（每空 5 分，共 30 分）</div>
+
+            <div class="program-box">
+                <div class="program-header">第1题：插入排序算法实现</div>
+                <div class="question-content" style="font-size: 14px; margin-bottom: 10px; color: #555;">
+                    题目描述：给定一个包含 <code>n</code> 个整数的数组 <code>a</code>，请完善下面的插入排序算法，将数组按从小到大的顺序排列。
+                </div>
+                <div class="program-code">#include &lt;iostream&gt;
+using namespace std;
+
+void insertionSort(int a[], int n) {
+    for (int i = 1; i < n; i++) {
+        int key = a[i];
+        int j = i - 1;
+        
+        // 寻找元素 key 应该插入的位置，并将比 key 大的元素向后移动
+        while (j >= 0 && a[j] > (1) ) {
+            a[(2)] = a[j];
+            j--;
+        }
+        
+        // 放入正确的位置
+        a[(3)] = key;
+    }
+}
+
+int main() {
+    int arr[] = {5, 2, 4, 6, 1, 3};
+    insertionSort(arr, 6);
+    return 0;
+}</div>
+                <div class="question">
+                    <div class="question-content">
+                        <span class="question-number">(1) 处应填：</span>
+                    </div>
+                    <div class="options">
+                        <span class="option">A. <code>a[j-1]</code></span>
+                        <span class="option">B. <code>key</code></span>
+                        <span class="option">C. <code>a[i]</code></span>
+                        <span class="option">D. <code>a[j+1]</code></span>
+                    </div>
+                </div>
+                <div class="question">
+                    <div class="question-content">
+                        <span class="question-number">(2) 处应填：</span>
+                    </div>
+                    <div class="options">
+                        <span class="option">A. <code>j</code></span>
+                        <span class="option">B. <code>j+1</code></span>
+                        <span class="option">C. <code>j-1</code></span>
+                        <span class="option">D. <code>i</code></span>
+                    </div>
+                </div>
+                <div class="question">
+                    <div class="question-content">
+                        <span class="question-number">(3) 处应填：</span>
+                    </div>
+                    <div class="options">
+                        <span class="option">A. <code>j+1</code></span>
+                        <span class="option">B. <code>j</code></span>
+                        <span class="option">C. <code>i</code></span>
+                        <span class="option">D. <code>i+1</code></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="program-box">
+                <div class="program-header">第2题：求单链表中的最大值</div>
+                <div class="question-content" style="font-size: 14px; margin-bottom: 10px; color: #555;">
+                    题目描述：定义了一个存储整数的单向链表结构，请完善程序，遍历整个非空链表以找到所有节点中的最大数据值。
+                </div>
+                <div class="program-code">#include &lt;iostream&gt;
+using namespace std;
+
+// 链表节点结构体定义
+struct Node {
+    int data;
+    Node* next;
+};
+
+// 寻找链表中的最大元素
+int findMax(Node* head) {
+    if (head == NULL) {
+        return -1; // 链表为空时返回特定值
+    }
+    
+    int maxVal = (4) ;    // 初始化最大值
+    Node* current = head->next;
+    
+    // 遍历整个链表
+    while ( (5) ) {
+        if (current->data > maxVal) {
+            maxVal = current->data;
+        }
+        // 指针移向下一个节点
+        current = (6) ; 
+    }
+    
+    return maxVal;
+}</div>
+                <div class="question">
+                    <div class="question-content">
+                        <span class="question-number">(4) 处应填：</span>
+                    </div>
+                    <div class="options">
+                        <span class="option">A. <code>head->next->data</code></span>
+                        <span class="option">B. <code>head->data</code></span>
+                        <span class="option">C. <code>0</code></span>
+                        <span class="option">D. <code>current->data</code></span>
+                    </div>
+                </div>
+                <div class="question">
+                    <div class="question-content">
+                        <span class="question-number">(5) 处应填：</span>
+                    </div>
+                    <div class="options">
+                        <span class="option">A. <code>current != NULL</code></span>
+                        <span class="option">B. <code>head != NULL</code></span>
+                        <span class="option">C. <code>current->next != NULL</code></span>
+                        <span class="option">D. <code>current == NULL</code></span>
+                    </div>
+                </div>
+                <div class="question">
+                    <div class="question-content">
+                        <span class="question-number">(6) 处应填：</span>
+                    </div>
+                    <div class="options">
+                        <span class="option">A. <code>current++</code></span>
+                        <span class="option">B. <code>head->next</code></span>
+                        <span class="option">C. <code>current->next</code></span>
+                        <span class="option">D. <code>current->data</code></span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="footer">
+            第 1 页 / 共 1 页
+        </div>
+    </div>
+    
+    <!-- 引入 MathJax 以支持公式渲染，虽然大部分内容不需要它，但也加上备用 -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</body>
+</html>

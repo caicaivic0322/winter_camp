@@ -1,0 +1,16 @@
+{
+  "name": "cpp-training-camp-server",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node --test --test-concurrency=1"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.19.2",
+    "multer": "^2.1.1"
+  }
+}

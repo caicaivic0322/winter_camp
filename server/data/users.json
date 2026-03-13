@@ -1,0 +1,50 @@
+{
+  "admin": {
+    "username": "admin",
+    "password": "123456",
+    "nickname": "管理员",
+    "role": "admin",
+    "level": "竞赛",
+    "createdAt": "2026-03-13T00:00:00.000Z"
+  },
+  "vic": {
+    "username": "vic",
+    "password": "123456",
+    "nickname": "蔡臻",
+    "role": "user",
+    "level": "中级",
+    "createdAt": "2026-03-13T00:01:00.000Z"
+  },
+  "haha": {
+    "username": "haha",
+    "password": "123456",
+    "nickname": "哇哈哈",
+    "role": "user",
+    "level": "初级",
+    "createdAt": "2026-03-13T03:57:44.597Z"
+  },
+  "trialcheck_1773374293728": {
+    "username": "trialcheck_1773374293728",
+    "password": "123456",
+    "nickname": "试注册",
+    "role": "user",
+    "level": "初级",
+    "createdAt": "2026-03-13T03:58:13.756Z"
+  },
+  "trialcheck2_1773374338213": {
+    "username": "trialcheck2_1773374338213",
+    "password": "123456",
+    "nickname": "试注册2",
+    "role": "user",
+    "level": "试用",
+    "createdAt": "2026-03-13T03:58:58.240Z"
+  },
+  "mama": {
+    "username": "mama",
+    "password": "123456",
+    "nickname": "蔡臻",
+    "role": "user",
+    "level": "试用",
+    "createdAt": "2026-03-13T04:04:10.154Z"
+  }
+}
