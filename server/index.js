@@ -24,7 +24,8 @@ app.use(cors({
 app.use(express.json())
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const dataDir = path.join(__dirname, 'data')
+const defaultDataDir = path.join(__dirname, 'data')
+const dataDir = path.resolve(process.env.DATA_DIR || defaultDataDir)
 const usersFile = path.join(dataDir, 'users.json')
 const questionsFile = path.join(dataDir, 'questions.json')
 const examsFile = path.join(dataDir, 'exams.json')
