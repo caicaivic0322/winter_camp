@@ -8,6 +8,7 @@ import multer from 'multer'
 import { fileURLToPath } from 'url'
 import { parseQuestions } from './lib/mdParser.js'
 import { getExamMarkdownTemplate } from './lib/examTemplate.js'
+import { createDataStore } from './lib/dataStore.js'
 import {
   COURSE_LEVELS,
   DEFAULT_EXAM_LEVEL,
@@ -26,169 +27,20 @@ app.use(express.json())
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const defaultDataDir = path.join(__dirname, 'data')
 const dataDir = path.resolve(process.env.DATA_DIR || defaultDataDir)
-const usersFile = path.join(dataDir, 'users.json')
-const questionsFile = path.join(dataDir, 'questions.json')
-const examsFile = path.join(dataDir, 'exams.json')
-const wrongBookFile = path.join(dataDir, 'wrong_book.json')
-const attemptsFile = path.join(dataDir, 'attempts.json')
 
 // 配置 multer 上传
 const upload = multer({ dest: path.join(__dirname, 'uploads') })
 const sessions = new Map()
 const revokedTokens = new Set()
 const TOKEN_SECRET = process.env.AUTH_TOKEN_SECRET || 'cpp-camp-local-secret'
-
-function migrateOldDataDir() {
-  const oldDir = path.join(process.cwd(), 'server', 'data')
-  const reallyOldDir = path.join(process.cwd(), 'server', 'server', 'data')
-  const candidates = [oldDir, reallyOldDir]
-  for (const dir of candidates) {
-    const src = path.join(dir, 'users.json')
-    if (fs.existsSync(src) && !fs.existsSync(usersFile)) {
-      if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true })
-      try {
-        fs.copyFileSync(src, usersFile)
-      } catch {}
-    }
-  }
-}
-
-function ensureData() {
-  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true })
-  migrateOldDataDir()
-  if (!fs.existsSync(usersFile)) {
-    const seed = {
-      admin: {
-        username: 'admin',
-        password: '123456',
-        nickname: '管理员',
-        role: 'admin',
-        level: '高级',
-        createdAt: new Date().toISOString(),
-      },
-    }
-    fs.writeFileSync(usersFile, JSON.stringify(seed, null, 2))
-  }
-  if (!fs.existsSync(questionsFile)) {
-    fs.writeFileSync(questionsFile, JSON.stringify([], null, 2))
-  }
-  if (!fs.existsSync(examsFile)) {
-    fs.writeFileSync(examsFile, JSON.stringify([], null, 2))
-  }
-  if (!fs.existsSync(wrongBookFile)) {
-    fs.writeFileSync(wrongBookFile, JSON.stringify([], null, 2))
-  }
-  if (!fs.existsSync(attemptsFile)) {
-    fs.writeFileSync(attemptsFile, JSON.stringify([], null, 2))
-  }
-}
-
-function readUsers() {
-  ensureData()
-  try {
-    const raw = fs.readFileSync(usersFile, 'utf-8')
-    const data = JSON.parse(raw)
-    let changed = false
-    Object.keys(data).forEach(k => {
-      const u = data[k]
-      if (u) {
-        const newLevel = normalizeCourseLevel(u.level, DEFAULT_USER_LEVEL)
-        if (u.level !== newLevel) {
-          u.level = newLevel
-          data[k] = u
-          changed = true
-        }
-        const normalizedProgress = normalizeCompetitionProgress(u.competitionProgress)
-        const currentProgress = u.competitionProgress || {}
-        if (
-          JSON.stringify(normalizedProgress.completedProblemIds) !== JSON.stringify(currentProgress.completedProblemIds || []) ||
-          JSON.stringify(normalizedProgress.wrongProblemIds) !== JSON.stringify(currentProgress.wrongProblemIds || []) ||
-          JSON.stringify(normalizedProgress.favoriteProblemIds) !== JSON.stringify(currentProgress.favoriteProblemIds || [])
-        ) {
-          u.competitionProgress = normalizedProgress
-          data[k] = u
-          changed = true
-        }
-      }
-    })
-    if (changed) writeUsers(data)
-    return data
-  } catch {
-    return {}
-  }
-}
-
-function writeUsers(data) {
-  ensureData()
-  fs.writeFileSync(usersFile, JSON.stringify(data, null, 2))
-}
-
-function readQuestions() {
-  ensureData()
-  try {
-    return JSON.parse(fs.readFileSync(questionsFile, 'utf-8'))
-  } catch {
-    return []
-  }
-}
-
-function writeQuestions(data) {
-  ensureData()
-  fs.writeFileSync(questionsFile, JSON.stringify(data, null, 2))
-}
-
-function readExams() {
-  ensureData()
-  try {
-    const data = JSON.parse(fs.readFileSync(examsFile, 'utf-8'))
-    let changed = false
-    const normalized = data.map(item => {
-      const levelRequired = normalizeCourseLevel(item.levelRequired, DEFAULT_EXAM_LEVEL)
-      if (levelRequired !== item.levelRequired) {
-        changed = true
-        return { ...item, levelRequired }
-      }
-      return item
-    })
-    if (changed) writeExams(normalized)
-    return normalized
-  } catch {
-    return []
-  }
-}
-
-function writeExams(data) {
-  ensureData()
-  fs.writeFileSync(examsFile, JSON.stringify(data, null, 2))
-}
-
-function readWrongBook() {
-  ensureData()
-  try {
-    return JSON.parse(fs.readFileSync(wrongBookFile, 'utf-8'))
-  } catch {
-    return []
-  }
-}
-
-function writeWrongBook(data) {
-  ensureData()
-  fs.writeFileSync(wrongBookFile, JSON.stringify(data, null, 2))
-}
-
-function readAttempts() {
-  ensureData()
-  try {
-    return JSON.parse(fs.readFileSync(attemptsFile, 'utf-8'))
-  } catch {
-    return []
-  }
-}
-
-function writeAttempts(data) {
-  ensureData()
-  fs.writeFileSync(attemptsFile, JSON.stringify(data, null, 2))
-}
+const dataStore = createDataStore({
+  env: process.env,
+  fallbackDataDir: dataDir,
+  normalizeCourseLevel,
+  normalizeCompetitionProgress,
+  defaultUserLevel: DEFAULT_USER_LEVEL,
+  defaultExamLevel: DEFAULT_EXAM_LEVEL,
+})
 
 function hasSubmittedExam(attempts, username, examId) {
   return attempts.some(item => item.username === username && item.examId === examId)
@@ -434,7 +286,7 @@ function getTokenFromRequest(req) {
   return header.slice(7).trim()
 }
 
-function attachAuthUser(req, res, next) {
+async function attachAuthUser(req, res, next) {
   const token = getTokenFromRequest(req)
   if (!token) {
     req.authUser = null
@@ -449,7 +301,7 @@ function attachAuthUser(req, res, next) {
 
   sessions.set(token, session)
 
-  const users = readUsers()
+  const users = await readUsers()
   const user = users[session.username]
   if (!user) {
     sessions.delete(token)
@@ -481,7 +333,9 @@ function requireAdmin(req, res, next) {
   next()
 }
 
-app.use(attachAuthUser)
+app.use((req, res, next) => {
+  attachAuthUser(req, res, next).catch(next)
+})
 
 function validatePassword(password) {
   if (!password || password.length < 6) {
@@ -638,34 +492,55 @@ function normalizeCompetitionProgress(payload = {}) {
   }
 }
 
+const readUsers = () => dataStore.readUsers()
+const writeUsers = (data) => dataStore.writeUsers(data)
+const readQuestions = () => dataStore.readQuestions()
+const writeQuestions = (data) => dataStore.writeQuestions(data)
+const readExams = () => dataStore.readExams()
+const writeExams = (data) => dataStore.writeExams(data)
+const readWrongBook = () => dataStore.readWrongBook()
+const writeWrongBook = (data) => dataStore.writeWrongBook(data)
+const readAttempts = () => dataStore.readAttempts()
+const writeAttempts = (data) => dataStore.writeAttempts(data)
+
+function asyncRoute(handler) {
+  return (req, res, next) => {
+    Promise.resolve(handler(req, res, next)).catch(next)
+  }
+}
+
 app.get('/api/health', (req, res) => {
-  res.json({ ok: true, time: Date.now() })
+  res.json({
+    ok: true,
+    time: Date.now(),
+    storage: dataStore.config.mode,
+  })
 })
 
-app.post('/api/users', (req, res) => {
-  const users = readUsers()
+app.post('/api/users', asyncRoute(async (req, res) => {
+  const users = await readUsers()
   const result = buildUser(req.body || {})
   if (result.error) return res.status(400).json({ error: result.error })
   const { user } = result
   if (users[user.username]) return res.status(409).json({ error: 'exists' })
   users[user.username] = user
-  writeUsers(users)
+  await writeUsers(users)
   const token = createSession(user)
   res.status(201).json({ user: toPublicUser(user), token })
-})
+}))
 
-app.post('/api/admin/users', requireAdmin, (req, res) => {
-  const users = readUsers()
+app.post('/api/admin/users', requireAdmin, asyncRoute(async (req, res) => {
+  const users = await readUsers()
   const result = buildUser(req.body || {})
   if (result.error) return res.status(400).json({ error: result.error })
   const { user } = result
   if (users[user.username]) return res.status(409).json({ error: 'exists' })
   users[user.username] = user
-  writeUsers(users)
+  await writeUsers(users)
   res.status(201).json(toPublicUser(user))
-})
+}))
 
-app.post('/api/admin/users/import', requireAdmin, upload.single('file'), (req, res) => {
+app.post('/api/admin/users/import', requireAdmin, upload.single('file'), asyncRoute(async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'no file' })
   }
@@ -673,7 +548,7 @@ app.post('/api/admin/users/import', requireAdmin, upload.single('file'), (req, r
   try {
     const content = fs.readFileSync(req.file.path, 'utf-8')
     const { rows } = parseUsersCsv(content)
-    const users = readUsers()
+    const users = await readUsers()
     const createdUsers = []
     const skippedUsers = []
     const errors = []
@@ -702,7 +577,7 @@ app.post('/api/admin/users/import', requireAdmin, upload.single('file'), (req, r
       createdUsers.push(user.username)
     })
 
-    writeUsers(users)
+    await writeUsers(users)
     res.json({
       ok: true,
       createdCount: createdUsers.length,
@@ -717,10 +592,10 @@ app.post('/api/admin/users/import', requireAdmin, upload.single('file'), (req, r
   } finally {
     try { fs.unlinkSync(req.file.path) } catch {}
   }
-})
+}))
 
-app.get('/api/admin/users/export', requireAdmin, (req, res) => {
-  const users = Object.values(readUsers()).sort((a, b) => {
+app.get('/api/admin/users/export', requireAdmin, asyncRoute(async (req, res) => {
+  const users = Object.values(await readUsers()).sort((a, b) => {
     if ((a.role || 'user') !== (b.role || 'user')) return (a.role || 'user') === 'admin' ? -1 : 1
     return String(a.username).localeCompare(String(b.username))
   })
@@ -729,7 +604,7 @@ app.get('/api/admin/users/export', requireAdmin, (req, res) => {
   res.setHeader('Content-Type', 'text/csv; charset=utf-8')
   res.setHeader('Content-Disposition', 'attachment; filename="users.csv"')
   res.send(csv)
-})
+}))
 
 app.get('/api/admin/users/template', requireAdmin, (req, res) => {
   res.setHeader('Content-Type', 'text/csv; charset=utf-8')
@@ -737,12 +612,12 @@ app.get('/api/admin/users/template', requireAdmin, (req, res) => {
   res.send(toUserTemplateCsv())
 })
 
-app.post('/api/login', (req, res) => {
+app.post('/api/login', asyncRoute(async (req, res) => {
   const { username, password } = req.body || {}
   if (!username || !password) {
     return res.status(400).json({ success: false, error: '用户名和密码不能为空' })
   }
-  const users = readUsers()
+  const users = await readUsers()
   const user = users[username]
   if (!user) {
     return res.status(401).json({ success: false, error: '用户不存在' })
@@ -756,7 +631,7 @@ app.post('/api/login', (req, res) => {
     token,
     user: toPublicUser(user)
   })
-})
+}))
 
 app.post('/api/logout', requireAuth, (req, res) => {
   if (req.authToken) {
@@ -766,31 +641,31 @@ app.post('/api/logout', requireAuth, (req, res) => {
   res.json({ success: true })
 })
 
-app.get('/api/users', requireAdmin, (req, res) => {
-  const users = readUsers()
+app.get('/api/users', requireAdmin, asyncRoute(async (req, res) => {
+  const users = await readUsers()
   const list = Object.values(users).map(toPublicUser)
   res.json(list)
-})
+}))
 
-app.get('/api/users/:username', requireAuth, (req, res) => {
+app.get('/api/users/:username', requireAuth, asyncRoute(async (req, res) => {
   if (req.authUser.role !== 'admin' && req.authUser.username !== req.params.username) {
     return res.status(403).json({ error: 'forbidden' })
   }
-  const users = readUsers()
+  const users = await readUsers()
   const user = users[req.params.username]
   if (!user) {
     return res.status(404).json({ error: 'user not found' })
   }
   res.json(toPublicUser(user))
-})
+}))
 
-app.get('/api/users/:username/competition-progress', requireAuth, (req, res) => {
+app.get('/api/users/:username/competition-progress', requireAuth, asyncRoute(async (req, res) => {
   const { username } = req.params
   if (req.authUser.role !== 'admin' && req.authUser.username !== username) {
     return res.status(403).json({ error: 'forbidden' })
   }
 
-  const users = readUsers()
+  const users = await readUsers()
   const user = users[username]
   if (!user) {
     return res.status(404).json({ error: 'user not found' })
@@ -800,15 +675,15 @@ app.get('/api/users/:username/competition-progress', requireAuth, (req, res) => 
     username,
     progress: normalizeCompetitionProgress(user.competitionProgress),
   })
-})
+}))
 
-app.put('/api/users/:username/competition-progress', requireAuth, (req, res) => {
+app.put('/api/users/:username/competition-progress', requireAuth, asyncRoute(async (req, res) => {
   const { username } = req.params
   if (req.authUser.role !== 'admin' && req.authUser.username !== username) {
     return res.status(403).json({ error: 'forbidden' })
   }
 
-  const users = readUsers()
+  const users = await readUsers()
   const user = users[username]
   if (!user) {
     return res.status(404).json({ error: 'user not found' })
@@ -817,33 +692,33 @@ app.put('/api/users/:username/competition-progress', requireAuth, (req, res) => 
   const progress = normalizeCompetitionProgress(req.body || {})
   user.competitionProgress = progress
   users[username] = user
-  writeUsers(users)
+  await writeUsers(users)
 
   res.json({
     ok: true,
     username,
     progress,
   })
-})
+}))
 
-app.patch('/api/users/:username/level', requireAdmin, (req, res) => {
+app.patch('/api/users/:username/level', requireAdmin, asyncRoute(async (req, res) => {
   const { username } = req.params
   const { level } = req.body || {}
   if (!LEVELS.includes(level)) {
     return res.status(400).json({ error: 'invalid level' })
   }
-  const users = readUsers()
+  const users = await readUsers()
   const u = users[username]
   if (!u) {
     return res.status(404).json({ error: 'user not found' })
   }
   u.level = level
   users[username] = u
-  writeUsers(users)
+  await writeUsers(users)
   res.json({ ok: true, username, level })
-})
+}))
 
-app.patch('/api/users/:username/role', requireAdmin, (req, res) => {
+app.patch('/api/users/:username/role', requireAdmin, asyncRoute(async (req, res) => {
   const { username } = req.params
   const { role } = req.body || {}
   if (!ROLES.includes(role)) {
@@ -854,7 +729,7 @@ app.patch('/api/users/:username/role', requireAdmin, (req, res) => {
     return res.status(400).json({ error: 'current admin cannot demote self' })
   }
 
-  const users = readUsers()
+  const users = await readUsers()
   const target = users[username]
   if (!target) {
     return res.status(404).json({ error: 'user not found' })
@@ -862,11 +737,11 @@ app.patch('/api/users/:username/role', requireAdmin, (req, res) => {
 
   target.role = role
   users[username] = target
-  writeUsers(users)
+  await writeUsers(users)
   res.json({ ok: true, username, role })
-})
+}))
 
-app.patch('/api/users/:username/password', requireAdmin, (req, res) => {
+app.patch('/api/users/:username/password', requireAdmin, asyncRoute(async (req, res) => {
   const { username } = req.params
   const { password } = req.body || {}
   const passwordError = validatePassword(password)
@@ -874,7 +749,7 @@ app.patch('/api/users/:username/password', requireAdmin, (req, res) => {
     return res.status(400).json({ error: passwordError })
   }
 
-  const users = readUsers()
+  const users = await readUsers()
   const target = users[username]
   if (!target) {
     return res.status(404).json({ error: 'user not found' })
@@ -882,13 +757,13 @@ app.patch('/api/users/:username/password', requireAdmin, (req, res) => {
 
   target.password = password
   users[username] = target
-  writeUsers(users)
+  await writeUsers(users)
   res.json({ ok: true, username })
-})
+}))
 
-app.delete('/api/users/:username', requireAdmin, (req, res) => {
+app.delete('/api/users/:username', requireAdmin, asyncRoute(async (req, res) => {
   const { username } = req.params
-  const users = readUsers()
+  const users = await readUsers()
   const user = users[username]
 
   if (!user) {
@@ -900,18 +775,18 @@ app.delete('/api/users/:username', requireAdmin, (req, res) => {
   }
 
   delete users[username]
-  writeUsers(users)
+  await writeUsers(users)
 
-  const attempts = readAttempts().filter(item => item.username !== username)
-  const wrongBook = readWrongBook().filter(item => item.username !== username)
-  writeAttempts(attempts)
-  writeWrongBook(wrongBook)
+  const attempts = (await readAttempts()).filter(item => item.username !== username)
+  const wrongBook = (await readWrongBook()).filter(item => item.username !== username)
+  await writeAttempts(attempts)
+  await writeWrongBook(wrongBook)
 
   res.json({ ok: true, username })
-})
+}))
 
 // 题库上传接口
-app.post('/api/admin/banks/upload', requireAdmin, upload.single('file'), (req, res) => {
+app.post('/api/admin/banks/upload', requireAdmin, upload.single('file'), asyncRoute(async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'no file' })
   
   try {
@@ -924,7 +799,7 @@ app.post('/api/admin/banks/upload', requireAdmin, upload.single('file'), (req, r
     }
     
     // 存入题库
-    const allQuestions = readQuestions()
+    const allQuestions = await readQuestions()
     const bankId = Date.now().toString()
     
     const newQuestions = questions.map((q, idx) => ({
@@ -937,7 +812,7 @@ app.post('/api/admin/banks/upload', requireAdmin, upload.single('file'), (req, r
     }))
     
     allQuestions.push(...newQuestions)
-    writeQuestions(allQuestions)
+    await writeQuestions(allQuestions)
     
     // 清理临时文件
     fs.unlinkSync(req.file.path)
@@ -951,16 +826,16 @@ app.post('/api/admin/banks/upload', requireAdmin, upload.single('file'), (req, r
   } catch (e) {
     res.status(500).json({ error: '解析异常: ' + e.message })
   }
-})
+}))
 
 // 获取所有题目（管理员预览）
-app.get('/api/admin/questions', requireAdmin, (req, res) => {
-  const questions = readQuestions()
+app.get('/api/admin/questions', requireAdmin, asyncRoute(async (req, res) => {
+  const questions = await readQuestions()
   res.json(questions)
-})
+}))
 
 // 发起考试
-app.post('/api/admin/exams', requireAdmin, (req, res) => {
+app.post('/api/admin/exams', requireAdmin, asyncRoute(async (req, res) => {
   const { title, duration, questionCount, bankIds, levelRequired, totalScore } = req.body || {}
   const { startTime, endTime } = normalizeExamWindow(req.body || {})
   
@@ -968,7 +843,7 @@ app.post('/api/admin/exams', requireAdmin, (req, res) => {
     return res.status(400).json({ error: 'missing fields' })
   }
   
-  const exams = readExams()
+  const exams = await readExams()
   const newExam = {
     id: Date.now().toString(),
     title,
@@ -985,10 +860,10 @@ app.post('/api/admin/exams', requireAdmin, (req, res) => {
   }
   
   exams.push(newExam)
-  writeExams(exams)
+  await writeExams(exams)
   
   res.json({ success: true, exam: newExam })
-})
+}))
 
 app.post('/api/admin/exams/preview', requireAdmin, upload.single('file'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'no file' })
@@ -1009,7 +884,7 @@ app.post('/api/admin/exams/preview', requireAdmin, upload.single('file'), (req, 
 })
 
 // 管理员上传考试文件并创建考试
-app.post('/api/admin/exams/upload', requireAdmin, upload.single('file'), (req, res) => {
+app.post('/api/admin/exams/upload', requireAdmin, upload.single('file'), asyncRoute(async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'no file' })
   const payload = req.body || {}
   const title = payload.title || req.file.originalname?.replace(/\.md$/i, '') || '未命名考试'
@@ -1031,8 +906,8 @@ app.post('/api/admin/exams/upload', requireAdmin, upload.single('file'), (req, r
       return res.status(400).json({ error: '解析失败：未找到有效题目' })
     }
 
-    const allQuestions = readQuestions()
-    const exams = readExams()
+    const allQuestions = await readQuestions()
+    const exams = await readExams()
     const bankId = Date.now().toString()
 
     const newQuestions = questions.map((q, idx) => ({
@@ -1044,7 +919,7 @@ app.post('/api/admin/exams/upload', requireAdmin, upload.single('file'), (req, r
       createdAt: new Date().toISOString()
     }))
     allQuestions.push(...newQuestions)
-    writeQuestions(allQuestions)
+    await writeQuestions(allQuestions)
 
     const exam = {
       id: (Date.now() + 1).toString(),
@@ -1061,7 +936,7 @@ app.post('/api/admin/exams/upload', requireAdmin, upload.single('file'), (req, r
       source: 'upload',
     }
     exams.push(exam)
-    writeExams(exams)
+    await writeExams(exams)
 
     res.status(201).json({
       success: true,
@@ -1075,7 +950,7 @@ app.post('/api/admin/exams/upload', requireAdmin, upload.single('file'), (req, r
   } finally {
     try { fs.unlinkSync(req.file.path) } catch {}
   }
-})
+}))
 
 app.get('/api/admin/exams/template-md', requireAdmin, (req, res) => {
   res.setHeader('Content-Type', 'text/markdown; charset=utf-8')
@@ -1083,18 +958,18 @@ app.get('/api/admin/exams/template-md', requireAdmin, (req, res) => {
   res.send(getExamMarkdownTemplate())
 })
 
-app.get('/api/admin/exams', requireAdmin, (req, res) => {
-  const exams = readExams()
+app.get('/api/admin/exams', requireAdmin, asyncRoute(async (req, res) => {
+  const exams = await readExams()
   const list = exams
     .slice()
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
   res.json(list)
-})
+}))
 
-app.patch('/api/admin/exams/:id', requireAdmin, (req, res) => {
+app.patch('/api/admin/exams/:id', requireAdmin, asyncRoute(async (req, res) => {
   const { id } = req.params
   const payload = req.body || {}
-  const exams = readExams()
+  const exams = await readExams()
   const idx = exams.findIndex(e => e.id === id)
   if (idx < 0) return res.status(404).json({ error: 'exam not found' })
 
@@ -1114,23 +989,23 @@ app.patch('/api/admin/exams/:id', requireAdmin, (req, res) => {
   if (Array.isArray(payload.bankIds) && payload.bankIds.length > 0) next.bankIds = payload.bankIds
 
   exams[idx] = next
-  writeExams(exams)
+  await writeExams(exams)
   res.json({ success: true, exam: next })
-})
+}))
 
-app.delete('/api/admin/exams/:id', requireAdmin, (req, res) => {
+app.delete('/api/admin/exams/:id', requireAdmin, asyncRoute(async (req, res) => {
   const { id } = req.params
-  const exams = readExams()
+  const exams = await readExams()
   const next = exams.filter(e => e.id !== id)
   if (next.length === exams.length) return res.status(404).json({ error: 'exam not found' })
-  writeExams(next)
+  await writeExams(next)
   res.json({ success: true })
-})
+}))
 
 // 获取可用考试列表（学生端）
-app.get('/api/exams/available', requireAuth, (req, res) => {
-  const exams = readExams()
-  const attempts = readAttempts()
+app.get('/api/exams/available', requireAuth, asyncRoute(async (req, res) => {
+  const exams = await readExams()
+  const attempts = await readAttempts()
   const username = req.authUser.username
   const now = new Date()
   
@@ -1144,17 +1019,17 @@ app.get('/api/exams/available', requireAuth, (req, res) => {
     }))
     .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
   res.json(available)
-})
+}))
 
 // 获取考试试卷（开始考试）
-app.get('/api/exams/:id/start', requireAuth, (req, res) => {
+app.get('/api/exams/:id/start', requireAuth, asyncRoute(async (req, res) => {
   const { id } = req.params
   const username = req.authUser.username
   
-  const exams = readExams()
+  const exams = await readExams()
   const exam = exams.find(e => e.id === id)
   if (!exam) return res.status(404).json({ error: 'exam not found' })
-  const attempts = readAttempts()
+  const attempts = await readAttempts()
   if (hasSubmittedExam(attempts, username, id)) {
     return res.status(409).json({ error: 'already_submitted' })
   }
@@ -1169,7 +1044,7 @@ app.get('/api/exams/:id/start', requireAuth, (req, res) => {
   }
   
   // 抽取题目（按试卷顺序，不打乱）
-  const allQuestions = readQuestions()
+  const allQuestions = await readQuestions()
   const bankOrder = new Map((exam.bankIds || []).map((bid, index) => [bid, index]))
   const candidates = allQuestions
     .filter(q => exam.bankIds.includes(q.bankId))
@@ -1195,21 +1070,21 @@ app.get('/api/exams/:id/start', requireAuth, (req, res) => {
     totalScore: exam.totalScore || DEFAULT_TOTAL_SCORE,
     questions: paper 
   })
-})
+}))
 
 // 提交试卷与判分
-app.post('/api/exams/:id/submit', requireAuth, async (req, res) => {
+app.post('/api/exams/:id/submit', requireAuth, asyncRoute(async (req, res) => {
   const { id } = req.params
   const { answers, questionIds } = req.body // answers: { qId: 'A', qId2: 'T' }
   const username = req.authUser.username
   
-  const exams = readExams()
+  const exams = await readExams()
   const exam = exams.find(e => e.id === id)
   if (!exam) return res.status(404).json({ error: 'exam not found' })
   
-  const allQuestions = readQuestions()
-  const wrongBook = readWrongBook()
-  const attempts = readAttempts()
+  const allQuestions = await readQuestions()
+  const wrongBook = await readWrongBook()
+  const attempts = await readAttempts()
   if (hasSubmittedExam(attempts, username, id)) {
     return res.status(409).json({ error: 'already_submitted' })
   }
@@ -1291,8 +1166,8 @@ app.post('/api/exams/:id/submit', requireAuth, async (req, res) => {
     })
   })
 
-  writeWrongBook(wrongBook)
-  writeAttempts(attempts)
+  await writeWrongBook(wrongBook)
+  await writeAttempts(attempts)
   
   res.json({
     success: true,
@@ -1303,13 +1178,13 @@ app.post('/api/exams/:id/submit', requireAuth, async (req, res) => {
     results,
     wrongQuestions: wrongQuestionsWithAnalysis,
   })
-})
+}))
 
 // 获取错题本
-app.get('/api/my/wrong-book', requireAuth, (req, res) => {
+app.get('/api/my/wrong-book', requireAuth, asyncRoute(async (req, res) => {
   const username = req.authUser.username
-  const wrongBook = readWrongBook().filter(w => w.username === username)
-  const allQuestions = readQuestions()
+  const wrongBook = (await readWrongBook()).filter(w => w.username === username)
+  const allQuestions = await readQuestions()
   const map = new Map()
   wrongBook.forEach(item => {
     const prev = map.get(item.questionId)
@@ -1341,9 +1216,19 @@ app.get('/api/my/wrong-book', requireAuth, (req, res) => {
   })
   const list = Array.from(map.values()).sort((a, b) => new Date(b.lastWrongAt) - new Date(a.lastWrongAt))
   res.json(list)
+}))
+
+app.use((error, req, res, next) => {
+  if (res.headersSent) return next(error)
+  console.error(error)
+  res.status(500).json({
+    error: 'server_error',
+    message: error instanceof Error ? error.message : 'unknown error',
+  })
 })
 
 const PORT = process.env.PORT || 8787
 app.listen(PORT, () => {
   process.stdout.write(`server at http://localhost:${PORT}\n`)
+  process.stdout.write(`storage mode: ${dataStore.config.mode}\n`)
 })
