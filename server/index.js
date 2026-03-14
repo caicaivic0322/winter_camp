@@ -422,6 +422,78 @@ function toUserTemplateCsv() {
   ].join('\n')
 }
 
+async function buildAdminBackupPayload() {
+  const [users, questions, exams, attempts, wrongBook] = await Promise.all([
+    readUsers(),
+    readQuestions(),
+    readExams(),
+    readAttempts(),
+    readWrongBook(),
+  ])
+
+  return {
+    exportedAt: new Date().toISOString(),
+    storage: dataStore.config.mode,
+    users,
+    questions,
+    exams,
+    attempts,
+    wrongBook,
+  }
+}
+
+function validateBackupPayload(payload = {}) {
+  if (!payload || typeof payload !== 'object') {
+    return { error: 'invalid backup payload' }
+  }
+
+  const users = payload.users
+  const questions = payload.questions
+  const exams = payload.exams
+  const attempts = payload.attempts
+  const wrongBook = payload.wrongBook
+
+  if (!users || typeof users !== 'object' || Array.isArray(users)) {
+    return { error: 'backup.users must be an object' }
+  }
+  if (!Array.isArray(questions)) {
+    return { error: 'backup.questions must be an array' }
+  }
+  if (!Array.isArray(exams)) {
+    return { error: 'backup.exams must be an array' }
+  }
+  if (!Array.isArray(attempts)) {
+    return { error: 'backup.attempts must be an array' }
+  }
+  if (!Array.isArray(wrongBook)) {
+    return { error: 'backup.wrongBook must be an array' }
+  }
+
+  const normalizedUsers = {}
+  Object.entries(users).forEach(([username, user]) => {
+    if (!user || typeof user !== 'object') return
+    normalizedUsers[username] = {
+      ...user,
+      username,
+      level: normalizeCourseLevel(user.level, DEFAULT_USER_LEVEL),
+      competitionProgress: normalizeCompetitionProgress(user.competitionProgress),
+    }
+  })
+
+  return {
+    data: {
+      users: normalizedUsers,
+      questions,
+      exams: exams.map(item => ({
+        ...item,
+        levelRequired: normalizeCourseLevel(item.levelRequired, DEFAULT_EXAM_LEVEL),
+      })),
+      attempts,
+      wrongBook,
+    },
+  }
+}
+
 function buildExamPreview(payload = {}, metadata = {}, questions = []) {
   const title = payload.title || metadata.title || '未命名考试'
   const sectionCounts = {
@@ -517,6 +589,15 @@ app.get('/api/health', (req, res) => {
   })
 })
 
+app.get('/api/health/storage', asyncRoute(async (req, res) => {
+  const probe = await dataStore.probe()
+  res.json({
+    ok: true,
+    time: Date.now(),
+    ...probe,
+  })
+}))
+
 app.post('/api/users', asyncRoute(async (req, res) => {
   const users = await readUsers()
   const result = buildUser(req.body || {})
@@ -611,6 +692,36 @@ app.get('/api/admin/users/template', requireAdmin, (req, res) => {
   res.setHeader('Content-Disposition', 'attachment; filename="users-template.csv"')
   res.send(toUserTemplateCsv())
 })
+
+app.get('/api/admin/backup', requireAdmin, asyncRoute(async (req, res) => {
+  const payload = await buildAdminBackupPayload()
+  const stamp = payload.exportedAt.replace(/[:.]/g, '-')
+  res.setHeader('Content-Type', 'application/json; charset=utf-8')
+  res.setHeader('Content-Disposition', `attachment; filename="backup-${stamp}.json"`)
+  res.json(payload)
+}))
+
+app.post('/api/admin/backup/restore', requireAdmin, asyncRoute(async (req, res) => {
+  const result = validateBackupPayload(req.body || {})
+  if (result.error) {
+    return res.status(400).json({ error: result.error })
+  }
+
+  await dataStore.replaceAll(result.data)
+
+  res.json({
+    ok: true,
+    restoredAt: new Date().toISOString(),
+    storage: dataStore.config.mode,
+    summary: {
+      userCount: Object.keys(result.data.users).length,
+      questionCount: result.data.questions.length,
+      examCount: result.data.exams.length,
+      attemptCount: result.data.attempts.length,
+      wrongBookCount: result.data.wrongBook.length,
+    },
+  })
+}))
 
 app.post('/api/login', asyncRoute(async (req, res) => {
   const { username, password } = req.body || {}

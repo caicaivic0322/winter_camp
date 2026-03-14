@@ -254,8 +254,31 @@ export function createDataStore({
     await writeCollection('attempts', data)
   }
 
+  async function probe() {
+    if (config.mode === 'local') {
+      ensureLocalData()
+      await readCollection('users', buildSeedUsers())
+      return { storage: config.mode, reachable: true }
+    }
+
+    await readStateRow('users')
+    return { storage: config.mode, reachable: true }
+  }
+
+  async function replaceAll({ users, questions, exams, attempts, wrongBook }) {
+    await Promise.all([
+      writeUsers(users),
+      writeQuestions(questions),
+      writeExams(exams),
+      writeAttempts(attempts),
+      writeWrongBook(wrongBook),
+    ])
+  }
+
   return {
     config,
+    probe,
+    replaceAll,
     readUsers,
     writeUsers,
     readQuestions,

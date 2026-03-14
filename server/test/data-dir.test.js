@@ -73,3 +73,21 @@ test('server stores runtime json files under DATA_DIR when provided', async () =
     fs.rmSync(tempDir, { recursive: true, force: true })
   }
 })
+
+test('storage health endpoint performs a real storage check', async () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cpp-camp-health-'))
+  const server = await startServer({ DATA_DIR: tempDir })
+
+  try {
+    const res = await fetch(`${server.baseUrl}/health/storage`)
+    assert.equal(res.status, 200)
+
+    const data = await res.json()
+    assert.equal(data.ok, true)
+    assert.equal(data.storage, 'local')
+    assert.equal(data.reachable, true)
+  } finally {
+    await server.stop()
+    fs.rmSync(tempDir, { recursive: true, force: true })
+  }
+})

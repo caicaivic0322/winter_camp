@@ -9,6 +9,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const serverDir = path.resolve(__dirname, '..')
 const dataDir = path.join(serverDir, 'data')
 const usersFile = path.join(dataDir, 'users.json')
+const questionsFile = path.join(dataDir, 'questions.json')
+const examsFile = path.join(dataDir, 'exams.json')
 const attemptsFile = path.join(dataDir, 'attempts.json')
 const wrongBookFile = path.join(dataDir, 'wrong_book.json')
 
@@ -53,6 +55,37 @@ const fixtures = {
       examId: 'exam-1',
       examTitle: '样例卷',
       at: '2026-03-13T00:03:00.000Z',
+    },
+  ],
+  questions: [
+    {
+      id: 'q-1',
+      bankId: 'bank-1',
+      order: 1,
+      title: '样例题',
+      type: 'single',
+      section: 'single',
+      score: 10,
+      answer: 'B',
+      options: [
+        { label: 'A', text: '选项A' },
+        { label: 'B', text: '选项B' },
+      ],
+    },
+  ],
+  exams: [
+    {
+      id: 'exam-1',
+      title: '样例卷',
+      startTime: '2026-03-13T00:00:00.000Z',
+      endTime: '2099-01-01T00:00:00.000Z',
+      duration: 1800,
+      questionCount: 1,
+      totalScore: 100,
+      bankIds: ['bank-1'],
+      levelRequired: '初级',
+      createdAt: '2026-03-13T00:00:00.000Z',
+      status: 'scheduled',
     },
   ],
 }
@@ -113,11 +146,15 @@ async function login(baseUrl, username, password) {
 test('admin can create a user and delete that user with related records cleanup', async () => {
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),
+    questions: fs.existsSync(questionsFile) ? fs.readFileSync(questionsFile, 'utf-8') : '[]',
+    exams: fs.existsSync(examsFile) ? fs.readFileSync(examsFile, 'utf-8') : '[]',
     attempts: fs.readFileSync(attemptsFile, 'utf-8'),
     wrongBook: fs.readFileSync(wrongBookFile, 'utf-8'),
   }
 
   writeJson(usersFile, fixtures.users)
+  writeJson(questionsFile, fixtures.questions)
+  writeJson(examsFile, fixtures.exams)
   writeJson(attemptsFile, fixtures.attempts)
   writeJson(wrongBookFile, fixtures.wrongBook)
 
@@ -520,11 +557,15 @@ test('admin can export users as csv', async () => {
 test('admin can download a csv template for bulk import', async () => {
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),
+    questions: fs.existsSync(questionsFile) ? fs.readFileSync(questionsFile, 'utf-8') : '[]',
+    exams: fs.existsSync(examsFile) ? fs.readFileSync(examsFile, 'utf-8') : '[]',
     attempts: fs.readFileSync(attemptsFile, 'utf-8'),
     wrongBook: fs.readFileSync(wrongBookFile, 'utf-8'),
   }
 
   writeJson(usersFile, fixtures.users)
+  writeJson(questionsFile, fixtures.questions)
+  writeJson(examsFile, fixtures.exams)
   writeJson(attemptsFile, fixtures.attempts)
   writeJson(wrongBookFile, fixtures.wrongBook)
 
@@ -546,6 +587,203 @@ test('admin can download a csv template for bulk import', async () => {
   } finally {
     await server.stop()
     fs.writeFileSync(usersFile, backups.users)
+    fs.writeFileSync(questionsFile, backups.questions)
+    fs.writeFileSync(examsFile, backups.exams)
+    fs.writeFileSync(attemptsFile, backups.attempts)
+    fs.writeFileSync(wrongBookFile, backups.wrongBook)
+  }
+})
+
+test('admin can export a full json backup and non-admin users are forbidden', async () => {
+  const backups = {
+    users: fs.readFileSync(usersFile, 'utf-8'),
+    questions: fs.existsSync(questionsFile) ? fs.readFileSync(questionsFile, 'utf-8') : '[]',
+    exams: fs.existsSync(examsFile) ? fs.readFileSync(examsFile, 'utf-8') : '[]',
+    attempts: fs.readFileSync(attemptsFile, 'utf-8'),
+    wrongBook: fs.readFileSync(wrongBookFile, 'utf-8'),
+  }
+
+  writeJson(usersFile, fixtures.users)
+  writeJson(questionsFile, fixtures.questions)
+  writeJson(examsFile, fixtures.exams)
+  writeJson(attemptsFile, fixtures.attempts)
+  writeJson(wrongBookFile, fixtures.wrongBook)
+
+  const server = await startServer()
+
+  try {
+    const adminLogin = await login(server.baseUrl, 'admin', '123456')
+    const res = await fetch(`${server.baseUrl}/admin/backup`, {
+      headers: {
+        Authorization: `Bearer ${adminLogin.token}`,
+      },
+    })
+
+    assert.equal(res.status, 200)
+    assert.match(res.headers.get('content-type') || '', /application\/json/)
+    assert.match(res.headers.get('content-disposition') || '', /backup-/)
+
+    const backup = await res.json()
+    assert.equal(backup.storage, 'local')
+    assert.equal(backup.users.admin.username, 'admin')
+    assert.equal(Array.isArray(backup.questions), true)
+    assert.equal(backup.questions[0].id, 'q-1')
+    assert.equal(Array.isArray(backup.exams), true)
+    assert.equal(backup.exams[0].id, 'exam-1')
+    assert.equal(Array.isArray(backup.attempts), true)
+    assert.equal(backup.attempts[0].id, 'attempt-1')
+    assert.equal(Array.isArray(backup.wrongBook), true)
+    assert.equal(backup.wrongBook[0].questionId, 'q-1')
+
+    const userLogin = await login(server.baseUrl, 'vic', '123456')
+    const forbiddenRes = await fetch(`${server.baseUrl}/admin/backup`, {
+      headers: {
+        Authorization: `Bearer ${userLogin.token}`,
+      },
+    })
+
+    assert.equal(forbiddenRes.status, 403)
+  } finally {
+    await server.stop()
+    fs.writeFileSync(usersFile, backups.users)
+    fs.writeFileSync(questionsFile, backups.questions)
+    fs.writeFileSync(examsFile, backups.exams)
+    fs.writeFileSync(attemptsFile, backups.attempts)
+    fs.writeFileSync(wrongBookFile, backups.wrongBook)
+  }
+})
+
+test('admin can restore a json backup and non-admin users are forbidden', async () => {
+  const backups = {
+    users: fs.readFileSync(usersFile, 'utf-8'),
+    questions: fs.existsSync(questionsFile) ? fs.readFileSync(questionsFile, 'utf-8') : '[]',
+    exams: fs.existsSync(examsFile) ? fs.readFileSync(examsFile, 'utf-8') : '[]',
+    attempts: fs.readFileSync(attemptsFile, 'utf-8'),
+    wrongBook: fs.readFileSync(wrongBookFile, 'utf-8'),
+  }
+
+  writeJson(usersFile, fixtures.users)
+  writeJson(questionsFile, fixtures.questions)
+  writeJson(examsFile, fixtures.exams)
+  writeJson(attemptsFile, fixtures.attempts)
+  writeJson(wrongBookFile, fixtures.wrongBook)
+
+  const server = await startServer()
+
+  try {
+    const adminLogin = await login(server.baseUrl, 'admin', '123456')
+    const restorePayload = {
+      users: {
+        admin: fixtures.users.admin,
+        restored: {
+          username: 'restored',
+          password: '123456',
+          nickname: '恢复学员',
+          role: 'user',
+          level: '竞赛',
+          competitionProgress: {
+            completedProblemIds: [9, 9, 3],
+            wrongProblemIds: ['x', 7],
+            favoriteProblemIds: [5],
+          },
+          createdAt: '2026-03-15T00:00:00.000Z',
+        },
+      },
+      questions: [{
+        id: 'restored-q',
+        bankId: 'restored-bank',
+        order: 1,
+        title: '恢复题目',
+        type: 'single',
+        section: 'single',
+        score: 20,
+        answer: 'A',
+        options: [{ label: 'A', text: '正确' }],
+      }],
+      exams: [{
+        id: 'restored-exam',
+        title: '恢复考试',
+        startTime: '2026-03-15T00:00:00.000Z',
+        endTime: '2099-01-01T00:00:00.000Z',
+        duration: 1800,
+        questionCount: 1,
+        totalScore: 100,
+        bankIds: ['restored-bank'],
+        levelRequired: '竞赛',
+        createdAt: '2026-03-15T00:00:00.000Z',
+        status: 'scheduled',
+      }],
+      attempts: [{
+        id: 'restored-attempt',
+        examId: 'restored-exam',
+        username: 'restored',
+        score: 100,
+        rawScore: 20,
+        rawTotal: 20,
+        totalScore: 100,
+        at: '2026-03-15T00:10:00.000Z',
+      }],
+      wrongBook: [{
+        username: 'restored',
+        questionId: 'restored-q',
+        questionTitle: '恢复题目',
+        yourAnswer: 'B',
+        correctAnswer: 'A',
+        examId: 'restored-exam',
+        examTitle: '恢复考试',
+        at: '2026-03-15T00:11:00.000Z',
+        analysis: '恢复的解析',
+      }],
+    }
+
+    const res = await fetch(`${server.baseUrl}/admin/backup/restore`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${adminLogin.token}`,
+      },
+      body: JSON.stringify(restorePayload),
+    })
+
+    assert.equal(res.status, 200)
+    const data = await res.json()
+    assert.equal(data.ok, true)
+    assert.equal(data.summary.userCount, 2)
+    assert.equal(data.summary.questionCount, 1)
+
+    const users = JSON.parse(fs.readFileSync(usersFile, 'utf-8'))
+    assert.equal(users.restored.nickname, '恢复学员')
+    assert.deepEqual(users.restored.competitionProgress, {
+      completedProblemIds: [9, 3],
+      wrongProblemIds: [7],
+      favoriteProblemIds: [5],
+    })
+
+    const questions = JSON.parse(fs.readFileSync(questionsFile, 'utf-8'))
+    assert.equal(questions[0].id, 'restored-q')
+    const exams = JSON.parse(fs.readFileSync(examsFile, 'utf-8'))
+    assert.equal(exams[0].id, 'restored-exam')
+    const attempts = JSON.parse(fs.readFileSync(attemptsFile, 'utf-8'))
+    assert.equal(attempts[0].id, 'restored-attempt')
+    const wrongBook = JSON.parse(fs.readFileSync(wrongBookFile, 'utf-8'))
+    assert.equal(wrongBook[0].questionId, 'restored-q')
+
+    const userLogin = await login(server.baseUrl, 'restored', '123456')
+    const forbiddenRes = await fetch(`${server.baseUrl}/admin/backup/restore`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${userLogin.token}`,
+      },
+      body: JSON.stringify(restorePayload),
+    })
+
+    assert.equal(forbiddenRes.status, 403)
+  } finally {
+    await server.stop()
+    fs.writeFileSync(usersFile, backups.users)
+    fs.writeFileSync(questionsFile, backups.questions)
+    fs.writeFileSync(examsFile, backups.exams)
     fs.writeFileSync(attemptsFile, backups.attempts)
     fs.writeFileSync(wrongBookFile, backups.wrongBook)
   }
