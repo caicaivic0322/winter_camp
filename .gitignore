@@ -15,6 +15,9 @@ build/
 .env.production.local
 server/.env
 server/.env.*
+server/data/users.json
+server/data/wrong_book.json
+server/data/attempts.json
 
 # IDE
 .idea/
