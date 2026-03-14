@@ -188,6 +188,7 @@ function Login() {
                 placeholder="显示在课程中的名称"
                 autoComplete="nickname"
               />
+              <p className="form-hint">建议填写本人真名，方便老师审核确认。</p>
             </motion.div>
           )}
           

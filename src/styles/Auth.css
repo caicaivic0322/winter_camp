@@ -140,6 +140,13 @@
   color: var(--text-subtle);
 }
 
+.form-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
 /* 提交按钮 */
 .auth-submit {
   padding: 16px;

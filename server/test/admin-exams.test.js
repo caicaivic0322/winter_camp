@@ -299,7 +299,8 @@ test('submit returns wrong-question analyses and wrong-book stays deduplicated b
     assert.equal(wrongBook.length, 1)
     assert.equal(wrongBook[0].questionId, 'q-1')
     assert.equal(wrongBook[0].wrongCount, 1)
-    assert.equal(Object.prototype.hasOwnProperty.call(wrongBook[0], 'analysis'), false)
+    assert.equal(typeof wrongBook[0].analysis, 'string')
+    assert.equal(wrongBook[0].analysis.length > 0, true)
   } finally {
     await server.stop()
     fs.writeFileSync(usersFile, backups.users)

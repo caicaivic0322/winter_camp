@@ -27,6 +27,17 @@ export const parts = [
     gradient: 'linear-gradient(135deg, #4ecdc4, #44b09e)',
     chapterRange: [23, 35],
   },
+  {
+    id: 4,
+    title: '竞赛单元',
+    subtitle: '按 CSP-J 到 CSP-S 梯度推进，配套 Hot 100 自测题单',
+    icon: '🏁',
+    color: '#ffd56f',
+    gradient: 'linear-gradient(135deg, #ffd56f, #ff9f68)',
+    moduleCount: 10,
+    path: '/competition',
+    unitLabel: '10 模块',
+  },
 ]
 
 // 课程分类颜色

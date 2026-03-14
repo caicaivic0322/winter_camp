@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import API_BASE from '../../config/api'
 import { buildAuthHeaders } from '../../utils/auth'
 import { clearExamSession, hydrateExamSession, readExamSession, writeExamSession } from '../../utils/examSession'
+import { buildWrongQuestionsPrintHtml } from '../../utils/wrongQuestionExport'
 
 const sectionConfig = [
   { key: 'single', title: '单选题', accent: 'var(--status-success-fg)' },
@@ -30,6 +31,7 @@ export default function ExamPaper() {
   const [submitted, setSubmitted] = useState(false)
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const [direction, setDirection] = useState(1)
   const [isCompact, setIsCompact] = useState(() => window.innerWidth < 960)
@@ -335,6 +337,7 @@ export default function ExamPaper() {
     if (!auto && !window.confirm('确认提交试卷吗？提交后无法修改。')) return
 
     setSubmitted(true)
+    setIsSubmitting(true)
     submittedRef.current = true
     clearInterval(timerRef.current)
 
@@ -352,6 +355,7 @@ export default function ExamPaper() {
         if (user?.username) {
           clearExamSession(localStorage, user.username, id)
         }
+        setIsSubmitting(false)
         logout()
         alert('登录状态已失效，请重新登录后再提交考试')
         navigate('/login', { replace: true })
@@ -365,11 +369,40 @@ export default function ExamPaper() {
       sessionRef.current = null
       setExpiresAt(null)
       setResult(data)
+      setIsSubmitting(false)
     } catch {
       alert('提交失败，请重试')
       setSubmitted(false)
+      setIsSubmitting(false)
       submittedRef.current = false
     }
+  }
+
+  const exportWrongQuestionsPdf = () => {
+    if (!result) return
+
+    const wrongQuestions = Array.isArray(result.wrongQuestions) ? result.wrongQuestions : []
+    const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=960,height=820')
+
+    if (!printWindow) {
+      alert('浏览器拦截了导出窗口，请允许弹窗后重试。')
+      return
+    }
+
+    const html = buildWrongQuestionsPrintHtml({
+      examTitle: exam?.title || result?.title || '考试结果',
+      score: result.score,
+      totalScore: result.totalScore,
+      wrongQuestions,
+    })
+
+    printWindow.document.open()
+    printWindow.document.write(html)
+    printWindow.document.close()
+    printWindow.focus()
+    setTimeout(() => {
+      printWindow.print()
+    }, 300)
   }
 
   const handleSubmit = async (auto = false) => {
@@ -428,6 +461,9 @@ export default function ExamPaper() {
             <div style={{ marginTop: 24, display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
               <button onClick={() => navigate('/exams')} style={secondaryActionStyle}>返回列表</button>
               <button onClick={() => navigate('/my/wrong-book')} style={primaryActionStyle}>查看错题本</button>
+              {wrongQuestions.length > 0 && (
+                <button onClick={exportWrongQuestionsPdf} style={secondaryActionStyle}>导出错题分析 PDF</button>
+              )}
             </div>
           </div>
 
@@ -443,6 +479,9 @@ export default function ExamPaper() {
               <p style={{ margin: '0 0 18px', color: 'var(--text-muted)' }}>
                 已将以下错题加入错题本。这里会展示本次提交的即时解析，错题本内不保存解析内容。
               </p>
+              <div style={{ marginBottom: 18 }}>
+                <button onClick={exportWrongQuestionsPdf} style={secondaryActionStyle}>导出本次错题分析 PDF</button>
+              </div>
               <div style={{ display: 'grid', gap: 14 }}>
                 {wrongQuestions.map((item, idx) => {
                   const options = Array.isArray(item.options) ? item.options : []
@@ -646,6 +685,31 @@ export default function ExamPaper() {
   return (
     <div style={pageStyle}>
       <div style={{ maxWidth: 1240, margin: '0 auto', padding: '24px 16px 32px' }}>
+        <AnimatePresence>
+          {isSubmitting && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={gradingOverlayStyle}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96, y: 14 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 14 }}
+                transition={{ duration: 0.22 }}
+                style={gradingCardStyle}
+              >
+                <div style={gradingSpinnerStyle} />
+                <h3 style={{ margin: '0 0 10px', fontSize: '1.35rem' }}>改卷中，请等待</h3>
+                <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+                  正在统计分数并生成错题分析，DeepSeek 解析可能需要一些时间，请不要关闭页面。
+                </p>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <motion.div
           initial={prefersReducedMotion ? false : { opacity: 0, y: -12 }}
           animate={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
@@ -1097,6 +1161,36 @@ const statusPillStyle = {
 const miniProgressStyle = {
   color: 'var(--text-muted)',
   fontWeight: 700,
+}
+
+const gradingOverlayStyle = {
+  position: 'fixed',
+  inset: 0,
+  zIndex: 1200,
+  display: 'grid',
+  placeItems: 'center',
+  background: 'rgba(6, 12, 24, 0.76)',
+  backdropFilter: 'blur(10px)',
+}
+
+const gradingCardStyle = {
+  width: 'min(92vw, 460px)',
+  padding: '28px 26px',
+  borderRadius: 28,
+  background: 'var(--panel-strong)',
+  border: '1px solid var(--border-default)',
+  boxShadow: 'var(--shadow-xl)',
+  textAlign: 'center',
+}
+
+const gradingSpinnerStyle = {
+  width: 56,
+  height: 56,
+  margin: '0 auto 18px',
+  borderRadius: '50%',
+  border: '4px solid rgba(255,255,255,0.12)',
+  borderTopColor: 'var(--brand-primary)',
+  animation: 'exam-spin 0.9s linear infinite',
 }
 
 const codeBlockStyle = {

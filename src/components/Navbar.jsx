@@ -5,7 +5,7 @@ import { DEFAULT_USER_LEVEL } from '../../shared/courseAccess.js'
 
 function Navbar({ onMenuClick }) {
   const { theme, toggleTheme, isDark } = useTheme()
-  const { user } = useAuth()
+  const { user, canAccessCompetitionUnit } = useAuth()
   
   return (
     <nav className="navbar">
@@ -16,6 +16,9 @@ function Navbar({ onMenuClick }) {
       
       <div className="navbar-menu">
         <Link to="/" className="navbar-link">首页</Link>
+        {canAccessCompetitionUnit() && (
+          <Link to="/competition" className="navbar-link">竞赛单元</Link>
+        )}
         <Link to="/exams" className="navbar-link">在线考试</Link>
         <Link to="/my/wrong-book" className="navbar-link">错题本</Link>
         <Link to="/visualizer/bubble" className="navbar-link">排序可视化</Link>

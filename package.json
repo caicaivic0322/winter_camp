@@ -6,6 +6,7 @@
   "description": "C++ 15天寒假集训营教学网站",
   "scripts": {
     "dev": "vite",
+    "test": "node --test src/utils/*.test.js",
     "build": "vite build",
     "preview": "vite preview"
   },

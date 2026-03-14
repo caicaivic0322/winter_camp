@@ -13,6 +13,10 @@ function PartDetail() {
     return <Navigate to="/" replace />
   }
 
+  if (part.path) {
+    return <Navigate to={part.path} replace />
+  }
+
   const partCourses = getPartCourses(partIdNum)
 
   const container = {

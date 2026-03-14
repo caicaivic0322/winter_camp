@@ -2076,5 +2076,88 @@
     "examId": "1773368219782",
     "examTitle": "考试测试004",
     "at": "2026-03-13T04:54:05.511Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773495233691_yoyhlmrkn",
+    "questionTitle": "下列标志符中，不合法的是（　　）",
+    "yourAnswer": "B",
+    "correctAnswer": "C",
+    "examId": "1773495233698",
+    "examTitle": "考试测试05",
+    "at": "2026-03-14T13:34:46.601Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773495233691_8r8b2di43",
+    "questionTitle": "关于 C++ 中的 `switch` 语句，下列说法正确的是（　　）",
+    "yourAnswer": "B",
+    "correctAnswer": "A",
+    "examId": "1773495233698",
+    "examTitle": "考试测试05",
+    "at": "2026-03-14T13:34:46.601Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773495395175_geqng12pv",
+    "questionTitle": "已知 `int a[10];`，则访问 `a[10]` 时程序通常会发生（　　）",
+    "yourAnswer": "A",
+    "correctAnswer": "C",
+    "examId": "1773495395181",
+    "examTitle": "考试测试05",
+    "at": "2026-03-14T13:37:25.184Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773496114203_g50l87nhx",
+    "questionTitle": "在 C++ 中，下列数据类型中占用内存最大的是（　　）",
+    "yourAnswer": "D",
+    "correctAnswer": "B",
+    "examId": "1773496114209",
+    "examTitle": "考试测试05",
+    "at": "2026-03-14T13:49:25.032Z"
+  },
+  {
+    "username": "admin",
+    "questionId": "1773496114203_vh53r79iv",
+    "questionTitle": "已知 `int a[10];`，则访问 `a[10]` 时程序通常会发生（　　）",
+    "yourAnswer": "A",
+    "correctAnswer": "C",
+    "examId": "1773496114209",
+    "examTitle": "考试测试05",
+    "at": "2026-03-14T13:49:25.032Z"
+  },
+  {
+    "username": "vic",
+    "questionId": "1773496114203_m2z5fgwj6",
+    "questionTitle": "下列标志符中，不合法的是（　　）",
+    "yourAnswer": "B",
+    "correctAnswer": "C",
+    "examId": "1773496114209",
+    "examTitle": "考试测试05",
+    "at": "2026-03-14T13:54:31.661Z",
+    "analysis": "这道题的正确答案是 C，你本次作答为 B。建议先回到题干里定位考点，再重点对比正确选项和你所选项的关键词差异。正确项内容是“double”。"
+  },
+  {
+    "username": "vic",
+    "questionId": "1773496114203_60vnjuces",
+    "questionTitle": "关于 C++ 中的 `switch` 语句，下列说法正确的是（　　）",
+    "yourAnswer": "B",
+    "correctAnswer": "A",
+    "examId": "1773496114209",
+    "examTitle": "考试测试05",
+    "at": "2026-03-14T13:54:31.661Z",
+    "analysis": "这道题的正确答案是 A，你本次作答为 B。建议先回到题干里定位考点，再重点对比正确选项和你所选项的关键词差异。正确项内容是“case 标签后面必须是常数表达式”。"
+  },
+  {
+    "username": "vic",
+    "questionId": "1773496114203_z536dj3oc",
+    "questionTitle": "下面哪个是用于输入一整行字符串（包含空格）的正确语法？（　　）",
+    "yourAnswer": "D",
+    "correctAnswer": "B",
+    "examId": "1773496114209",
+    "examTitle": "考试测试05",
+    "at": "2026-03-14T13:54:31.661Z",
+    "analysis": "这道题的正确答案是 B，你本次作答为 D。建议先回到题干里定位考点，再重点对比正确选项和你所选项的关键词差异。正确项内容是“getline(cin, s);”。"
   }
 ]

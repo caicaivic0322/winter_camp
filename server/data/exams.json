@@ -3,7 +3,7 @@
     "id": "1772888493343",
     "title": "Set2 代码展示修复版",
     "startTime": "2026-03-07T00:00:00.000Z",
-    "endTime": "2026-03-31T23:59:00.000Z",
+    "endTime": "2026-03-13T23:59:00.000Z",
     "duration": 180,
     "questionCount": 38,
     "totalScore": 100,
@@ -60,6 +60,22 @@
     ],
     "levelRequired": "中级",
     "createdAt": "2026-03-13T02:16:59.781Z",
+    "status": "scheduled",
+    "source": "upload"
+  },
+  {
+    "id": "1773496114209",
+    "title": "考试测试05",
+    "startTime": "2026-03-14T13:30:00.000Z",
+    "endTime": "2026-03-14T14:30:00.000Z",
+    "duration": 180,
+    "questionCount": 10,
+    "totalScore": 100,
+    "bankIds": [
+      "1773496114207"
+    ],
+    "levelRequired": "中级",
+    "createdAt": "2026-03-14T13:48:34.208Z",
     "status": "scheduled",
     "source": "upload"
   }

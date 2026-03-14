@@ -259,6 +259,23 @@ export default function WrongBook() {
               <span style={{ color: 'var(--status-success-fg)', fontWeight: 700 }}>正确答案：{sanitizeText(item.correctAnswer)}</span>
             )}
           </div>
+
+          {item.analysis && (
+            <div style={{
+              marginTop: '14px',
+              padding: '14px 16px',
+              borderRadius: '16px',
+              background: 'var(--panel-bg)',
+              border: '1px solid var(--border-default)',
+            }}>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 700, marginBottom: 8 }}>
+                错题解析
+              </div>
+              <div style={{ color: 'var(--text-body)', lineHeight: 1.75 }}>
+                {item.analysis}
+              </div>
+            </div>
+          )}
         </div>
       ))}
     </div>

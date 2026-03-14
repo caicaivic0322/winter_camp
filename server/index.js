@@ -97,6 +97,17 @@ function readUsers() {
           data[k] = u
           changed = true
         }
+        const normalizedProgress = normalizeCompetitionProgress(u.competitionProgress)
+        const currentProgress = u.competitionProgress || {}
+        if (
+          JSON.stringify(normalizedProgress.completedProblemIds) !== JSON.stringify(currentProgress.completedProblemIds || []) ||
+          JSON.stringify(normalizedProgress.wrongProblemIds) !== JSON.stringify(currentProgress.wrongProblemIds || []) ||
+          JSON.stringify(normalizedProgress.favoriteProblemIds) !== JSON.stringify(currentProgress.favoriteProblemIds || [])
+        ) {
+          u.competitionProgress = normalizedProgress
+          data[k] = u
+          changed = true
+        }
       }
     })
     if (changed) writeUsers(data)
@@ -237,10 +248,39 @@ function buildFallbackAnalysis(item) {
   return `这道题的正确答案是 ${correctAnswer}，你本次作答为 ${userAnswer}。建议先回到题干里定位考点，再重点对比正确选项和你所选项的关键词差异。${suffix}`.trim()
 }
 
-async function requestDeepSeekAnalyses(items) {
-  const apiKey = process.env.DEEPSEEK_API_KEY
-  if (!apiKey || !Array.isArray(items) || items.length === 0) return null
+function trimTrailingSlash(value) {
+  return String(value || '').replace(/\/+$/, '')
+}
 
+function getAiAnalysisConfigs() {
+  const configs = []
+  const deepSeekKey = String(process.env.DEEPSEEK_API_KEY || '').trim()
+  const deepSeekBase = trimTrailingSlash(process.env.DEEPSEEK_API_BASE || 'https://api.deepseek.com')
+
+  if (deepSeekKey) {
+    configs.push({
+      provider: 'deepseek',
+      apiKey: deepSeekKey,
+      endpoint: `${deepSeekBase}/chat/completions`,
+      model: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
+    })
+  }
+
+  const openAiKey = String(process.env.OPENAI_API_KEY || '').trim()
+  const openAiBase = trimTrailingSlash(process.env.OPENAI_API_BASE)
+  if (openAiKey && openAiBase) {
+    configs.push({
+      provider: 'openai-compatible',
+      apiKey: openAiKey,
+      endpoint: `${openAiBase}/chat/completions`,
+      model: process.env.OPENAI_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-chat',
+    })
+  }
+
+  return configs
+}
+
+async function requestAiAnalysesWithConfig(items, config) {
   const promptItems = items.map(item => ({
     questionId: item.questionId,
     title: sanitizeQuestionText(item.title),
@@ -253,14 +293,14 @@ async function requestDeepSeekAnalyses(items) {
     correctAnswer: item.correctAnswer || '未设置',
   }))
 
-  const response = await fetch('https://api.deepseek.com/chat/completions', {
+  const response = await fetch(config.endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${config.apiKey}`,
     },
     body: JSON.stringify({
-      model: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
+      model: config.model,
       temperature: 0.3,
       response_format: {
         type: 'json_object',
@@ -290,7 +330,8 @@ async function requestDeepSeekAnalyses(items) {
   })
 
   if (!response.ok) {
-    throw new Error(`deepseek request failed: ${response.status}`)
+    const message = await response.text()
+    throw new Error(`${config.provider} request failed: ${response.status} ${message}`)
   }
 
   const data = await response.json()
@@ -300,6 +341,27 @@ async function requestDeepSeekAnalyses(items) {
   const parsed = JSON.parse(content)
   const analyses = Array.isArray(parsed?.analyses) ? parsed.analyses : []
   return analyses
+}
+
+async function requestDeepSeekAnalyses(items) {
+  const configs = getAiAnalysisConfigs()
+  if (configs.length === 0 || !Array.isArray(items) || items.length === 0) return null
+
+  let lastError = null
+
+  for (const config of configs) {
+    try {
+      const analyses = await requestAiAnalysesWithConfig(items, config)
+      if (Array.isArray(analyses) && analyses.length > 0) return analyses
+    } catch (error) {
+      lastError = error
+      console.warn(`[wrong-question-analysis] ${config.provider} request failed, trying next provider if available`)
+      console.warn(error instanceof Error ? error.message : String(error))
+    }
+  }
+
+  if (lastError) throw lastError
+  return null
 }
 
 async function buildWrongQuestionAnalyses(items) {
@@ -319,7 +381,10 @@ async function buildWrongQuestionAnalyses(items) {
         analysis: analysisMap.get(item.questionId) || buildFallbackAnalysis(item),
       }))
     }
-  } catch {}
+  } catch (error) {
+    console.warn('[wrong-question-analysis] remote analysis failed, using fallback analysis')
+    console.warn(error instanceof Error ? error.message : String(error))
+  }
 
   return items.map(item => ({
     ...item,
@@ -543,8 +608,32 @@ function buildUser(payload = {}) {
       nickname: nickname || username,
       role: ROLES.includes(role) ? role : 'user',
       level: normalizeCourseLevel(level, DEFAULT_USER_LEVEL),
+      competitionProgress: normalizeCompetitionProgress(),
       createdAt: new Date().toISOString(),
     }
+  }
+}
+
+function normalizeCompetitionProgress(payload = {}) {
+  const normalizeList = (value) => {
+    if (!Array.isArray(value)) return []
+    const seen = new Set()
+    const result = []
+
+    value.forEach((item) => {
+      const id = Number(item)
+      if (!Number.isInteger(id) || id <= 0 || seen.has(id)) return
+      seen.add(id)
+      result.push(id)
+    })
+
+    return result
+  }
+
+  return {
+    completedProblemIds: normalizeList(payload.completedProblemIds),
+    wrongProblemIds: normalizeList(payload.wrongProblemIds),
+    favoriteProblemIds: normalizeList(payload.favoriteProblemIds),
   }
 }
 
@@ -692,6 +781,48 @@ app.get('/api/users/:username', requireAuth, (req, res) => {
     return res.status(404).json({ error: 'user not found' })
   }
   res.json(toPublicUser(user))
+})
+
+app.get('/api/users/:username/competition-progress', requireAuth, (req, res) => {
+  const { username } = req.params
+  if (req.authUser.role !== 'admin' && req.authUser.username !== username) {
+    return res.status(403).json({ error: 'forbidden' })
+  }
+
+  const users = readUsers()
+  const user = users[username]
+  if (!user) {
+    return res.status(404).json({ error: 'user not found' })
+  }
+
+  res.json({
+    username,
+    progress: normalizeCompetitionProgress(user.competitionProgress),
+  })
+})
+
+app.put('/api/users/:username/competition-progress', requireAuth, (req, res) => {
+  const { username } = req.params
+  if (req.authUser.role !== 'admin' && req.authUser.username !== username) {
+    return res.status(403).json({ error: 'forbidden' })
+  }
+
+  const users = readUsers()
+  const user = users[username]
+  if (!user) {
+    return res.status(404).json({ error: 'user not found' })
+  }
+
+  const progress = normalizeCompetitionProgress(req.body || {})
+  user.competitionProgress = progress
+  users[username] = user
+  writeUsers(users)
+
+  res.json({
+    ok: true,
+    username,
+    progress,
+  })
 })
 
 app.patch('/api/users/:username/level', requireAdmin, (req, res) => {
@@ -1087,6 +1218,7 @@ app.post('/api/exams/:id/submit', requireAuth, async (req, res) => {
   let earnedRawScore = 0
   const results = []
   const wrongQuestions = []
+  const wrongBookRecords = []
 
   validQuestionIds.forEach(qId => {
     const question = allQuestions.find(q => q.id === qId)
@@ -1111,7 +1243,7 @@ app.post('/api/exams/:id/submit', requireAuth, async (req, res) => {
         examTitle: exam.title,
         at: new Date().toISOString()
       }
-      wrongBook.push(record)
+      wrongBookRecords.push(record)
       wrongQuestions.push({
         questionId: qId,
         title: question.title,
@@ -1145,10 +1277,21 @@ app.post('/api/exams/:id/submit', requireAuth, async (req, res) => {
     at: new Date().toISOString()
   }
   attempts.push(attempt)
-  
+  const wrongQuestionsWithAnalysis = await buildWrongQuestionAnalyses(wrongQuestions)
+
+  const analysisMap = new Map(
+    wrongQuestionsWithAnalysis.map(item => [item.questionId, item.analysis || ''])
+  )
+
+  wrongBookRecords.forEach((record) => {
+    wrongBook.push({
+      ...record,
+      analysis: analysisMap.get(record.questionId) || buildFallbackAnalysis(record),
+    })
+  })
+
   writeWrongBook(wrongBook)
   writeAttempts(attempts)
-  const wrongQuestionsWithAnalysis = await buildWrongQuestionAnalyses(wrongQuestions)
   
   res.json({
     success: true,
@@ -1178,6 +1321,7 @@ app.get('/api/my/wrong-book', requireAuth, (req, res) => {
         options: q.options || [],
         codeSnippet: q.codeSnippet || '',
         correctAnswer: item.correctAnswer,
+        analysis: item.analysis || '',
         wrongCount: 1,
         firstWrongAt: item.at,
         lastWrongAt: item.at,
@@ -1188,6 +1332,10 @@ app.get('/api/my/wrong-book', requireAuth, (req, res) => {
       prev.wrongCount += 1
       prev.lastWrongAt = item.at
       prev.lastYourAnswer = item.yourAnswer
+      prev.correctAnswer = item.correctAnswer
+      if (!prev.analysis && item.analysis) {
+        prev.analysis = item.analysis
+      }
     }
   })
   const list = Array.from(map.values()).sort((a, b) => new Date(b.lastWrongAt) - new Date(a.lastWrongAt))

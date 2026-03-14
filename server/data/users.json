@@ -5,7 +5,12 @@
     "nickname": "管理员",
     "role": "admin",
     "level": "竞赛",
-    "createdAt": "2026-03-13T00:00:00.000Z"
+    "createdAt": "2026-03-13T00:00:00.000Z",
+    "competitionProgress": {
+      "completedProblemIds": [],
+      "wrongProblemIds": [],
+      "favoriteProblemIds": []
+    }
   },
   "vic": {
     "username": "vic",
@@ -13,7 +18,12 @@
     "nickname": "蔡臻",
     "role": "user",
     "level": "中级",
-    "createdAt": "2026-03-13T00:01:00.000Z"
+    "createdAt": "2026-03-13T00:01:00.000Z",
+    "competitionProgress": {
+      "completedProblemIds": [],
+      "wrongProblemIds": [],
+      "favoriteProblemIds": []
+    }
   },
   "haha": {
     "username": "haha",

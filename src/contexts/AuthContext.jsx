@@ -3,6 +3,7 @@ import API_BASE from '../config/api'
 import { buildAuthHeaders, clearStoredAuth, CURRENT_USER_KEY, saveStoredAuth } from '../utils/auth'
 import {
   ADMIN_LEVEL,
+  canAccessCompetitionUnit,
   DEFAULT_USER_LEVEL,
   getCourseAccessProfile,
   isCourseAccessible,
@@ -287,6 +288,7 @@ export function AuthProvider({ children }) {
     getUnlockedCourses,
     isCourseUnlocked,
     getCourseUnlockTime,
+    canAccessCompetitionUnit: () => canAccessCompetitionUnit(user),
   }
   
   return (

@@ -1,8 +1,12 @@
 import { Link, useLocation } from 'react-router-dom'
 import { parts, getPartCourses } from '../data/courses'
+import { competitionModules } from '../data/competitionUnit'
+import { useAuth } from '../contexts/AuthContext'
 
 function Sidebar({ isOpen, onClose }) {
   const location = useLocation()
+  const { canAccessCompetitionUnit } = useAuth()
+  const visibleParts = parts.filter((part) => part.id !== 4 || canAccessCompetitionUnit())
 
   return (
     <>
@@ -12,12 +16,14 @@ function Sidebar({ isOpen, onClose }) {
       />
       <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
         <h3 className="sidebar-title">课程目录</h3>
-        {parts.map((part) => {
-          const partCourses = getPartCourses(part.id)
+        {visibleParts.map((part) => {
+          const isCompetition = part.id === 4
+          const partCourses = isCompetition ? competitionModules : getPartCourses(part.id)
+          const destination = part.path || `/part/${part.id}`
           return (
             <div key={part.id} className="sidebar-part-group">
               <Link
-                to={`/part/${part.id}`}
+                to={destination}
                 className="sidebar-part-header"
                 onClick={onClose}
                 style={{ '--part-color': part.color }}
@@ -26,18 +32,26 @@ function Sidebar({ isOpen, onClose }) {
                 <span>{part.title}</span>
                 <span className="sidebar-part-count">{partCourses.length}</span>
               </Link>
-              {partCourses.map((course) => (
-                <Link
-                  key={course.id}
-                  to={`/lesson/${course.id}`}
-                  className={`sidebar-item ${location.pathname === `/lesson/${course.id}` ? 'active' : ''}`}
-                  onClick={onClose}
-                >
-                  <span className="icon">{course.icon}</span>
-                  <span className="number">第{course.id}章</span>
-                  <span>{course.title}</span>
-                </Link>
-              ))}
+              {partCourses.map((course) => {
+                const courseId = isCompetition ? course.slug : course.id
+                const to = isCompetition ? `/competition/module/${course.slug}` : `/lesson/${course.id}`
+                const active = isCompetition
+                  ? location.pathname === `/competition/module/${course.slug}`
+                  : location.pathname === `/lesson/${course.id}`
+
+                return (
+                  <Link
+                    key={courseId}
+                    to={to}
+                    className={`sidebar-item ${active ? 'active' : ''}`}
+                    onClick={onClose}
+                  >
+                    <span className="icon">{isCompetition ? '🏷️' : course.icon}</span>
+                    <span className="number">{isCompetition ? `M${course.order}` : `第${course.id}章`}</span>
+                    <span>{course.title}</span>
+                  </Link>
+                )
+              })}
             </div>
           )
         })}

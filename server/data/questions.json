@@ -21301,5 +21301,935 @@
     "language": "C++",
     "bankTitle": "考试测试004",
     "createdAt": "2026-03-13T02:16:59.779Z"
+  },
+  {
+    "id": "1773495233690_lpr85vh26",
+    "title": "十进制数 100 转换成二进制数的结果是（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "1100100"
+      },
+      {
+        "label": "B",
+        "text": "1101000"
+      },
+      {
+        "label": "C",
+        "text": "1011010"
+      },
+      {
+        "label": "D",
+        "text": "1100010"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "A",
+    "order": 1,
+    "bankId": "1773495233695",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:33:53.695Z"
+  },
+  {
+    "id": "1773495233691_qnve6ceqo",
+    "title": "在 C++ 中，下列数据类型中占用内存最大的是（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "short"
+      },
+      {
+        "label": "B",
+        "text": "long long"
+      },
+      {
+        "label": "C",
+        "text": "char"
+      },
+      {
+        "label": "D",
+        "text": "long"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "B",
+    "order": 2,
+    "bankId": "1773495233695",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:33:53.695Z"
+  },
+  {
+    "id": "1773495233691_yoyhlmrkn",
+    "title": "下列标志符中，不合法的是（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "name_123"
+      },
+      {
+        "label": "B",
+        "text": "_index"
+      },
+      {
+        "label": "C",
+        "text": "double"
+      },
+      {
+        "label": "D",
+        "text": "MyVariable"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "C",
+    "order": 3,
+    "bankId": "1773495233695",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:33:53.695Z"
+  },
+  {
+    "id": "1773495233691_mye3ca66d",
+    "title": "设 `int a = 1, b = 2, c = 3;`，执行 `a += b *= c;` 后，`a` 的值是（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "6"
+      },
+      {
+        "label": "B",
+        "text": "7"
+      },
+      {
+        "label": "C",
+        "text": "9"
+      },
+      {
+        "label": "D",
+        "text": "11"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "B",
+    "order": 4,
+    "bankId": "1773495233695",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:33:53.695Z"
+  },
+  {
+    "id": "1773495233691_8r8b2di43",
+    "title": "关于 C++ 中的 `switch` 语句，下列说法正确的是（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "case 标签后面必须是常数表达式"
+      },
+      {
+        "label": "B",
+        "text": "每个 case 自带 break 功能"
+      },
+      {
+        "label": "C",
+        "text": "default 必须放在所有 case 的前面"
+      },
+      {
+        "label": "D",
+        "text": "switch 控制表达式可以是任意浮点数"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "A",
+    "order": 5,
+    "bankId": "1773495233695",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:33:53.695Z"
+  },
+  {
+    "id": "1773495233691_dk0dqirb7",
+    "title": "下面哪个是用于输入一整行字符串（包含空格）的正确语法？（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "cin >> s;"
+      },
+      {
+        "label": "B",
+        "text": "getline(cin, s);"
+      },
+      {
+        "label": "C",
+        "text": "cin.get(s);"
+      },
+      {
+        "label": "D",
+        "text": "scanf(\"%s\", s);"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "B",
+    "order": 6,
+    "bankId": "1773495233695",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:33:53.695Z"
+  },
+  {
+    "id": "1773495233691_c9bo3pn6l",
+    "title": "已知 `int a[10];`，则访问 `a[10]` 时程序通常会发生（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "编译错误"
+      },
+      {
+        "label": "B",
+        "text": "语法纠偏"
+      },
+      {
+        "label": "C",
+        "text": "越界访问（未定义行为）"
+      },
+      {
+        "label": "D",
+        "text": "自动扩容"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "C",
+    "order": 7,
+    "bankId": "1773495233695",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:33:53.695Z"
+  },
+  {
+    "id": "1773495233691_fd4kzpxxt",
+    "title": "在 C++ 中，一维数组的长度必须（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "在编译时确定（常量表达式）"
+      },
+      {
+        "label": "B",
+        "text": "在运行时通过 cin 输入确定"
+      },
+      {
+        "label": "C",
+        "text": "始终为 100"
+      },
+      {
+        "label": "D",
+        "text": "无法确定"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "A",
+    "order": 8,
+    "bankId": "1773495233695",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:33:53.695Z"
+  },
+  {
+    "id": "1773495233691_3mefu76m1",
+    "title": "下列哪种排序算法通常使用分治法实现？（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "插入排序"
+      },
+      {
+        "label": "B",
+        "text": "选择排序"
+      },
+      {
+        "label": "C",
+        "text": "归并排序"
+      },
+      {
+        "label": "D",
+        "text": "冒泡排序"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "C",
+    "order": 9,
+    "bankId": "1773495233695",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:33:53.695Z"
+  },
+  {
+    "id": "1773495233691_ue7grogpn",
+    "title": "计算机系统中的 RAM 指的是（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "只读存储器"
+      },
+      {
+        "label": "B",
+        "text": "随机存取存储器"
+      },
+      {
+        "label": "C",
+        "text": "硬盘控制器"
+      },
+      {
+        "label": "D",
+        "text": "高速缓冲存储器"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "B",
+    "order": 10,
+    "bankId": "1773495233695",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:33:53.695Z"
+  },
+  {
+    "id": "1773495395174_g0ech4kwd",
+    "title": "十进制数 100 转换成二进制数的结果是（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "1100100"
+      },
+      {
+        "label": "B",
+        "text": "1101000"
+      },
+      {
+        "label": "C",
+        "text": "1011010"
+      },
+      {
+        "label": "D",
+        "text": "1100010"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "A",
+    "order": 1,
+    "bankId": "1773495395178",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:36:35.178Z"
+  },
+  {
+    "id": "1773495395174_hjadc6h41",
+    "title": "在 C++ 中，下列数据类型中占用内存最大的是（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "short"
+      },
+      {
+        "label": "B",
+        "text": "long long"
+      },
+      {
+        "label": "C",
+        "text": "char"
+      },
+      {
+        "label": "D",
+        "text": "long"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "B",
+    "order": 2,
+    "bankId": "1773495395178",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:36:35.178Z"
+  },
+  {
+    "id": "1773495395174_dqiy5c1th",
+    "title": "下列标志符中，不合法的是（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "name_123"
+      },
+      {
+        "label": "B",
+        "text": "_index"
+      },
+      {
+        "label": "C",
+        "text": "double"
+      },
+      {
+        "label": "D",
+        "text": "MyVariable"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "C",
+    "order": 3,
+    "bankId": "1773495395178",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:36:35.178Z"
+  },
+  {
+    "id": "1773495395174_7ijn3g438",
+    "title": "设 `int a = 1, b = 2, c = 3;`，执行 `a += b *= c;` 后，`a` 的值是（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "6"
+      },
+      {
+        "label": "B",
+        "text": "7"
+      },
+      {
+        "label": "C",
+        "text": "9"
+      },
+      {
+        "label": "D",
+        "text": "11"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "B",
+    "order": 4,
+    "bankId": "1773495395178",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:36:35.178Z"
+  },
+  {
+    "id": "1773495395174_443h4u954",
+    "title": "关于 C++ 中的 `switch` 语句，下列说法正确的是（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "case 标签后面必须是常数表达式"
+      },
+      {
+        "label": "B",
+        "text": "每个 case 自带 break 功能"
+      },
+      {
+        "label": "C",
+        "text": "default 必须放在所有 case 的前面"
+      },
+      {
+        "label": "D",
+        "text": "switch 控制表达式可以是任意浮点数"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "A",
+    "order": 5,
+    "bankId": "1773495395178",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:36:35.178Z"
+  },
+  {
+    "id": "1773495395175_va9dh92c1",
+    "title": "下面哪个是用于输入一整行字符串（包含空格）的正确语法？（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "cin >> s;"
+      },
+      {
+        "label": "B",
+        "text": "getline(cin, s);"
+      },
+      {
+        "label": "C",
+        "text": "cin.get(s);"
+      },
+      {
+        "label": "D",
+        "text": "scanf(\"%s\", s);"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "B",
+    "order": 6,
+    "bankId": "1773495395178",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:36:35.178Z"
+  },
+  {
+    "id": "1773495395175_geqng12pv",
+    "title": "已知 `int a[10];`，则访问 `a[10]` 时程序通常会发生（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "编译错误"
+      },
+      {
+        "label": "B",
+        "text": "语法纠偏"
+      },
+      {
+        "label": "C",
+        "text": "越界访问（未定义行为）"
+      },
+      {
+        "label": "D",
+        "text": "自动扩容"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "C",
+    "order": 7,
+    "bankId": "1773495395178",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:36:35.178Z"
+  },
+  {
+    "id": "1773495395175_q6c822s3m",
+    "title": "在 C++ 中，一维数组的长度必须（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "在编译时确定（常量表达式）"
+      },
+      {
+        "label": "B",
+        "text": "在运行时通过 cin 输入确定"
+      },
+      {
+        "label": "C",
+        "text": "始终为 100"
+      },
+      {
+        "label": "D",
+        "text": "无法确定"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "A",
+    "order": 8,
+    "bankId": "1773495395178",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:36:35.178Z"
+  },
+  {
+    "id": "1773495395175_iambzf44i",
+    "title": "下列哪种排序算法通常使用分治法实现？（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "插入排序"
+      },
+      {
+        "label": "B",
+        "text": "选择排序"
+      },
+      {
+        "label": "C",
+        "text": "归并排序"
+      },
+      {
+        "label": "D",
+        "text": "冒泡排序"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "C",
+    "order": 9,
+    "bankId": "1773495395178",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:36:35.178Z"
+  },
+  {
+    "id": "1773495395175_v5b081p65",
+    "title": "计算机系统中的 RAM 指的是（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "只读存储器"
+      },
+      {
+        "label": "B",
+        "text": "随机存取存储器"
+      },
+      {
+        "label": "C",
+        "text": "硬盘控制器"
+      },
+      {
+        "label": "D",
+        "text": "高速缓冲存储器"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "B",
+    "order": 10,
+    "bankId": "1773495395178",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:36:35.178Z"
+  },
+  {
+    "id": "1773496114203_40ol51u1v",
+    "title": "十进制数 100 转换成二进制数的结果是（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "1100100"
+      },
+      {
+        "label": "B",
+        "text": "1101000"
+      },
+      {
+        "label": "C",
+        "text": "1011010"
+      },
+      {
+        "label": "D",
+        "text": "1100010"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "A",
+    "order": 1,
+    "bankId": "1773496114207",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:48:34.207Z"
+  },
+  {
+    "id": "1773496114203_g50l87nhx",
+    "title": "在 C++ 中，下列数据类型中占用内存最大的是（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "short"
+      },
+      {
+        "label": "B",
+        "text": "long long"
+      },
+      {
+        "label": "C",
+        "text": "char"
+      },
+      {
+        "label": "D",
+        "text": "long"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "B",
+    "order": 2,
+    "bankId": "1773496114207",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:48:34.207Z"
+  },
+  {
+    "id": "1773496114203_m2z5fgwj6",
+    "title": "下列标志符中，不合法的是（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "name_123"
+      },
+      {
+        "label": "B",
+        "text": "_index"
+      },
+      {
+        "label": "C",
+        "text": "double"
+      },
+      {
+        "label": "D",
+        "text": "MyVariable"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "C",
+    "order": 3,
+    "bankId": "1773496114207",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:48:34.207Z"
+  },
+  {
+    "id": "1773496114203_49zg2lxwh",
+    "title": "设 `int a = 1, b = 2, c = 3;`，执行 `a += b *= c;` 后，`a` 的值是（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "6"
+      },
+      {
+        "label": "B",
+        "text": "7"
+      },
+      {
+        "label": "C",
+        "text": "9"
+      },
+      {
+        "label": "D",
+        "text": "11"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "B",
+    "order": 4,
+    "bankId": "1773496114207",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:48:34.207Z"
+  },
+  {
+    "id": "1773496114203_60vnjuces",
+    "title": "关于 C++ 中的 `switch` 语句，下列说法正确的是（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "case 标签后面必须是常数表达式"
+      },
+      {
+        "label": "B",
+        "text": "每个 case 自带 break 功能"
+      },
+      {
+        "label": "C",
+        "text": "default 必须放在所有 case 的前面"
+      },
+      {
+        "label": "D",
+        "text": "switch 控制表达式可以是任意浮点数"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "A",
+    "order": 5,
+    "bankId": "1773496114207",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:48:34.207Z"
+  },
+  {
+    "id": "1773496114203_z536dj3oc",
+    "title": "下面哪个是用于输入一整行字符串（包含空格）的正确语法？（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "cin >> s;"
+      },
+      {
+        "label": "B",
+        "text": "getline(cin, s);"
+      },
+      {
+        "label": "C",
+        "text": "cin.get(s);"
+      },
+      {
+        "label": "D",
+        "text": "scanf(\"%s\", s);"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "B",
+    "order": 6,
+    "bankId": "1773496114207",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:48:34.207Z"
+  },
+  {
+    "id": "1773496114203_vh53r79iv",
+    "title": "已知 `int a[10];`，则访问 `a[10]` 时程序通常会发生（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "编译错误"
+      },
+      {
+        "label": "B",
+        "text": "语法纠偏"
+      },
+      {
+        "label": "C",
+        "text": "越界访问（未定义行为）"
+      },
+      {
+        "label": "D",
+        "text": "自动扩容"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "C",
+    "order": 7,
+    "bankId": "1773496114207",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:48:34.207Z"
+  },
+  {
+    "id": "1773496114203_96fuw81pu",
+    "title": "在 C++ 中，一维数组的长度必须（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "在编译时确定（常量表达式）"
+      },
+      {
+        "label": "B",
+        "text": "在运行时通过 cin 输入确定"
+      },
+      {
+        "label": "C",
+        "text": "始终为 100"
+      },
+      {
+        "label": "D",
+        "text": "无法确定"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "A",
+    "order": 8,
+    "bankId": "1773496114207",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:48:34.207Z"
+  },
+  {
+    "id": "1773496114203_rvr1oiss1",
+    "title": "下列哪种排序算法通常使用分治法实现？（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "插入排序"
+      },
+      {
+        "label": "B",
+        "text": "选择排序"
+      },
+      {
+        "label": "C",
+        "text": "归并排序"
+      },
+      {
+        "label": "D",
+        "text": "冒泡排序"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "C",
+    "order": 9,
+    "bankId": "1773496114207",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:48:34.207Z"
+  },
+  {
+    "id": "1773496114203_lf080xtkp",
+    "title": "计算机系统中的 RAM 指的是（　　）",
+    "options": [
+      {
+        "label": "A",
+        "text": "只读存储器"
+      },
+      {
+        "label": "B",
+        "text": "随机存取存储器"
+      },
+      {
+        "label": "C",
+        "text": "硬盘控制器"
+      },
+      {
+        "label": "D",
+        "text": "高速缓冲存储器"
+      }
+    ],
+    "type": "single",
+    "section": "single",
+    "score": 2,
+    "answer": "B",
+    "order": 10,
+    "bankId": "1773496114207",
+    "language": "C++",
+    "bankTitle": "考试测试05",
+    "createdAt": "2026-03-14T13:48:34.207Z"
   }
 ]

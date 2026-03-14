@@ -61,6 +61,12 @@ export function canAccessExamLevel(userLevel, requiredLevel = DEFAULT_EXAM_LEVEL
   return getLevelRank(userLevel) >= getLevelRank(requiredLevel)
 }
 
+export function canAccessCompetitionUnit(user) {
+  if (!user) return false
+  if (user.role === 'admin') return true
+  return normalizeCourseLevel(user.level, DEFAULT_USER_LEVEL) === '竞赛'
+}
+
 export function getCourseAccessProfile(level) {
   const normalized = normalizeCourseLevel(level)
   const profile = COURSE_ACCESS_MAP[normalized] || COURSE_ACCESS_MAP[DEFAULT_USER_LEVEL]
