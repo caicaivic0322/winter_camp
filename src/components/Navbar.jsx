@@ -3,7 +3,7 @@ import { useTheme } from '../contexts/ThemeContext'
 import { useAuth } from '../contexts/AuthContext'
 import { DEFAULT_USER_LEVEL } from '../../shared/courseAccess.js'
 
-function Navbar({ onMenuClick }) {
+function Navbar() {
   const { theme, toggleTheme, isDark } = useTheme()
   const { user, canAccessCompetitionUnit } = useAuth()
   
@@ -59,9 +59,6 @@ function Navbar({ onMenuClick }) {
           aria-label={isDark ? '切换到亮色模式' : '切换到暗色模式'}
         >
           {isDark ? '☀️' : '🌙'}
-        </button>
-        <button className="menu-btn" onClick={onMenuClick}>
-          ☰
         </button>
       </div>
     </nav>

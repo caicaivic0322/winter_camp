@@ -11,6 +11,14 @@
   overflow: hidden;
 }
 
+body.auth-scrollbar-hidden {
+  overflow-y: hidden;
+}
+
+body.auth-scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
 .auth-container {
   width: 100%;
   max-width: 420px;

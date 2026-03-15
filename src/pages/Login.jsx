@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth, getUnlockedCourses } from '../contexts/AuthContext'
@@ -15,6 +15,13 @@ function Login() {
   const { login, register } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+
+  useEffect(() => {
+    document.body.classList.add('auth-scrollbar-hidden')
+    return () => {
+      document.body.classList.remove('auth-scrollbar-hidden')
+    }
+  }, [])
   
   // 获取课程状态
   const courseStatus = getUnlockedCourses()
@@ -86,17 +93,6 @@ function Login() {
     setError('')
   }
   
-  // 格式化日期显示
-  const formatDate = (date) => {
-    return date.toLocaleDateString('zh-CN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  }
-  
   return (
     <div className="auth-page">
       <motion.div 
@@ -112,41 +108,6 @@ function Login() {
             {isLogin ? '欢迎回来，继续你的学习之旅' : '加入我们，开启编程之旅'}
           </p>
         </div>
-        
-        {/* 课程状态提示 */}
-        {courseStatus.isBeforeStart && (
-          <div className="auth-notice">
-            <span className="notice-icon">⏰</span>
-            <div>
-              <div className="notice-title">课程即将开始</div>
-              <div className="notice-text">
-                首批课程将于 {formatDate(courseStatus.startDate)} 开放
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {!courseStatus.isBeforeStart && courseStatus.unlockedCount > 0 && (
-          <div className="auth-notice success">
-            <span className="notice-icon">📖</span>
-            <div>
-              <div className="notice-title">课程进行中</div>
-              <div className="notice-text">
-                已开放 {courseStatus.unlockedCount} / 35 节课程
-                {courseStatus.userLevel && (
-                  <span style={{ marginLeft: 8, color: 'var(--text-subtle)' }}>
-                    （{courseStatus.userLevel}）
-                  </span>
-                )}
-              </div>
-              {courseStatus.accessLabel && (
-                <div className="notice-text" style={{ marginTop: 4 }}>
-                  {courseStatus.accessLabel}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
         
         <form className="auth-form" onSubmit={handleSubmit}>
           {error && (
@@ -227,18 +188,7 @@ function Login() {
         </div>
         
         <div className="auth-info">
-          <div className="info-item">
-            <span>📅</span>
-            <span>2026.1.23 - 2026.3.31</span>
-          </div>
-          <div className="info-item">
-            <span>📚</span>
-            <span>17节精品课程</span>
-          </div>
-          <div className="info-item">
-            <span>⏰</span>
-            <span>每日8:00更新</span>
-          </div>
+          <div className="info-item">Developed by [蔡老师]</div>
         </div>
       </motion.div>
       

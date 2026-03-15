@@ -104,17 +104,17 @@
   opacity: 1;
 }
 
-.menu-btn {
-  display: none;
-  background: transparent;
-  color: var(--text-heading);
-  font-size: 1.5rem;
-  padding: 8px;
-}
-
 @media (max-width: 768px) {
-  .menu-btn { display: block; }
-  .navbar-menu { display: none; }
+  .navbar-menu {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    max-width: calc(100vw - 170px);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .navbar-menu::-webkit-scrollbar { display: none; }
+  .navbar-user-pill { display: none; }
   .navbar {
     left: 16px;
     right: 16px;
@@ -223,8 +223,14 @@
   transition: transform var(--duration-normal) var(--ease-out);
   z-index: 999;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   padding: 24px 16px;
   box-shadow: var(--shadow-lg);
+}
+
+.sidebar::-webkit-scrollbar {
+  display: none;
 }
 
 .sidebar.open {

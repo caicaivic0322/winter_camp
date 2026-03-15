@@ -1,9 +1,8 @@
-import { useState, lazy, Suspense } from 'react'
+import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth, getUnlockedCourses } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import Navbar from './components/Navbar'
-import Sidebar from './components/Sidebar'
 import './styles/App.css'
 import './styles/Supplementals.css'
 import { canAccessCompetitionUnit } from '../shared/courseAccess.js'
@@ -95,8 +94,6 @@ function CompetitionShell() {
 
 // 主应用内容
 function AppContent() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { isAuthenticated } = useAuth()
   const location = useLocation()
 
   // 登录页面不显示导航栏
@@ -114,8 +111,7 @@ function AppContent() {
 
   return (
     <div className="app">
-      <Navbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Navbar />
       <main className="main-content">
         <Suspense fallback={<div className="loading-screen"><div className="loading-spinner-large" /></div>}>
         <Routes>
