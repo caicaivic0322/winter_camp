@@ -4,11 +4,58 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { motion } from 'framer-motion'
 import { courses } from '../data/courses'
-import { getLessonContent } from '../data/lessonContents'
-import { getTestContent, getAnswerContent } from '../data/supplementaryContents'
 import Modal from '../components/Modal'
 import { useAuth, isCourseUnlocked, getCourseUnlockTime, getUnlockedCourses } from '../contexts/AuthContext'
 import { DEFAULT_USER_LEVEL } from '../../shared/courseAccess.js'
+
+const lessonContentLoaders = {
+  1: () => import('../../第01章_初识C++/讲义_初识C++.md?raw'),
+  2: () => import('../../第02课_二进制与位运算/讲义_二进制与位运算.md?raw'),
+  3: () => import('../../第03章_数据类型/讲义_数据类型.md?raw'),
+  4: () => import('../../第04章_程序结构与运算符/讲义_程序结构与运算符.md?raw'),
+  5: () => import('../../第05章_条件分支/讲义_条件分支.md?raw'),
+  6: () => import('../../第06章_离散分支/讲义_离散分支.md?raw'),
+  7: () => import('../../第07章_while循环/讲义_while循环.md?raw'),
+  8: () => import('../../第08章_for循环/讲义_for循环.md?raw'),
+  9: () => import('../../第09章_初识数组/讲义_初识数组.md?raw'),
+  10: () => import('../../第10章_嵌套循环/讲义_嵌套循环.md?raw'),
+  11: () => import('../../第11章_二维数组/讲义_二维数组.md?raw'),
+  12: () => import('../../第12章_字符串/讲义_字符串.md?raw'),
+  13: () => import('../../第13章_动态数组/讲义_动态数组.md?raw'),
+  14: () => import('../../第01课_函数强化与传参机制/讲义_函数强化与传参机制.md?raw'),
+  15: () => import('../../第15章_指针/讲义_指针.md?raw'),
+  16: () => import('../../第16章_文件操作/讲义_文件操作.md?raw'),
+  17: () => import('../../第03课_结构体与类的应用/讲义_结构体与类的应用.md?raw'),
+  18: () => import('../../第13课_链表基础/讲义_链表基础.md?raw'),
+  19: () => import('../../第19章_栈和队列/讲义_栈和队列.md?raw'),
+  20: () => import('../../第20章_union集合体/讲义_union集合体.md?raw'),
+  21: () => import('../../第09课_树与二叉树/讲义_树与二叉树.md?raw'),
+  22: () => import('../../第22章_图/讲义_图.md?raw'),
+  23: () => import('../../第07课_插入排序/讲义_插入排序.md?raw'),
+  24: () => import('../../第08课_冒泡排序/讲义_冒泡排序.md?raw'),
+  25: () => import('../../第10课_分治与归并/讲义_分治与归并.md?raw'),
+  26: () => import('../../第11课_快速排序与贪心/讲义_快速排序与贪心.md?raw'),
+  27: () => import('../../第13课_堆与堆排序/讲义_堆与堆排序.md?raw'),
+  28: () => import('../../第04课_高精度加法/讲义_高精度加法.md?raw'),
+  29: () => import('../../第05课_高精度减法/讲义_高精度减法.md?raw'),
+  30: () => import('../../第06课_高精度乘法/讲义_高精度乘法.md?raw'),
+  31: () => import('../../第12课_动态规划/讲义_动态规划.md?raw'),
+  32: () => import('../../第14课_搜索算法/讲义_搜索算法.md?raw'),
+  33: () => import('../../第16课_哈希表基础/讲义_哈希表基础.md?raw'),
+  34: () => import('../../第17课_unordered_map详解/讲义_unordered_map详解.md?raw'),
+  35: () => import('../../第15课_综合训练与测评/讲义_综合训练.md?raw'),
+}
+
+async function loadLessonContent(lessonId) {
+  const loader = lessonContentLoaders[lessonId]
+  if (!loader) return null
+  try {
+    const mod = await loader()
+    return mod.default || null
+  } catch {
+    return null
+  }
+}
 
 function Lesson() {
   const { id } = useParams()
@@ -23,16 +70,20 @@ function Lesson() {
   const [modalContent, setModalContent] = useState('')
   const [modalTitle, setModalTitle] = useState('')
   
-  const openResource = (type) => {
+  const openResource = async (type) => {
     let resContent = null
     let resTitle = ''
-    
-    if (type === 'test') {
-      resContent = getTestContent(courseId)
-      resTitle = `📝 第${courseId}课 测试卷 (简化版)`
-    } else if (type === 'answer') {
-      resContent = getAnswerContent(courseId)
-      resTitle = `✅ 第${courseId}课 参考答案 (简化版)`
+
+    try {
+      const { getTestContent, getAnswerContent } = await import('../data/supplementaryContents')
+      if (type === 'test') {
+        resContent = getTestContent(courseId)
+        resTitle = `📝 第${courseId}课 测试卷 (简化版)`
+      } else if (type === 'answer') {
+        resContent = getAnswerContent(courseId)
+        resTitle = `✅ 第${courseId}课 参考答案 (简化版)`
+      }
+    } catch {
     }
     
     if (resContent) {
@@ -50,13 +101,14 @@ function Lesson() {
   const isUnlocked = isCourseUnlocked(courseId)
   
   useEffect(() => {
-    // 只有解锁的课程才加载内容
-    if (isUnlocked) {
-      const lessonContent = getLessonContent(courseId)
+    if (!isUnlocked) return
+    let cancelled = false
+    ;(async () => {
+      const lessonContent = await loadLessonContent(courseId)
+      if (cancelled) return
+
       if (lessonContent) {
         setContent(lessonContent)
-        
-        // 解析目录
         const headings = lessonContent.match(/^##\s+.+$/gm) || []
         const tocItems = headings.map(h => {
           const text = h.replace(/^##\s+/, '')
@@ -66,7 +118,11 @@ function Lesson() {
         setToc(tocItems)
       } else {
         setContent(`# 📘 第${courseId}课：${course?.title || '加载中...'}\n\n> 💡 课程内容正在准备中...`)
+        setToc([])
       }
+    })()
+    return () => {
+      cancelled = true
     }
   }, [courseId, course, isUnlocked])
   

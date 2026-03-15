@@ -1,12 +1,32 @@
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { parts, getPartCourses } from '../data/courses'
-import { competitionModules } from '../data/competitionUnit'
 import { useAuth } from '../contexts/AuthContext'
 
 function Sidebar({ isOpen, onClose }) {
   const location = useLocation()
   const { canAccessCompetitionUnit } = useAuth()
+  const [competitionModules, setCompetitionModules] = useState([])
   const visibleParts = parts.filter((part) => part.id !== 4 || canAccessCompetitionUnit())
+
+  useEffect(() => {
+    if (!isOpen || !canAccessCompetitionUnit()) return
+    let cancelled = false
+    import('../data/competitionUnit')
+      .then((mod) => {
+        if (!cancelled) {
+          setCompetitionModules(mod.competitionModules || [])
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCompetitionModules([])
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen, canAccessCompetitionUnit])
 
   return (
     <>
@@ -19,6 +39,7 @@ function Sidebar({ isOpen, onClose }) {
         {visibleParts.map((part) => {
           const isCompetition = part.id === 4
           const partCourses = isCompetition ? competitionModules : getPartCourses(part.id)
+          const partCount = isCompetition ? (part.moduleCount || partCourses.length) : partCourses.length
           const destination = part.path || `/part/${part.id}`
           return (
             <div key={part.id} className="sidebar-part-group">
@@ -30,7 +51,7 @@ function Sidebar({ isOpen, onClose }) {
               >
                 <span className="icon">{part.icon}</span>
                 <span>{part.title}</span>
-                <span className="sidebar-part-count">{partCourses.length}</span>
+                <span className="sidebar-part-count">{partCount}</span>
               </Link>
               {partCourses.map((course) => {
                 const courseId = isCompetition ? course.slug : course.id

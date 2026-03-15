@@ -1,27 +1,29 @@
-import { useState } from 'react'
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { useState, lazy, Suspense } from 'react'
+import { Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth, getUnlockedCourses } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
-import { CompetitionProgressProvider } from './contexts/CompetitionProgressContext'
 import Navbar from './components/Navbar'
 import Sidebar from './components/Sidebar'
-import Home from './pages/Home'
-import PartDetail from './pages/PartDetail'
-import Lesson from './pages/Lesson'
-import Visualizer from './pages/Visualizer'
-import Login from './pages/Login'
-import CompetitionHub from './pages/CompetitionHub'
-import CompetitionLesson from './pages/CompetitionLesson'
-import CompetitionPractice from './pages/CompetitionPractice'
-import CompetitionProblemDetail from './pages/CompetitionProblemDetail'
-import ExamList from './pages/Exam/ExamList'
-import ExamPaper from './pages/Exam/ExamPaper'
-import WrongBook from './pages/Exam/WrongBook'
-import AdminExams from './pages/AdminExams'
 import './styles/App.css'
 import './styles/Supplementals.css'
-import AdminUsers from './pages/AdminUsers'
 import { canAccessCompetitionUnit } from '../shared/courseAccess.js'
+
+// 懒加载所有页面组件，首屏只加载必要代码
+const Home = lazy(() => import('./pages/Home'))
+const PartDetail = lazy(() => import('./pages/PartDetail'))
+const Lesson = lazy(() => import('./pages/Lesson'))
+const Visualizer = lazy(() => import('./pages/Visualizer'))
+const Login = lazy(() => import('./pages/Login'))
+const CompetitionHub = lazy(() => import('./pages/CompetitionHub'))
+const CompetitionLesson = lazy(() => import('./pages/CompetitionLesson'))
+const CompetitionPractice = lazy(() => import('./pages/CompetitionPractice'))
+const CompetitionProblemDetail = lazy(() => import('./pages/CompetitionProblemDetail'))
+const CompetitionProgressProvider = lazy(() => import('./contexts/CompetitionProgressContext').then((mod) => ({ default: mod.CompetitionProgressProvider })))
+const ExamList = lazy(() => import('./pages/Exam/ExamList'))
+const ExamPaper = lazy(() => import('./pages/Exam/ExamPaper'))
+const WrongBook = lazy(() => import('./pages/Exam/WrongBook'))
+const AdminExams = lazy(() => import('./pages/AdminExams'))
+const AdminUsers = lazy(() => import('./pages/AdminUsers'))
 
 // 路由保护组件
 function ProtectedRoute({ children }) {
@@ -81,6 +83,16 @@ function CompetitionRoute({ children }) {
   return children
 }
 
+function CompetitionShell() {
+  return (
+    <Suspense fallback={<div className="loading-screen"><div className="loading-spinner-large" /></div>}>
+      <CompetitionProgressProvider>
+        <Outlet />
+      </CompetitionProgressProvider>
+    </Suspense>
+  )
+}
+
 // 主应用内容
 function AppContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -92,9 +104,11 @@ function AppContent() {
 
   if (isLoginPage) {
     return (
-      <Routes>
-        <Route path="/login" element={<Login />} />
-      </Routes>
+      <Suspense fallback={<div className="loading-screen"><div className="loading-spinner-large" /></div>}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+        </Routes>
+      </Suspense>
     )
   }
 
@@ -103,6 +117,7 @@ function AppContent() {
       <Navbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <main className="main-content">
+        <Suspense fallback={<div className="loading-screen"><div className="loading-spinner-large" /></div>}>
         <Routes>
           <Route path="/" element={
             <ProtectedRoute>
@@ -124,26 +139,12 @@ function AppContent() {
               <PartDetail />
             </ProtectedRoute>
           } />
-          <Route path="/competition" element={
-            <CompetitionRoute>
-              <CompetitionHub />
-            </CompetitionRoute>
-          } />
-          <Route path="/competition/module/:slug" element={
-            <CompetitionRoute>
-              <CompetitionLesson />
-            </CompetitionRoute>
-          } />
-          <Route path="/competition/practice" element={
-            <CompetitionRoute>
-              <CompetitionPractice />
-            </CompetitionRoute>
-          } />
-          <Route path="/competition/problem/:id" element={
-            <CompetitionRoute>
-              <CompetitionProblemDetail />
-            </CompetitionRoute>
-          } />
+          <Route path="/competition" element={<CompetitionRoute><CompetitionShell /></CompetitionRoute>}>
+            <Route index element={<CompetitionHub />} />
+            <Route path="module/:slug" element={<CompetitionLesson />} />
+            <Route path="practice" element={<CompetitionPractice />} />
+            <Route path="problem/:id" element={<CompetitionProblemDetail />} />
+          </Route>
           <Route path="/lesson/:id" element={
             <ProtectedRoute>
               <Lesson />
@@ -172,6 +173,7 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </main>
     </div>
   )
@@ -181,9 +183,7 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <CompetitionProgressProvider>
-          <AppContent />
-        </CompetitionProgressProvider>
+        <AppContent />
       </AuthProvider>
     </ThemeProvider>
   )

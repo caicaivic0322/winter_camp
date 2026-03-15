@@ -22,6 +22,17 @@ function markdownPlugin() {
 export default defineConfig({
   plugins: [react(), markdownPlugin()],
   assetsInclude: ['**/*.md'],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-motion': ['framer-motion'],
+          'vendor-markdown': ['react-markdown', 'remark-gfm'],
+        },
+      },
+    },
+  },
   server: {
     proxy: {
       '/api': {
@@ -44,3 +55,4 @@ export default defineConfig({
     },
   },
 })
+

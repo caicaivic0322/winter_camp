@@ -5,6 +5,7 @@ import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import multer from 'multer'
+import compression from 'compression'
 import { fileURLToPath } from 'url'
 import { parseQuestions } from './lib/mdParser.js'
 import { getExamMarkdownTemplate } from './lib/examTemplate.js'
@@ -18,6 +19,7 @@ import {
 } from '../shared/courseAccess.js'
 
 const app = express()
+app.use(compression())
 app.use(cors({
   origin: '*',
   credentials: true

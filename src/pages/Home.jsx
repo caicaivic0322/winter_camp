@@ -3,7 +3,6 @@ import { motion } from 'framer-motion'
 import { parts, courses, getPartCourses } from '../data/courses'
 import { useAuth, getUnlockedCourses } from '../contexts/AuthContext'
 import { DEFAULT_USER_LEVEL } from '../../shared/courseAccess.js'
-import { competitionModules } from '../data/competitionUnit'
 
 function Home() {
   const { user, logout, canAccessCompetitionUnit } = useAuth()
@@ -80,10 +79,10 @@ function Home() {
           transition={{ delay: 0.5, duration: 0.6 }}
         >
           {visibleParts.map((part) => {
-            const partCourses = part.id === 4 ? competitionModules : getPartCourses(part.id)
+            const partCount = part.id === 4 ? (part.moduleCount || 0) : getPartCourses(part.id).length
             return (
               <div className="stat-item" key={part.id}>
-                <div className="stat-value">{partCourses.length}</div>
+                <div className="stat-value">{partCount}</div>
                 <div className="stat-label">{part.title}</div>
               </div>
             )
@@ -110,12 +109,12 @@ function Home() {
         <div className="parts-grid">
           {visibleParts.map((part) => {
             const isCompetition = part.id === 4
-            const partCourses = isCompetition ? competitionModules : getPartCourses(part.id)
+            const partCourses = isCompetition ? [] : getPartCourses(part.id)
             const categories = isCompetition
               ? ['CSP-J', 'CSP-S', 'Hot 100', '专题讲解']
               : [...new Set(partCourses.map(c => c.category))]
             const destination = part.path || `/part/${part.id}`
-            const countLabel = part.unitLabel || `${partCourses.length} 章`
+            const countLabel = isCompetition ? (part.unitLabel || `${part.moduleCount || 0} 模块`) : `${partCourses.length} 章`
             const rangeLabel = isCompetition ? '专题学习 + 自测题单' : `第${part.chapterRange[0]}-${part.chapterRange[1]}章`
 
             return (

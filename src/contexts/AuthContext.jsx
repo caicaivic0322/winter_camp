@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import API_BASE from '../config/api'
 import { buildAuthHeaders, clearStoredAuth, CURRENT_USER_KEY, saveStoredAuth } from '../utils/auth'
+import { readApiError } from '../utils/apiError'
 import {
   ADMIN_LEVEL,
   canAccessCompetitionUnit,
@@ -188,8 +189,7 @@ export function AuthProvider({ children }) {
       })
       
       if (!res.ok) {
-        const error = await res.json()
-        return { success: false, error: error.error || '注册失败' }
+        return { success: false, error: await readApiError(res, '注册失败') }
       }
       
       const data = await res.json()
@@ -216,8 +216,7 @@ export function AuthProvider({ children }) {
       })
       
       if (!res.ok) {
-        const error = await res.json()
-        return { success: false, error: error.error || '登录失败' }
+        return { success: false, error: await readApiError(res, '登录失败') }
       }
       
       const data = await res.json()
