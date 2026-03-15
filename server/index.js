@@ -1299,11 +1299,25 @@ app.get('/api/my/wrong-book', requireAuth, asyncRoute(async (req, res) => {
   const wrongBook = (await readWrongBook()).filter(w => w.username === username)
   const allQuestions = await readQuestions()
   const map = new Map()
+
+  const buildWrongBookDedupKey = (item, question) => {
+    const title = sanitizeQuestionText(item.questionTitle || question?.title || '')
+    const correctAnswer = String(item.correctAnswer || question?.answer || '').trim().toUpperCase()
+    const type = String(question?.type || 'single').trim().toLowerCase()
+    const optionsSignature = Array.isArray(question?.options)
+      ? question.options
+          .map(opt => `${String(opt?.label || '').trim().toUpperCase()}:${normalizeOptionText(opt?.text || '')}`)
+          .join('|')
+      : ''
+    return `${title}::${correctAnswer}::${type}::${optionsSignature}`
+  }
+
   wrongBook.forEach(item => {
-    const prev = map.get(item.questionId)
+    const q = allQuestions.find(x => x.id === item.questionId) || {}
+    const dedupKey = buildWrongBookDedupKey(item, q)
+    const prev = map.get(dedupKey)
     if (!prev) {
-      const q = allQuestions.find(x => x.id === item.questionId) || {}
-      map.set(item.questionId, {
+      map.set(dedupKey, {
         questionId: item.questionId,
         title: item.questionTitle || q.title || '',
         type: q.type || 'single',
