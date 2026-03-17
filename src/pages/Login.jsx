@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { useAuth, getUnlockedCourses } from '../contexts/AuthContext'
 import '../styles/Auth.css'
 
@@ -23,19 +22,12 @@ function Login() {
     }
   }, [])
   
-  // 获取课程状态
   const courseStatus = getUnlockedCourses()
   
-  // 如果网站已过期，显示过期信息
   if (courseStatus.isExpired) {
     return (
       <div className="auth-page">
-        <motion.div 
-          className="auth-container expired-container"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
+        <div className="auth-container expired-container auth-enter">
           <div className="auth-header">
             <div className="auth-logo">🔒</div>
             <h1>课程已结束</h1>
@@ -56,7 +48,7 @@ function Login() {
             <span className="expired-icon">📚</span>
             <span>期待与你再次相遇</span>
           </div>
-        </motion.div>
+        </div>
       </div>
     )
   }
@@ -75,7 +67,6 @@ function Login() {
       }
       
       if (result.success) {
-        // 登录成功，跳转到之前的页面或首页
         const from = location.state?.from?.pathname || '/'
         navigate(from, { replace: true })
       } else {
@@ -95,12 +86,7 @@ function Login() {
   
   return (
     <div className="auth-page">
-      <motion.div 
-        className="auth-container"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
+      <div className="auth-container auth-enter">
         <div className="auth-header">
           <div className="auth-logo">🚀</div>
           <h1>延安科创训练营</h1>
@@ -111,13 +97,9 @@ function Login() {
         
         <form className="auth-form" onSubmit={handleSubmit}>
           {error && (
-            <motion.div 
-              className="auth-error"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-            >
+            <div className="auth-error auth-error-enter">
               <span>⚠️</span> {error}
-            </motion.div>
+            </div>
           )}
           
           <div className="form-group">
@@ -135,11 +117,7 @@ function Login() {
           </div>
           
           {!isLogin && (
-            <motion.div 
-              className="form-group"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-            >
+            <div className="form-group auth-field-enter">
               <label htmlFor="nickname">昵称（可选）</label>
               <input
                 type="text"
@@ -150,7 +128,7 @@ function Login() {
                 autoComplete="nickname"
               />
               <p className="form-hint">建议填写本人真名，方便老师审核确认。</p>
-            </motion.div>
+            </div>
           )}
           
           <div className="form-group">
@@ -190,9 +168,8 @@ function Login() {
         <div className="auth-info">
           <div className="info-item">Developed by [蔡老师]</div>
         </div>
-      </motion.div>
+      </div>
       
-      {/* 背景装饰 */}
       <div className="auth-bg-decoration">
         <div className="bg-circle circle-1" />
         <div className="bg-circle circle-2" />

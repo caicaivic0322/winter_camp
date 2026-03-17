@@ -19,7 +19,6 @@
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
-    "@vitejs/plugin-legacy": "^5.4.3",
     "@vitejs/plugin-react": "^4.7.0",
     "playwright": "^1.58.2",
     "terser": "^5.46.0",

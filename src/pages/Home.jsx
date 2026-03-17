@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { parts, courses, getPartCourses } from '../data/courses'
 import { useAuth, getUnlockedCourses } from '../contexts/AuthContext'
 import { DEFAULT_USER_LEVEL } from '../../shared/courseAccess.js'
@@ -9,28 +8,9 @@ function Home() {
   const courseStatus = getUnlockedCourses()
   const visibleParts = parts.filter((part) => part.id !== 4 || canAccessCompetitionUnit())
 
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.12 }
-    }
-  }
-
-  const item = {
-    hidden: { opacity: 0, y: 30 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
-  }
-
   return (
-    <div className="home container">
-      {/* 用户信息栏 */}
-      <motion.div
-        className="user-bar"
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
+    <div className="home container page-enter">
+      <div className="user-bar page-enter-quick">
         <div className="user-info">
           <span className="user-avatar">👤</span>
           <span className="user-name">欢迎，{user?.nickname || user?.username}</span>
@@ -43,23 +23,12 @@ function Home() {
             退出登录
           </button>
         </div>
-      </motion.div>
+      </div>
 
-      {/* Hero 区域 */}
-      <motion.section
-        className="hero"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <motion.div
-          className="hero-badge"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-        >
+      <section className="hero page-enter-delay-1">
+        <div className="hero-badge hero-badge-pop">
           <span>🚀</span> {courses.length}章精品课程 + 1个竞赛单元 · 四大阶段系统学习
-        </motion.div>
+        </div>
 
         <h1 className="hero-title">C++系统学习课程</h1>
 
@@ -72,12 +41,7 @@ function Home() {
           </div>
         )}
 
-        <motion.div
-          className="hero-stats"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.6 }}
-        >
+        <div className="hero-stats page-enter-delay-2">
           {visibleParts.map((part) => {
             const partCount = part.id === 4 ? (part.moduleCount || 0) : getPartCourses(part.id).length
             return (
@@ -87,27 +51,16 @@ function Home() {
               </div>
             )
           })}
-        </motion.div>
-      </motion.section>
+        </div>
+      </section>
 
-      {/* 三大部分卡片 */}
-      <motion.section
-        variants={container}
-        initial="hidden"
-        animate="show"
-        style={{ marginTop: '48px' }}
-      >
-        <motion.h2
-          className="section-title"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-        >
+      <section className="page-enter-delay-2" style={{ marginTop: '48px' }}>
+        <h2 className="section-title">
           课程体系
-        </motion.h2>
+        </h2>
 
         <div className="parts-grid">
-          {visibleParts.map((part) => {
+          {visibleParts.map((part, index) => {
             const isCompetition = part.id === 4
             const partCourses = isCompetition ? [] : getPartCourses(part.id)
             const categories = isCompetition
@@ -118,7 +71,7 @@ function Home() {
             const rangeLabel = isCompetition ? '专题学习 + 自测题单' : `第${part.chapterRange[0]}-${part.chapterRange[1]}章`
 
             return (
-              <motion.div key={part.id} variants={item}>
+              <div key={part.id} className="page-stagger-item" style={{ animationDelay: `${0.08 * index}s` }}>
                 <Link
                   to={destination}
                   className="part-card"
@@ -156,14 +109,13 @@ function Home() {
                     </div>
                   </div>
                 </Link>
-              </motion.div>
+              </div>
             )
           })}
         </div>
-      </motion.section>
+      </section>
 
-      {/* 底部 */}
-      <motion.footer
+      <footer
         style={{
           textAlign: 'center',
           padding: '80px 0 48px',
@@ -171,9 +123,6 @@ function Home() {
           fontFamily: 'var(--font-mono)',
           fontSize: '0.85rem',
         }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.2, duration: 0.5 }}
       >
         <div style={{ marginBottom: '8px', color: 'var(--text-muted)' }}>
           <span style={{ color: 'var(--dawn-orange)' }}>{'<'}</span>
@@ -181,7 +130,7 @@ function Home() {
           <span style={{ color: 'var(--dawn-orange)' }}>{' />'}</span>
         </div>
         <div>developed by [蔡老师] for competitive programming</div>
-      </motion.footer>
+      </footer>
     </div>
   )
 }

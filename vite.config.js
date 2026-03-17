@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import legacy from '@vitejs/plugin-legacy'
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
@@ -23,21 +22,15 @@ function markdownPlugin() {
 export default defineConfig({
   plugins: [
     react(),
-    legacy({
-      targets: ['defaults', 'not IE 11'],
-      additionalLegacyPolyfills: ['regenerator-runtime/runtime']
-    }),
     markdownPlugin()
   ],
   assetsInclude: ['**/*.md'],
   build: {
-    target: 'es2015',
+    target: 'es2020',
     rollupOptions: {
       output: {
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-motion': ['framer-motion'],
-          'vendor-markdown': ['react-markdown', 'remark-gfm'],
         },
       },
     },
@@ -64,4 +57,3 @@ export default defineConfig({
     },
   },
 })
-

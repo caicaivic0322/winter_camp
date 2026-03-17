@@ -12,9 +12,10 @@ test('resolveStorageConfig uses local file storage by default', () => {
   assert.equal(config.dataDir, '/tmp/cpp-camp-data')
 })
 
-test('resolveStorageConfig uses supabase when server credentials are present', () => {
+test('resolveStorageConfig uses supabase when explicitly requested', () => {
   const config = resolveStorageConfig({
     DATA_DIR: '/tmp/cpp-camp-data',
+    STORAGE_MODE: 'supabase',
     SUPABASE_URL: 'https://demo.supabase.co',
     SUPABASE_SERVICE_ROLE_KEY: 'service-role-secret',
   })
@@ -43,4 +44,36 @@ test('resolveStorageConfig uses sqlite when SQLITE_PATH is provided', () => {
 
   assert.equal(config.mode, 'sqlite')
   assert.equal(config.sqlitePath, '/var/lib/cpp-camp/state.db')
+})
+
+test('resolveStorageConfig keeps local mode when DATA_DIR is explicitly provided alongside Supabase env', () => {
+  const config = resolveStorageConfig({
+    DATA_DIR: '/tmp/cpp-camp-data',
+    SUPABASE_URL: 'https://demo.supabase.co',
+    SUPABASE_SERVICE_ROLE_KEY: 'service-role-secret',
+  })
+
+  assert.equal(config.mode, 'local')
+  assert.equal(config.dataDir, '/tmp/cpp-camp-data')
+})
+
+test('resolveStorageConfig lets explicit sqlite mode override ambient Supabase env', () => {
+  const config = resolveStorageConfig({
+    DATA_DIR: '/tmp/cpp-camp-data',
+    STORAGE_MODE: 'sqlite',
+    SUPABASE_URL: 'https://demo.supabase.co',
+    SUPABASE_SERVICE_ROLE_KEY: 'service-role-secret',
+  })
+
+  assert.equal(config.mode, 'sqlite')
+  assert.equal(config.sqlitePath, '/tmp/cpp-camp-data/app_state.sqlite')
+})
+
+test('resolveStorageConfig ignores ambient Supabase env unless STORAGE_MODE requests it', () => {
+  const config = resolveStorageConfig({
+    SUPABASE_URL: 'https://demo.supabase.co',
+    SUPABASE_SERVICE_ROLE_KEY: 'service-role-secret',
+  })
+
+  assert.equal(config.mode, 'local')
 })

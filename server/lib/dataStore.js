@@ -16,6 +16,7 @@ function loadSqliteDriver() {
 }
 
 export function resolveStorageConfig(env = process.env, fallbackDataDir = '') {
+  const hasExplicitDataDir = Boolean(String(env.DATA_DIR || '').trim())
   const dataDir = path.resolve(env.DATA_DIR || fallbackDataDir || path.join(process.cwd(), 'data'))
   const storageMode = String(env.STORAGE_MODE || '').trim().toLowerCase()
   const supabaseUrl = String(env.SUPABASE_URL || '').trim()
@@ -24,7 +25,7 @@ export function resolveStorageConfig(env = process.env, fallbackDataDir = '') {
   const sqlitePathRaw = String(env.SQLITE_PATH || '').trim()
   const sqlitePath = path.resolve(sqlitePathRaw || path.join(dataDir, DEFAULT_SQLITE_FILE))
 
-  if (storageMode === 'supabase' || (supabaseUrl && supabaseServiceRoleKey)) {
+  if (storageMode === 'supabase') {
     return {
       mode: 'supabase',
       dataDir,
@@ -39,6 +40,14 @@ export function resolveStorageConfig(env = process.env, fallbackDataDir = '') {
       mode: 'sqlite',
       dataDir,
       sqlitePath,
+      supabaseTable,
+    }
+  }
+
+  if (storageMode === 'local' || hasExplicitDataDir) {
+    return {
+      mode: 'local',
+      dataDir,
       supabaseTable,
     }
   }

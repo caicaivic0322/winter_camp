@@ -16,6 +16,58 @@
   z-index: 1;
 }
 
+.page-enter,
+.page-enter-quick,
+.page-enter-delay-1,
+.page-enter-delay-2,
+.page-stagger-item {
+  opacity: 0;
+  animation: pageFadeUp 560ms var(--ease-out) forwards;
+  will-change: transform, opacity;
+}
+
+.page-enter-quick {
+  animation-duration: 380ms;
+}
+
+.page-enter-delay-1 {
+  animation-delay: 120ms;
+}
+
+.page-enter-delay-2 {
+  animation-delay: 220ms;
+}
+
+.page-stagger-item {
+  animation-duration: 520ms;
+}
+
+.hero-badge-pop {
+  animation: badgePop 420ms var(--ease-spring) 140ms both;
+}
+
+@keyframes pageFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes badgePop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* ==================== 导航栏 ==================== */
 .navbar {
   position: fixed;
