@@ -48,6 +48,46 @@ function hasSubmittedExam(attempts, username, examId) {
   return attempts.some(item => item.username === username && item.examId === examId)
 }
 
+const API_CACHE_MS = Math.max(0, Number(process.env.API_CACHE_MS || 5000) || 5000)
+const endpointCache = new Map()
+
+function cacheClone(value) {
+  return value === undefined ? undefined : JSON.parse(JSON.stringify(value))
+}
+
+function getCachedEndpoint(key) {
+  const hit = endpointCache.get(key)
+  if (!hit) return null
+  if ((Date.now() - hit.at) > API_CACHE_MS) {
+    endpointCache.delete(key)
+    return null
+  }
+  return cacheClone(hit.payload)
+}
+
+function setCachedEndpoint(key, payload) {
+  endpointCache.set(key, {
+    at: Date.now(),
+    payload: cacheClone(payload),
+  })
+}
+
+function clearCachedEndpoint(prefix) {
+  for (const key of endpointCache.keys()) {
+    if (key.startsWith(prefix)) endpointCache.delete(key)
+  }
+}
+
+function clearExamCaches() {
+  clearCachedEndpoint('admin:exams')
+  clearCachedEndpoint('exams:available:')
+}
+
+function clearUserCaches(username) {
+  endpointCache.delete(`exams:available:${username}`)
+  endpointCache.delete(`wrong-book:${username}`)
+}
+
 const LEVELS = COURSE_LEVELS
 const ROLES = ['user', 'admin']
 const DEFAULT_TOTAL_SCORE = 100
@@ -894,6 +934,8 @@ app.delete('/api/users/:username', requireAdmin, asyncRoute(async (req, res) => 
   const wrongBook = (await readWrongBook()).filter(item => item.username !== username)
   await writeAttempts(attempts)
   await writeWrongBook(wrongBook)
+  clearUserCaches(username)
+  clearExamCaches()
 
   res.json({ ok: true, username })
 }))
@@ -974,6 +1016,7 @@ app.post('/api/admin/exams', requireAdmin, asyncRoute(async (req, res) => {
   
   exams.push(newExam)
   await writeExams(exams)
+  clearExamCaches()
   
   res.json({ success: true, exam: newExam })
 }))
@@ -1050,6 +1093,7 @@ app.post('/api/admin/exams/upload', requireAdmin, upload.single('file'), asyncRo
     }
     exams.push(exam)
     await writeExams(exams)
+    clearExamCaches()
 
     res.status(201).json({
       success: true,
@@ -1072,10 +1116,14 @@ app.get('/api/admin/exams/template-md', requireAdmin, (req, res) => {
 })
 
 app.get('/api/admin/exams', requireAdmin, asyncRoute(async (req, res) => {
+  const cacheKey = 'admin:exams:list'
+  const cached = getCachedEndpoint(cacheKey)
+  if (cached) return res.json(cached)
   const exams = await readExams()
   const list = exams
     .slice()
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+  setCachedEndpoint(cacheKey, list)
   res.json(list)
 }))
 
@@ -1103,6 +1151,7 @@ app.patch('/api/admin/exams/:id', requireAdmin, asyncRoute(async (req, res) => {
 
   exams[idx] = next
   await writeExams(exams)
+  clearExamCaches()
   res.json({ success: true, exam: next })
 }))
 
@@ -1112,25 +1161,34 @@ app.delete('/api/admin/exams/:id', requireAdmin, asyncRoute(async (req, res) => 
   const next = exams.filter(e => e.id !== id)
   if (next.length === exams.length) return res.status(404).json({ error: 'exam not found' })
   await writeExams(next)
+  clearExamCaches()
   res.json({ success: true })
 }))
 
 // 获取可用考试列表（学生端）
 app.get('/api/exams/available', requireAuth, asyncRoute(async (req, res) => {
+  const username = req.authUser.username
+  const cacheKey = `exams:available:${username}`
+  const cached = getCachedEndpoint(cacheKey)
+  if (cached) return res.json(cached)
   const exams = await readExams()
   const attempts = await readAttempts()
-  const username = req.authUser.username
+  const submittedExamIds = new Set(
+    attempts
+      .filter(item => item.username === username)
+      .map(item => item.examId)
+  )
   const now = new Date()
   
-  // 返回未结束考试（含未开始和进行中），方便学生提前看到新发布考试
   const available = exams
     .filter(e => new Date(e.endTime) >= now)
-    .filter(e => !hasSubmittedExam(attempts, username, e.id))
+    .filter(e => !submittedExamIds.has(e.id))
     .map(e => ({
       ...e,
       availability: new Date(e.startTime) > now ? 'upcoming' : 'active'
     }))
     .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
+  setCachedEndpoint(cacheKey, available)
   res.json(available)
 }))
 
@@ -1158,9 +1216,10 @@ app.get('/api/exams/:id/start', requireAuth, asyncRoute(async (req, res) => {
   
   // 抽取题目（按试卷顺序，不打乱）
   const allQuestions = await readQuestions()
+  const bankIdSet = new Set(exam.bankIds || [])
   const bankOrder = new Map((exam.bankIds || []).map((bid, index) => [bid, index]))
   const candidates = allQuestions
-    .filter(q => exam.bankIds.includes(q.bankId))
+    .filter(q => bankIdSet.has(q.bankId))
     .sort((a, b) => {
       const bankDiff = (bankOrder.get(a.bankId) ?? 9999) - (bankOrder.get(b.bankId) ?? 9999)
       if (bankDiff !== 0) return bankDiff
@@ -1196,6 +1255,7 @@ app.post('/api/exams/:id/submit', requireAuth, asyncRoute(async (req, res) => {
   if (!exam) return res.status(404).json({ error: 'exam not found' })
   
   const allQuestions = await readQuestions()
+  const questionMap = new Map(allQuestions.map(q => [q.id, q]))
   const wrongBook = await readWrongBook()
   const attempts = await readAttempts()
   if (hasSubmittedExam(attempts, username, id)) {
@@ -1210,7 +1270,7 @@ app.post('/api/exams/:id/submit', requireAuth, asyncRoute(async (req, res) => {
   const wrongBookRecords = []
 
   validQuestionIds.forEach(qId => {
-    const question = allQuestions.find(q => q.id === qId)
+    const question = questionMap.get(qId)
     if (!question) return
 
     totalRawScore += question.score
@@ -1281,6 +1341,8 @@ app.post('/api/exams/:id/submit', requireAuth, asyncRoute(async (req, res) => {
 
   await writeWrongBook(wrongBook)
   await writeAttempts(attempts)
+  clearUserCaches(username)
+  clearExamCaches()
   
   res.json({
     success: true,
@@ -1296,24 +1358,33 @@ app.post('/api/exams/:id/submit', requireAuth, asyncRoute(async (req, res) => {
 // 获取错题本
 app.get('/api/my/wrong-book', requireAuth, asyncRoute(async (req, res) => {
   const username = req.authUser.username
+  const cacheKey = `wrong-book:${username}`
+  const cached = getCachedEndpoint(cacheKey)
+  if (cached) return res.json(cached)
   const wrongBook = (await readWrongBook()).filter(w => w.username === username)
   const allQuestions = await readQuestions()
+  const questionMap = new Map(allQuestions.map(q => [q.id, q]))
+  const optionSignatureCache = new Map()
   const map = new Map()
 
   const buildWrongBookDedupKey = (item, question) => {
     const title = sanitizeQuestionText(item.questionTitle || question?.title || '')
     const correctAnswer = String(item.correctAnswer || question?.answer || '').trim().toUpperCase()
     const type = String(question?.type || 'single').trim().toLowerCase()
-    const optionsSignature = Array.isArray(question?.options)
-      ? question.options
-          .map(opt => `${String(opt?.label || '').trim().toUpperCase()}:${normalizeOptionText(opt?.text || '')}`)
-          .join('|')
-      : ''
+    const optionsSignature = question?.id ? (optionSignatureCache.get(question.id) || '') : ''
     return `${title}::${correctAnswer}::${type}::${optionsSignature}`
   }
 
   wrongBook.forEach(item => {
-    const q = allQuestions.find(x => x.id === item.questionId) || {}
+    const q = questionMap.get(item.questionId) || {}
+    if (q.id && !optionSignatureCache.has(q.id)) {
+      const optionsSignature = Array.isArray(q.options)
+        ? q.options
+            .map(opt => `${String(opt?.label || '').trim().toUpperCase()}:${normalizeOptionText(opt?.text || '')}`)
+            .join('|')
+        : ''
+      optionSignatureCache.set(q.id, optionsSignature)
+    }
     const dedupKey = buildWrongBookDedupKey(item, q)
     const prev = map.get(dedupKey)
     if (!prev) {
@@ -1342,6 +1413,7 @@ app.get('/api/my/wrong-book', requireAuth, asyncRoute(async (req, res) => {
     }
   })
   const list = Array.from(map.values()).sort((a, b) => new Date(b.lastWrongAt) - new Date(a.lastWrongAt))
+  setCachedEndpoint(cacheKey, list)
   res.json(list)
 }))
 

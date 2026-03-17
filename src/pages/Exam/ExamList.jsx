@@ -53,9 +53,8 @@ export default function ExamList() {
   const fetchExams = async () => {
     try {
       const endpoint = isAdmin ? '/admin/exams' : '/exams/available'
-      const res = await fetch(`${API_BASE}${endpoint}?t=${Date.now()}`, {
+      const res = await fetch(`${API_BASE}${endpoint}`, {
         headers: buildAuthHeaders(),
-        cache: 'no-store'
       })
       if (res.ok) {
         const data = await res.json()

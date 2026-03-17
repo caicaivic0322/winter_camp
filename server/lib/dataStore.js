@@ -1,21 +1,44 @@
 import fs from 'fs'
 import path from 'path'
+import { createRequire } from 'module'
 import { createClient } from '@supabase/supabase-js'
 
 const DEFAULT_SUPABASE_TABLE = 'app_state'
+const DEFAULT_SQLITE_FILE = 'app_state.sqlite'
+const require = createRequire(import.meta.url)
+
+function loadSqliteDriver() {
+  try {
+    return require('better-sqlite3')
+  } catch {
+    return null
+  }
+}
 
 export function resolveStorageConfig(env = process.env, fallbackDataDir = '') {
   const dataDir = path.resolve(env.DATA_DIR || fallbackDataDir || path.join(process.cwd(), 'data'))
+  const storageMode = String(env.STORAGE_MODE || '').trim().toLowerCase()
   const supabaseUrl = String(env.SUPABASE_URL || '').trim()
   const supabaseServiceRoleKey = String(env.SUPABASE_SERVICE_ROLE_KEY || '').trim()
   const supabaseTable = String(env.SUPABASE_STATE_TABLE || DEFAULT_SUPABASE_TABLE).trim() || DEFAULT_SUPABASE_TABLE
+  const sqlitePathRaw = String(env.SQLITE_PATH || '').trim()
+  const sqlitePath = path.resolve(sqlitePathRaw || path.join(dataDir, DEFAULT_SQLITE_FILE))
 
-  if (supabaseUrl && supabaseServiceRoleKey) {
+  if (storageMode === 'supabase' || (supabaseUrl && supabaseServiceRoleKey)) {
     return {
       mode: 'supabase',
       dataDir,
       supabaseUrl,
       supabaseServiceRoleKey,
+      supabaseTable,
+    }
+  }
+
+  if (storageMode === 'sqlite' || sqlitePathRaw) {
+    return {
+      mode: 'sqlite',
+      dataDir,
+      sqlitePath,
       supabaseTable,
     }
   }
@@ -51,6 +74,15 @@ export function createDataStore({
         },
       })
     : null
+
+  const sqlite = (() => {
+    if (config.mode !== 'sqlite') return null
+    const SqliteDriver = loadSqliteDriver()
+    if (!SqliteDriver) {
+      throw new Error('SQLite mode requires dependency "better-sqlite3". Run: npm --prefix server install')
+    }
+    return new SqliteDriver(config.sqlitePath)
+  })()
 
   function buildSeedUsers() {
     return {
@@ -100,6 +132,69 @@ export function createDataStore({
     }
   }
 
+  function sqliteReadStateRowSync(key) {
+    const row = sqlite
+      .prepare('SELECT value FROM app_state WHERE key = ? LIMIT 1')
+      .get(key)
+    if (!row) return undefined
+    try {
+      return JSON.parse(row.value)
+    } catch {
+      return undefined
+    }
+  }
+
+  function sqliteWriteStateRowSync(key, value) {
+    sqlite
+      .prepare(`
+        INSERT INTO app_state (key, value, updated_at)
+        VALUES (@key, @value, @updated_at)
+        ON CONFLICT(key) DO UPDATE SET
+          value = excluded.value,
+          updated_at = excluded.updated_at
+      `)
+      .run({
+        key,
+        value: JSON.stringify(value),
+        updated_at: new Date().toISOString(),
+      })
+  }
+
+  function ensureSqliteData() {
+    if (!fs.existsSync(config.dataDir)) fs.mkdirSync(config.dataDir, { recursive: true })
+    sqlite.pragma('journal_mode = WAL')
+    sqlite.pragma('busy_timeout = 5000')
+    sqlite
+      .prepare(`
+        CREATE TABLE IF NOT EXISTS app_state (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      `)
+      .run()
+
+    const users = sqliteReadStateRowSync('users')
+    if (users === undefined) {
+      ensureLocalData()
+      const localData = {
+        users: JSON.parse(fs.readFileSync(usersFile, 'utf-8')),
+        questions: JSON.parse(fs.readFileSync(questionsFile, 'utf-8')),
+        exams: JSON.parse(fs.readFileSync(examsFile, 'utf-8')),
+        wrong_book: JSON.parse(fs.readFileSync(wrongBookFile, 'utf-8')),
+        attempts: JSON.parse(fs.readFileSync(attemptsFile, 'utf-8')),
+      }
+
+      sqlite.transaction(() => {
+        sqliteWriteStateRowSync('users', localData.users)
+        sqliteWriteStateRowSync('questions', localData.questions)
+        sqliteWriteStateRowSync('exams', localData.exams)
+        sqliteWriteStateRowSync('wrong_book', localData.wrong_book)
+        sqliteWriteStateRowSync('attempts', localData.attempts)
+      })()
+    }
+  }
+
   async function readStateRow(key) {
     const { data, error } = await supabase
       .from(config.supabaseTable)
@@ -144,6 +239,16 @@ export function createDataStore({
       }
     }
 
+    if (config.mode === 'sqlite') {
+      ensureSqliteData()
+      const value = sqliteReadStateRowSync(key)
+      if (value === undefined || value === null) {
+        sqliteWriteStateRowSync(key, defaultValue)
+        return defaultValue
+      }
+      return value
+    }
+
     const value = await readStateRow(key)
     if (value === undefined || value === null) {
       await writeStateRow(key, defaultValue)
@@ -163,6 +268,12 @@ export function createDataStore({
         attempts: attemptsFile,
       }
       fs.writeFileSync(fileMap[key], JSON.stringify(value, null, 2))
+      return
+    }
+
+    if (config.mode === 'sqlite') {
+      ensureSqliteData()
+      sqliteWriteStateRowSync(key, value)
       return
     }
 
@@ -258,6 +369,12 @@ export function createDataStore({
     if (config.mode === 'local') {
       ensureLocalData()
       await readCollection('users', buildSeedUsers())
+      return { storage: config.mode, reachable: true }
+    }
+
+    if (config.mode === 'sqlite') {
+      ensureSqliteData()
+      sqliteReadStateRowSync('users')
       return { storage: config.mode, reachable: true }
     }
 
