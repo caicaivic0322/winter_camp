@@ -481,7 +481,7 @@ async function processPendingAttemptQueue() {
 
 function buildStudentExamResultSummary(attempt) {
   return {
-    attemptId: attempt.id,
+    attemptId: String(attempt.id),
     examId: attempt.examId,
     examTitle: attempt.examTitle || attempt.examId,
     status: attempt.status || 'graded',
@@ -1023,10 +1023,50 @@ async function buildStudentExamResults(username) {
     .map(buildStudentExamResultSummary)
 }
 
+async function buildAttemptWrongQuestionDetail(attempt) {
+  if (Array.isArray(attempt.wrongQuestions) && attempt.wrongQuestions.length > 0) {
+    return cloneJson(attempt.wrongQuestions)
+  }
+
+  const legacyWrongBook = await dataStore.readLegacyWrongBook()
+  if (!Array.isArray(legacyWrongBook) || legacyWrongBook.length === 0) {
+    return []
+  }
+
+  const targetSubmittedAt = toIsoTime(attempt.submittedAt || attempt.at || '', '')
+  let matchedItems = legacyWrongBook.filter((item) => (
+    item
+    && item.username === attempt.username
+    && item.examId === attempt.examId
+  ))
+
+  if (targetSubmittedAt) {
+    const exactTimeItems = matchedItems.filter((item) => (
+      toIsoTime(item.at || '', '') === targetSubmittedAt
+    ))
+    if (exactTimeItems.length > 0) {
+      matchedItems = exactTimeItems
+    }
+  }
+
+  return matchedItems.map((item, index) => ({
+    questionId: item.questionId || `legacy-${attempt.examId}-${index}`,
+    questionNumber: Number.isFinite(Number(item.questionNumber)) ? Number(item.questionNumber) : null,
+    title: item.questionTitle || item.title || '',
+    type: item.type || 'single',
+    options: Array.isArray(item.options) ? cloneJson(item.options) : [],
+    yourAnswer: item.yourAnswer || '',
+    correctAnswer: item.correctAnswer || '',
+    analysis: item.analysis || '',
+  }))
+}
+
 async function buildStudentExamResultDetail(username, attemptId) {
   const attempts = await readAttempts()
-  const attempt = attempts.find(item => item.id === attemptId && item.username === username)
+  const attempt = attempts.find(item => String(item.id) === String(attemptId) && item.username === username)
   if (!attempt) return null
+
+  const wrongQuestions = await buildAttemptWrongQuestionDetail(attempt)
 
   return {
     ...buildStudentExamResultSummary(attempt),
@@ -1034,7 +1074,7 @@ async function buildStudentExamResultDetail(username, attemptId) {
     rawTotal: attempt.rawTotal ?? null,
     answeredCount: attempt.answeredCount ?? 0,
     durationSeconds: attempt.durationSeconds ?? null,
-    wrongQuestions: Array.isArray(attempt.wrongQuestions) ? cloneJson(attempt.wrongQuestions) : [],
+    wrongQuestions,
     gradingError: attempt.gradingError || '',
   }
 }

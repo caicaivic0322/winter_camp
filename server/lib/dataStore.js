@@ -72,6 +72,7 @@ export function createDataStore({
   const questionsFile = path.join(config.dataDir, 'questions.json')
   const examsFile = path.join(config.dataDir, 'exams.json')
   const attemptsFile = path.join(config.dataDir, 'attempts.json')
+  const legacyWrongBookFile = path.join(config.dataDir, 'wrong_book.json')
 
   const supabase = config.mode === 'supabase'
     ? createClient(config.supabaseUrl, config.supabaseServiceRoleKey, {
@@ -353,6 +354,27 @@ export function createDataStore({
     return Array.isArray(data) ? data : []
   }
 
+  async function readLegacyWrongBook() {
+    if (config.mode === 'local') {
+      if (!fs.existsSync(legacyWrongBookFile)) return []
+      try {
+        const data = JSON.parse(fs.readFileSync(legacyWrongBookFile, 'utf-8'))
+        return Array.isArray(data) ? data : []
+      } catch {
+        return []
+      }
+    }
+
+    if (config.mode === 'sqlite') {
+      ensureSqliteData()
+      const data = sqliteReadStateRowSync('wrong_book')
+      return Array.isArray(data) ? data : []
+    }
+
+    const data = await readStateRow('wrong_book')
+    return Array.isArray(data) ? data : []
+  }
+
   async function writeAttempts(data) {
     await writeCollection('attempts', data)
   }
@@ -394,6 +416,7 @@ export function createDataStore({
     readExams,
     writeExams,
     readAttempts,
+    readLegacyWrongBook,
     writeAttempts,
   }
 }

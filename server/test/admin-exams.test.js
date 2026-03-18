@@ -14,6 +14,7 @@ const usersFile = path.join(dataDir, 'users.json')
 const examsFile = path.join(dataDir, 'exams.json')
 const questionsFile = path.join(dataDir, 'questions.json')
 const attemptsFile = path.join(dataDir, 'attempts.json')
+const legacyWrongBookFile = path.join(dataDir, 'wrong_book.json')
 
 const fixtures = {
   users: {
@@ -38,6 +39,14 @@ const fixtures = {
 
 function writeJson(file, data) {
   fs.writeFileSync(file, JSON.stringify(data, null, 2))
+}
+
+function restoreOptionalFile(file, backup) {
+  if (backup === null) {
+    if (fs.existsSync(file)) fs.unlinkSync(file)
+    return
+  }
+  fs.writeFileSync(file, backup)
 }
 
 async function waitFor(assertion, { timeout = 5000, interval = 50 } = {}) {
@@ -221,6 +230,74 @@ test('exam result export falls back to stored question numbers when exam metadat
     fs.writeFileSync(examsFile, backups.exams)
     fs.writeFileSync(questionsFile, backups.questions)
     fs.writeFileSync(attemptsFile, backups.attempts)
+  }
+})
+
+test('student exam detail falls back to legacy wrong book analysis for historical attempts', async () => {
+  const backups = {
+    users: fs.readFileSync(usersFile, 'utf-8'),
+    exams: fs.readFileSync(examsFile, 'utf-8'),
+    questions: fs.readFileSync(questionsFile, 'utf-8'),
+    attempts: fs.readFileSync(attemptsFile, 'utf-8'),
+    legacyWrongBook: fs.existsSync(legacyWrongBookFile) ? fs.readFileSync(legacyWrongBookFile, 'utf-8') : null,
+  }
+
+  writeJson(usersFile, fixtures.users)
+  writeJson(examsFile, [])
+  writeJson(questionsFile, [])
+  writeJson(attemptsFile, [
+    {
+      id: 1773820295926,
+      examId: 'legacy-exam-1',
+      examTitle: '历史考试',
+      username: 'vic',
+      score: 60,
+      rawScore: 60,
+      rawTotal: 100,
+      totalScore: 100,
+      answeredCount: 1,
+      wrongQuestionIds: ['legacy-q-1'],
+      submittedAt: '2026-03-18T10:00:00.000Z',
+      at: '2026-03-18T10:00:00.000Z',
+      status: 'graded',
+    },
+  ])
+  writeJson(legacyWrongBookFile, [
+    {
+      username: 'vic',
+      examId: 'legacy-exam-1',
+      questionId: 'legacy-q-1',
+      questionTitle: '下面哪个选项是正确答案？',
+      yourAnswer: 'A',
+      correctAnswer: 'B',
+      at: '2026-03-18T10:00:00.000Z',
+      analysis: '这是遗留错题本里的解析。',
+    },
+  ])
+
+  const server = await startServer()
+
+  try {
+    const student = await loginAs(server.baseUrl, 'vic', '123456')
+    const detailRes = await fetch(`${server.baseUrl}/my/exam-results/1773820295926`, {
+      headers: {
+        Authorization: `Bearer ${student.token}`,
+      },
+    })
+
+    assert.equal(detailRes.status, 200)
+    const detail = await detailRes.json()
+    assert.equal(detail.attemptId, '1773820295926')
+    assert.equal(detail.wrongQuestions.length, 1)
+    assert.equal(detail.wrongQuestions[0].title, '下面哪个选项是正确答案？')
+    assert.equal(detail.wrongQuestions[0].analysis, '这是遗留错题本里的解析。')
+  } finally {
+    await server.stop()
+    fs.writeFileSync(usersFile, backups.users)
+    fs.writeFileSync(examsFile, backups.exams)
+    fs.writeFileSync(questionsFile, backups.questions)
+    fs.writeFileSync(attemptsFile, backups.attempts)
+    restoreOptionalFile(legacyWrongBookFile, backups.legacyWrongBook)
   }
 })
 
