@@ -1024,10 +1024,41 @@ async function buildStudentExamResults(username) {
 }
 
 async function buildAttemptWrongQuestionDetail(attempt) {
+  const allQuestions = await readQuestions()
+  const questionMap = new Map(
+    allQuestions
+      .filter(item => item?.id)
+      .map(item => [item.id, item])
+  )
+
   if (Array.isArray(attempt.wrongQuestions) && attempt.wrongQuestions.length > 0) {
+    let changed = false
+    const normalizedWrongQuestions = attempt.wrongQuestions.map((item, index) => {
+      const sourceQuestion = questionMap.get(item.questionId || '')
+      const title = item.title || sourceQuestion?.title || ''
+      const options = Array.isArray(item.options) && item.options.length > 0
+        ? cloneJson(item.options)
+        : cloneJson(sourceQuestion?.options || [])
+
+      if (title !== item.title || JSON.stringify(options) !== JSON.stringify(item.options || [])) {
+        changed = true
+      }
+
+      return {
+        questionId: item.questionId || `stored-${attempt.examId}-${index}`,
+        questionNumber: Number.isFinite(Number(item.questionNumber)) ? Number(item.questionNumber) : null,
+        title,
+        type: item.type || sourceQuestion?.type || 'single',
+        options,
+        yourAnswer: item.yourAnswer || '',
+        correctAnswer: item.correctAnswer || sourceQuestion?.answer || '',
+        analysis: item.analysis || '',
+      }
+    })
+
     return {
-      wrongQuestions: cloneJson(attempt.wrongQuestions),
-      hydratedFromLegacy: false,
+      wrongQuestions: normalizedWrongQuestions,
+      hydratedFromLegacy: changed,
     }
   }
 
@@ -1038,13 +1069,6 @@ async function buildAttemptWrongQuestionDetail(attempt) {
       hydratedFromLegacy: false,
     }
   }
-
-  const allQuestions = await readQuestions()
-  const questionMap = new Map(
-    allQuestions
-      .filter(item => item?.id)
-      .map(item => [item.id, item])
-  )
 
   const targetSubmittedAt = toIsoTime(attempt.submittedAt || attempt.at || '', '')
   let matchedItems = legacyWrongBook.filter((item) => (

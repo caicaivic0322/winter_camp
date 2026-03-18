@@ -320,6 +320,85 @@ test('student exam detail falls back to legacy wrong book analysis for historica
   }
 })
 
+test('student exam detail backfills options from question bank for stored wrong questions', async () => {
+  const backups = {
+    users: fs.readFileSync(usersFile, 'utf-8'),
+    exams: fs.readFileSync(examsFile, 'utf-8'),
+    questions: fs.readFileSync(questionsFile, 'utf-8'),
+    attempts: fs.readFileSync(attemptsFile, 'utf-8'),
+  }
+
+  writeJson(usersFile, fixtures.users)
+  writeJson(examsFile, [])
+  writeJson(questionsFile, [
+    {
+      id: 'stored-q-1',
+      title: '以下哪个选项是正确的？',
+      type: 'single',
+      answer: 'C',
+      options: [
+        { label: 'A', text: '错误选项A' },
+        { label: 'B', text: '错误选项B' },
+        { label: 'C', text: '正确选项C' },
+      ],
+    },
+  ])
+  writeJson(attemptsFile, [
+    {
+      id: 'stored-attempt-1',
+      examId: 'stored-exam-1',
+      examTitle: '已迁移历史考试',
+      username: 'vic',
+      score: 60,
+      rawScore: 60,
+      rawTotal: 100,
+      totalScore: 100,
+      answeredCount: 1,
+      wrongQuestionIds: ['stored-q-1'],
+      submittedAt: '2026-03-18T12:00:00.000Z',
+      at: '2026-03-18T12:00:00.000Z',
+      status: 'graded',
+      wrongQuestions: [
+        {
+          questionId: 'stored-q-1',
+          questionNumber: 1,
+          title: '以下哪个选项是正确的？',
+          options: [],
+          yourAnswer: 'A',
+          correctAnswer: 'C',
+          analysis: '这是已迁移记录里的解析。',
+        },
+      ],
+    },
+  ])
+
+  const server = await startServer()
+
+  try {
+    const student = await loginAs(server.baseUrl, 'vic', '123456')
+    const detailRes = await fetch(`${server.baseUrl}/my/exam-results/stored-attempt-1`, {
+      headers: {
+        Authorization: `Bearer ${student.token}`,
+      },
+    })
+
+    assert.equal(detailRes.status, 200)
+    const detail = await detailRes.json()
+    assert.equal(detail.wrongQuestions.length, 1)
+    assert.equal(detail.wrongQuestions[0].options.length, 3)
+    assert.equal(detail.wrongQuestions[0].correctAnswer, 'C')
+
+    const storedAttempts = JSON.parse(fs.readFileSync(attemptsFile, 'utf-8'))
+    assert.equal(storedAttempts[0].wrongQuestions[0].options.length, 3)
+  } finally {
+    await server.stop()
+    fs.writeFileSync(usersFile, backups.users)
+    fs.writeFileSync(examsFile, backups.exams)
+    fs.writeFileSync(questionsFile, backups.questions)
+    fs.writeFileSync(attemptsFile, backups.attempts)
+  }
+})
+
 test('admin can preview exam markdown before creating the exam', async () => {
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),
