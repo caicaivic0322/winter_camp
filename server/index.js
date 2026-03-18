@@ -1039,6 +1039,13 @@ async function buildAttemptWrongQuestionDetail(attempt) {
     }
   }
 
+  const allQuestions = await readQuestions()
+  const questionMap = new Map(
+    allQuestions
+      .filter(item => item?.id)
+      .map(item => [item.id, item])
+  )
+
   const targetSubmittedAt = toIsoTime(attempt.submittedAt || attempt.at || '', '')
   let matchedItems = legacyWrongBook.filter((item) => (
     item
@@ -1058,9 +1065,11 @@ async function buildAttemptWrongQuestionDetail(attempt) {
   const wrongQuestions = matchedItems.map((item, index) => ({
     questionId: item.questionId || `legacy-${attempt.examId}-${index}`,
     questionNumber: Number.isFinite(Number(item.questionNumber)) ? Number(item.questionNumber) : null,
-    title: item.questionTitle || item.title || '',
+    title: item.questionTitle || item.title || questionMap.get(item.questionId || '')?.title || '',
     type: item.type || 'single',
-    options: Array.isArray(item.options) ? cloneJson(item.options) : [],
+    options: Array.isArray(item.options) && item.options.length > 0
+      ? cloneJson(item.options)
+      : cloneJson(questionMap.get(item.questionId || '')?.options || []),
     yourAnswer: item.yourAnswer || '',
     correctAnswer: item.correctAnswer || '',
     analysis: item.analysis || '',

@@ -244,7 +244,18 @@ test('student exam detail falls back to legacy wrong book analysis for historica
 
   writeJson(usersFile, fixtures.users)
   writeJson(examsFile, [])
-  writeJson(questionsFile, [])
+  writeJson(questionsFile, [
+    {
+      id: 'legacy-q-1',
+      title: '下面哪个选项是正确答案？',
+      type: 'single',
+      options: [
+        { label: 'A', text: '错误选项A' },
+        { label: 'B', text: '正确选项B' },
+        { label: 'C', text: '干扰项C' },
+      ],
+    },
+  ])
   writeJson(attemptsFile, [
     {
       id: 1773820295926,
@@ -291,11 +302,14 @@ test('student exam detail falls back to legacy wrong book analysis for historica
     assert.equal(detail.wrongQuestions.length, 1)
     assert.equal(detail.wrongQuestions[0].title, '下面哪个选项是正确答案？')
     assert.equal(detail.wrongQuestions[0].analysis, '这是遗留错题本里的解析。')
+    assert.equal(detail.wrongQuestions[0].options.length, 3)
+    assert.equal(detail.wrongQuestions[0].options[1].label, 'B')
 
     const storedAttempts = JSON.parse(fs.readFileSync(attemptsFile, 'utf-8'))
     assert.equal(Array.isArray(storedAttempts[0].wrongQuestions), true)
     assert.equal(storedAttempts[0].wrongQuestions.length, 1)
     assert.equal(storedAttempts[0].wrongQuestions[0].analysis, '这是遗留错题本里的解析。')
+    assert.equal(storedAttempts[0].wrongQuestions[0].options.length, 3)
   } finally {
     await server.stop()
     fs.writeFileSync(usersFile, backups.users)
