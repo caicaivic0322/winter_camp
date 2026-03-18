@@ -149,6 +149,76 @@ test('admin can download exam markdown template', async () => {
   }
 })
 
+test('exam result export falls back to stored question numbers when exam metadata is missing', async () => {
+  const backups = {
+    users: fs.readFileSync(usersFile, 'utf-8'),
+    exams: fs.readFileSync(examsFile, 'utf-8'),
+    questions: fs.readFileSync(questionsFile, 'utf-8'),
+    wrongBook: fs.readFileSync(wrongBookFile, 'utf-8'),
+    attempts: fs.readFileSync(attemptsFile, 'utf-8'),
+  }
+
+  writeJson(usersFile, fixtures.users)
+  writeJson(examsFile, [])
+  writeJson(questionsFile, [])
+  writeJson(wrongBookFile, [
+    {
+      username: 'vic',
+      questionId: 'missing-q-2',
+      questionTitle: '第二题',
+      yourAnswer: 'A',
+      correctAnswer: 'B',
+      examId: 'missing-exam',
+      examTitle: '历史阶段测试',
+      questionNumber: 2,
+      attemptId: 'attempt-missing',
+      at: '2026-03-18T00:25:53.000Z',
+      analysis: '示例解析',
+    },
+  ])
+  writeJson(attemptsFile, [
+    {
+      id: 'attempt-missing',
+      examId: 'missing-exam',
+      examTitle: '历史阶段测试',
+      username: 'vic',
+      score: 80,
+      rawScore: 80,
+      rawTotal: 100,
+      totalScore: 100,
+      at: '2026-03-18T00:25:53.000Z',
+      submittedAt: '2026-03-18T00:25:53.000Z',
+      durationSeconds: 0,
+      wrongQuestionIds: ['missing-q-2'],
+      answeredCount: 1,
+    },
+  ])
+
+  const server = await startServer()
+
+  try {
+    const admin = await login(server.baseUrl)
+    const res = await fetch(`${server.baseUrl}/admin/exam-results?student=vic`, {
+      headers: {
+        Authorization: `Bearer ${admin.token}`,
+      },
+    })
+
+    assert.equal(res.status, 200)
+    const data = await res.json()
+    assert.equal(data.examAttempts.length, 1)
+    assert.equal(data.examAttempts[0].examTitle, '历史阶段测试')
+    assert.deepEqual(data.examAttempts[0].wrongQuestionNumbers, [2])
+  } finally {
+    await server.stop()
+    fs.writeFileSync(usersFile, backups.users)
+    fs.writeFileSync(examsFile, backups.exams)
+    fs.writeFileSync(questionsFile, backups.questions)
+    fs.writeFileSync(wrongBookFile, backups.wrongBook)
+    fs.writeFileSync(attemptsFile, backups.attempts)
+  }
+})
+
 test('admin can preview exam markdown before creating the exam', async () => {
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),

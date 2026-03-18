@@ -694,7 +694,9 @@ async function buildAdminExamResults({ examId = '', student = '', from = '', to 
 
   wrongBook.forEach((item) => {
     if (!item?.examId || !item?.username || !item?.questionId) return
-    const key = `${item.examId}:${item.username}`
+    const key = item.attemptId
+      ? `${item.examId}:${item.username}:${item.attemptId}`
+      : `${item.examId}:${item.username}`
     const list = wrongByAttemptKey.get(key) || []
     list.push(item)
     wrongByAttemptKey.set(key, list)
@@ -714,21 +716,31 @@ async function buildAdminExamResults({ examId = '', student = '', from = '', to 
     const exam = examMap.get(attempt.examId) || {}
     const user = users[attempt.username] || {}
     const questionNumberMap = questionNumberMaps.get(attempt.examId) || new Map()
-    const wrongItems = wrongByAttemptKey.get(`${attempt.examId}:${attempt.username}`) || []
+    const wrongItems = wrongByAttemptKey.get(
+      attempt.id
+        ? `${attempt.examId}:${attempt.username}:${attempt.id}`
+        : `${attempt.examId}:${attempt.username}`
+    ) || wrongByAttemptKey.get(`${attempt.examId}:${attempt.username}`) || []
     const wrongQuestionIds = Array.isArray(attempt.wrongQuestionIds) && attempt.wrongQuestionIds.length > 0
       ? Array.from(new Set(attempt.wrongQuestionIds))
       : Array.from(new Set(wrongItems.map(item => item.questionId)))
     const wrongQuestionNumbers = wrongQuestionIds
       .map(questionId => questionNumberMap.get(questionId))
       .filter(Number.isFinite)
-      .sort((a, b) => a - b)
+    const fallbackWrongQuestionNumbers = wrongItems
+      .map(item => Number(item.questionNumber))
+      .filter(Number.isFinite)
+    const mergedWrongQuestionNumbers = Array.from(new Set([
+      ...wrongQuestionNumbers,
+      ...fallbackWrongQuestionNumbers,
+    ])).sort((a, b) => a - b)
     const submittedAt = toIsoTime(attempt.submittedAt || attempt.at)
     const startedAt = attempt.startedAt ? toIsoTime(attempt.startedAt) : ''
 
     return {
       id: attempt.id,
       examId: attempt.examId,
-      examTitle: exam.title || attempt.examId,
+      examTitle: exam.title || attempt.examTitle || wrongItems[0]?.examTitle || attempt.examId,
       examStartTime: exam.startTime || '',
       examEndTime: exam.endTime || '',
       username: attempt.username,
@@ -741,8 +753,8 @@ async function buildAdminExamResults({ examId = '', student = '', from = '', to 
       answeredCount: Number(attempt.answeredCount || 0),
       wrongCount: wrongQuestionIds.length,
       wrongQuestionIds,
-      wrongQuestionNumbers,
-      wrongQuestionLabels: wrongQuestionNumbers.map(number => `第${number}题`),
+      wrongQuestionNumbers: mergedWrongQuestionNumbers,
+      wrongQuestionLabels: mergedWrongQuestionNumbers.map(number => `第${number}题`),
       startedAt,
       submittedAt,
       durationSeconds: Number.isFinite(Number(attempt.durationSeconds))
@@ -1523,6 +1535,7 @@ app.post('/api/exams/:id/submit', requireAuth, asyncRoute(async (req, res) => {
   const validQuestionIds = Array.isArray(questionIds) ? questionIds : Object.keys(answers || {})
   const submitTime = toIsoTime(submittedAt)
   const startTime = startedAt ? toIsoTime(startedAt) : ''
+  const attemptId = Date.now().toString()
   let totalRawScore = 0
   let earnedRawScore = 0
   const results = []
@@ -1533,6 +1546,7 @@ app.post('/api/exams/:id/submit', requireAuth, asyncRoute(async (req, res) => {
   validQuestionIds.forEach(qId => {
     const question = questionMap.get(qId)
     if (!question) return
+    const questionNumber = results.length + 1
 
     totalRawScore += question.score
     const userAns = answers?.[qId]
@@ -1552,6 +1566,8 @@ app.post('/api/exams/:id/submit', requireAuth, asyncRoute(async (req, res) => {
         correctAnswer: question.answer,
         examId: id,
         examTitle: exam.title,
+        questionNumber,
+        attemptId,
         at: submitTime
       }
       wrongBookRecords.push(record)
@@ -1578,8 +1594,9 @@ app.post('/api/exams/:id/submit', requireAuth, asyncRoute(async (req, res) => {
   
   // 记录本次尝试
   const attempt = {
-    id: Date.now().toString(),
+    id: attemptId,
     examId: id,
+    examTitle: exam.title,
     username,
     score: scoreScaled,
     rawScore: earnedRawScore,
