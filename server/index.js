@@ -104,6 +104,48 @@ function normalizeExamWindow(payload = {}) {
   return { startTime, endTime }
 }
 
+function parseIsoTime(value) {
+  if (!value) return null
+  const ms = new Date(value).getTime()
+  return Number.isFinite(ms) ? ms : null
+}
+
+function toIsoTime(value, fallback = new Date().toISOString()) {
+  const ms = parseIsoTime(value)
+  return ms === null ? fallback : new Date(ms).toISOString()
+}
+
+function diffSeconds(startTime, endTime) {
+  const startMs = parseIsoTime(startTime)
+  const endMs = parseIsoTime(endTime)
+  if (startMs === null || endMs === null) return null
+  return Math.max(0, Math.round((endMs - startMs) / 1000))
+}
+
+function averageOf(values = []) {
+  if (!Array.isArray(values) || values.length === 0) return 0
+  return Math.round(values.reduce((sum, value) => sum + Number(value || 0), 0) / values.length)
+}
+
+function toDateBoundary(value, mode = 'start') {
+  if (!value) return null
+  const normalized = /^\d{4}-\d{2}-\d{2}$/.test(String(value))
+    ? `${value}${mode === 'end' ? 'T23:59:59.999Z' : 'T00:00:00.000Z'}`
+    : value
+  const ms = parseIsoTime(normalized)
+  return ms === null ? null : ms
+}
+
+function matchesDateRange(value, from, to) {
+  const ms = parseIsoTime(value)
+  if (ms === null) return false
+  const fromMs = toDateBoundary(from, 'start')
+  const toMs = toDateBoundary(to, 'end')
+  if (fromMs !== null && ms < fromMs) return false
+  if (toMs !== null && ms > toMs) return false
+  return true
+}
+
 function toPublicUser(user) {
   return {
     username: user.username,
@@ -617,6 +659,211 @@ const writeWrongBook = (data) => dataStore.writeWrongBook(data)
 const readAttempts = () => dataStore.readAttempts()
 const writeAttempts = (data) => dataStore.writeAttempts(data)
 
+function buildExamQuestionNumberMap(exam, allQuestions) {
+  const bankIdSet = new Set(exam.bankIds || [])
+  const bankOrder = new Map((exam.bankIds || []).map((bankId, index) => [bankId, index]))
+  const candidates = (allQuestions || [])
+    .filter(question => bankIdSet.has(question.bankId))
+    .sort((a, b) => {
+      const bankDiff = (bankOrder.get(a.bankId) ?? 9999) - (bankOrder.get(b.bankId) ?? 9999)
+      if (bankDiff !== 0) return bankDiff
+      return (a.order || 0) - (b.order || 0)
+    })
+
+  const count = exam.questionCount || candidates.length
+  const selected = count >= candidates.length ? candidates : candidates.slice(0, count)
+  return new Map(selected.map((question, index) => [question.id, index + 1]))
+}
+
+async function buildAdminExamResults({ examId = '', student = '', from = '', to = '' } = {}) {
+  const [users, exams, attempts, wrongBook, allQuestions] = await Promise.all([
+    readUsers(),
+    readExams(),
+    readAttempts(),
+    readWrongBook(),
+    readQuestions(),
+  ])
+
+  const examMap = new Map(exams.map(exam => [exam.id, exam]))
+  const wrongByAttemptKey = new Map()
+  const questionNumberMaps = new Map()
+
+  exams.forEach((exam) => {
+    questionNumberMaps.set(exam.id, buildExamQuestionNumberMap(exam, allQuestions))
+  })
+
+  wrongBook.forEach((item) => {
+    if (!item?.examId || !item?.username || !item?.questionId) return
+    const key = `${item.examId}:${item.username}`
+    const list = wrongByAttemptKey.get(key) || []
+    list.push(item)
+    wrongByAttemptKey.set(key, list)
+  })
+
+  const filteredAttempts = attempts
+    .filter(attempt => {
+      if (examId && attempt.examId !== examId) return false
+      if (student && attempt.username !== student) return false
+      const exam = examMap.get(attempt.examId)
+      const timeValue = attempt.submittedAt || attempt.at || exam?.startTime
+      return matchesDateRange(timeValue, from, to)
+    })
+    .sort((a, b) => new Date(a.submittedAt || a.at || 0) - new Date(b.submittedAt || b.at || 0))
+
+  const examAttempts = filteredAttempts.map((attempt) => {
+    const exam = examMap.get(attempt.examId) || {}
+    const user = users[attempt.username] || {}
+    const questionNumberMap = questionNumberMaps.get(attempt.examId) || new Map()
+    const wrongItems = wrongByAttemptKey.get(`${attempt.examId}:${attempt.username}`) || []
+    const wrongQuestionIds = Array.isArray(attempt.wrongQuestionIds) && attempt.wrongQuestionIds.length > 0
+      ? Array.from(new Set(attempt.wrongQuestionIds))
+      : Array.from(new Set(wrongItems.map(item => item.questionId)))
+    const wrongQuestionNumbers = wrongQuestionIds
+      .map(questionId => questionNumberMap.get(questionId))
+      .filter(Number.isFinite)
+      .sort((a, b) => a - b)
+    const submittedAt = toIsoTime(attempt.submittedAt || attempt.at)
+    const startedAt = attempt.startedAt ? toIsoTime(attempt.startedAt) : ''
+
+    return {
+      id: attempt.id,
+      examId: attempt.examId,
+      examTitle: exam.title || attempt.examId,
+      examStartTime: exam.startTime || '',
+      examEndTime: exam.endTime || '',
+      username: attempt.username,
+      nickname: user.nickname || attempt.username,
+      level: user.level || DEFAULT_USER_LEVEL,
+      score: Number(attempt.score || 0),
+      totalScore: Number(attempt.totalScore || exam.totalScore || DEFAULT_TOTAL_SCORE),
+      rawScore: Number(attempt.rawScore || 0),
+      rawTotal: Number(attempt.rawTotal || 0),
+      answeredCount: Number(attempt.answeredCount || 0),
+      wrongCount: wrongQuestionIds.length,
+      wrongQuestionIds,
+      wrongQuestionNumbers,
+      wrongQuestionLabels: wrongQuestionNumbers.map(number => `第${number}题`),
+      startedAt,
+      submittedAt,
+      durationSeconds: Number.isFinite(Number(attempt.durationSeconds))
+        ? Number(attempt.durationSeconds)
+        : diffSeconds(startedAt, submittedAt) || 0,
+    }
+  })
+
+  const examSummaryMap = new Map()
+  const studentSummaryMap = new Map()
+
+  examAttempts.forEach((attempt) => {
+    const examBucket = examSummaryMap.get(attempt.examId) || {
+      examId: attempt.examId,
+      examTitle: attempt.examTitle,
+      examStartTime: attempt.examStartTime,
+      examEndTime: attempt.examEndTime,
+      scores: [],
+      durations: [],
+      wrongCounts: [],
+      highestScore: 0,
+      lowestScore: null,
+    }
+    examBucket.scores.push(attempt.score)
+    examBucket.durations.push(attempt.durationSeconds)
+    examBucket.wrongCounts.push(attempt.wrongCount)
+    examBucket.highestScore = Math.max(examBucket.highestScore, attempt.score)
+    examBucket.lowestScore = examBucket.lowestScore === null ? attempt.score : Math.min(examBucket.lowestScore, attempt.score)
+    examSummaryMap.set(attempt.examId, examBucket)
+
+    const studentBucket = studentSummaryMap.get(attempt.username) || {
+      username: attempt.username,
+      nickname: attempt.nickname,
+      level: attempt.level,
+      scores: [],
+      durations: [],
+      wrongCounts: [],
+      exams: [],
+      bestScore: 0,
+    }
+    studentBucket.scores.push(attempt.score)
+    studentBucket.durations.push(attempt.durationSeconds)
+    studentBucket.wrongCounts.push(attempt.wrongCount)
+    studentBucket.exams.push({
+      examId: attempt.examId,
+      examTitle: attempt.examTitle,
+      score: attempt.score,
+      totalScore: attempt.totalScore,
+      submittedAt: attempt.submittedAt,
+    })
+    studentBucket.bestScore = Math.max(studentBucket.bestScore, attempt.score)
+    studentSummaryMap.set(attempt.username, studentBucket)
+  })
+
+  const examSummaries = Array.from(examSummaryMap.values())
+    .map(item => ({
+      examId: item.examId,
+      examTitle: item.examTitle,
+      examStartTime: item.examStartTime,
+      examEndTime: item.examEndTime,
+      participantCount: item.scores.length,
+      averageScore: averageOf(item.scores),
+      averageDurationSeconds: averageOf(item.durations),
+      averageWrongCount: averageOf(item.wrongCounts),
+      highestScore: item.highestScore,
+      lowestScore: item.lowestScore ?? 0,
+    }))
+    .sort((a, b) => new Date(b.examStartTime || 0) - new Date(a.examStartTime || 0))
+
+  const studentSummaries = Array.from(studentSummaryMap.values())
+    .map(item => ({
+      username: item.username,
+      nickname: item.nickname,
+      level: item.level,
+      examCount: item.scores.length,
+      averageScore: averageOf(item.scores),
+      averageDurationSeconds: averageOf(item.durations),
+      averageWrongCount: averageOf(item.wrongCounts),
+      bestScore: item.bestScore,
+      lastSubmittedAt: item.exams
+        .slice()
+        .sort((a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0))[0]?.submittedAt || '',
+    }))
+    .sort((a, b) => b.averageScore - a.averageScore || a.username.localeCompare(b.username))
+
+  const studentTrendLines = examAttempts.map(item => ({
+    username: item.username,
+    nickname: item.nickname,
+    examId: item.examId,
+    examTitle: item.examTitle,
+    score: item.score,
+    totalScore: item.totalScore,
+    submittedAt: item.submittedAt,
+  }))
+
+  return {
+    filters: { examId, student, from, to },
+    examOptions: exams
+      .slice()
+      .sort((a, b) => new Date(b.startTime || 0) - new Date(a.startTime || 0))
+      .map(item => ({
+        id: item.id,
+        title: item.title,
+        startTime: item.startTime,
+        endTime: item.endTime,
+      })),
+    studentOptions: Object.values(users)
+      .filter(user => user.role !== 'admin')
+      .map(user => ({
+        username: user.username,
+        nickname: user.nickname || user.username,
+        level: normalizeCourseLevel(user.level, DEFAULT_USER_LEVEL),
+      }))
+      .sort((a, b) => a.username.localeCompare(b.username)),
+    examSummaries,
+    examAttempts,
+    studentSummaries,
+    studentTrendLines,
+  }
+}
+
 function asyncRoute(handler) {
   return (req, res, next) => {
     Promise.resolve(handler(req, res, next)).catch(next)
@@ -1127,6 +1374,17 @@ app.get('/api/admin/exams', requireAdmin, asyncRoute(async (req, res) => {
   res.json(list)
 }))
 
+app.get('/api/admin/exam-results', requireAdmin, asyncRoute(async (req, res) => {
+  const { examId = '', student = '', from = '', to = '' } = req.query || {}
+  const payload = await buildAdminExamResults({
+    examId: String(examId || ''),
+    student: String(student || ''),
+    from: String(from || ''),
+    to: String(to || ''),
+  })
+  res.json(payload)
+}))
+
 app.patch('/api/admin/exams/:id', requireAdmin, asyncRoute(async (req, res) => {
   const { id } = req.params
   const payload = req.body || {}
@@ -1247,7 +1505,7 @@ app.get('/api/exams/:id/start', requireAuth, asyncRoute(async (req, res) => {
 // 提交试卷与判分
 app.post('/api/exams/:id/submit', requireAuth, asyncRoute(async (req, res) => {
   const { id } = req.params
-  const { answers, questionIds } = req.body // answers: { qId: 'A', qId2: 'T' }
+  const { answers, questionIds, startedAt, submittedAt } = req.body // answers: { qId: 'A', qId2: 'T' }
   const username = req.authUser.username
   
   const exams = await readExams()
@@ -1263,11 +1521,14 @@ app.post('/api/exams/:id/submit', requireAuth, asyncRoute(async (req, res) => {
   }
   
   const validQuestionIds = Array.isArray(questionIds) ? questionIds : Object.keys(answers || {})
+  const submitTime = toIsoTime(submittedAt)
+  const startTime = startedAt ? toIsoTime(startedAt) : ''
   let totalRawScore = 0
   let earnedRawScore = 0
   const results = []
   const wrongQuestions = []
   const wrongBookRecords = []
+  let answeredCount = 0
 
   validQuestionIds.forEach(qId => {
     const question = questionMap.get(qId)
@@ -1277,6 +1538,7 @@ app.post('/api/exams/:id/submit', requireAuth, asyncRoute(async (req, res) => {
     const userAns = answers?.[qId]
     const isCorrect = userAns === question.answer
     const answered = hasSubmittedAnswer(userAns)
+    if (answered) answeredCount += 1
 
     if (isCorrect) {
       earnedRawScore += question.score
@@ -1290,7 +1552,7 @@ app.post('/api/exams/:id/submit', requireAuth, asyncRoute(async (req, res) => {
         correctAnswer: question.answer,
         examId: id,
         examTitle: exam.title,
-        at: new Date().toISOString()
+        at: submitTime
       }
       wrongBookRecords.push(record)
       wrongQuestions.push({
@@ -1323,7 +1585,12 @@ app.post('/api/exams/:id/submit', requireAuth, asyncRoute(async (req, res) => {
     rawScore: earnedRawScore,
     rawTotal: totalRawScore,
     totalScore: configuredTotalScore,
-    at: new Date().toISOString()
+    answeredCount,
+    wrongQuestionIds: wrongQuestions.map(item => item.questionId),
+    startedAt: startTime,
+    submittedAt: submitTime,
+    durationSeconds: startTime ? (diffSeconds(startTime, submitTime) || 0) : null,
+    at: submitTime
   }
   attempts.push(attempt)
   const wrongQuestionsWithAnalysis = await buildWrongQuestionAnalyses(wrongQuestions)

@@ -348,6 +348,8 @@ export default function ExamPaper() {
         body: JSON.stringify({
           answers: currentAnswers,
           questionIds: currentExam.questions.map(q => q.id),
+          startedAt: sessionRef.current?.startedAt ? new Date(sessionRef.current.startedAt).toISOString() : '',
+          submittedAt: new Date().toISOString(),
         }),
       })
 

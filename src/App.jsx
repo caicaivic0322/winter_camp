@@ -23,6 +23,7 @@ const ExamPaper = lazy(() => import('./pages/Exam/ExamPaper'))
 const WrongBook = lazy(() => import('./pages/Exam/WrongBook'))
 const AdminExams = lazy(() => import('./pages/AdminExams'))
 const AdminUsers = lazy(() => import('./pages/AdminUsers'))
+const AdminScores = lazy(() => import('./pages/AdminScores'))
 
 // 路由保护组件
 function ProtectedRoute({ children }) {
@@ -128,6 +129,11 @@ function AppContent() {
           <Route path="/admin/exams" element={
             <ProtectedRoute>
               <AdminExams />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/scores" element={
+            <ProtectedRoute>
+              <AdminScores />
             </ProtectedRoute>
           } />
           <Route path="/part/:partId" element={

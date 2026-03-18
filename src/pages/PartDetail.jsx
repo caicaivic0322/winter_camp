@@ -2,6 +2,7 @@ import { Link, useParams, Navigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { parts, courses, getPartCourses } from '../data/courses'
 import { getUnlockedCourses, isCourseUnlocked } from '../contexts/AuthContext'
+import { openSortingVisualizer } from '../utils/visualgo'
 
 function PartDetail() {
   const { partId } = useParams()
@@ -98,13 +99,17 @@ function PartDetail() {
                   <div className="course-footer">
                     <span className="course-category">{course.category}</span>
                     {course.hasAnimation && (
-                      <Link
-                        to={`/visualizer/${course.animationType}`}
+                      <button
+                        type="button"
                         className="course-badge"
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          openSortingVisualizer()
+                        }}
                       >
                         ▶ 动画演示
-                      </Link>
+                      </button>
                     )}
                   </div>
 

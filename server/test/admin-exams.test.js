@@ -509,6 +509,312 @@ test('submitted exam disappears from available list and cannot be started again'
   }
 })
 
+test('submit stores attempt timing metadata and wrong question ids', async () => {
+  const backups = {
+    users: fs.readFileSync(usersFile, 'utf-8'),
+    exams: fs.existsSync(examsFile) ? fs.readFileSync(examsFile, 'utf-8') : '[]',
+    questions: fs.existsSync(questionsFile) ? fs.readFileSync(questionsFile, 'utf-8') : '[]',
+    wrongBook: fs.existsSync(wrongBookFile) ? fs.readFileSync(wrongBookFile, 'utf-8') : '[]',
+    attempts: fs.existsSync(attemptsFile) ? fs.readFileSync(attemptsFile, 'utf-8') : '[]',
+  }
+
+  writeJson(usersFile, fixtures.users)
+  writeJson(examsFile, [
+    {
+      id: 'exam-meta',
+      title: '记录元数据考试',
+      startTime: '2025-01-01T00:00:00.000Z',
+      endTime: '2099-01-01T00:00:00.000Z',
+      duration: 1800,
+      questionCount: 2,
+      totalScore: 100,
+      bankIds: ['bank-meta'],
+      levelRequired: '初级',
+      createdAt: '2026-03-13T01:10:00.000Z',
+      status: 'scheduled',
+    },
+  ])
+  writeJson(questionsFile, [
+    {
+      id: 'q-meta-1',
+      bankId: 'bank-meta',
+      order: 1,
+      title: '下列哪个关键字用于循环？',
+      type: 'single',
+      section: 'single',
+      score: 50,
+      answer: 'A',
+      options: [
+        { label: 'A', text: 'for' },
+        { label: 'B', text: 'cout' },
+      ],
+    },
+    {
+      id: 'q-meta-2',
+      bankId: 'bank-meta',
+      order: 2,
+      title: 'true 表示真。（　√　）',
+      type: 'judge',
+      section: 'judge',
+      score: 50,
+      answer: 'T',
+      options: [],
+    },
+  ])
+  writeJson(wrongBookFile, [])
+  writeJson(attemptsFile, [])
+
+  const server = await startServer()
+
+  try {
+    const auth = await loginAs(server.baseUrl, 'vic', '123456')
+    const startedAt = '2026-03-18T08:00:00.000Z'
+    const submittedAt = '2026-03-18T08:12:30.000Z'
+
+    const submitRes = await fetch(`${server.baseUrl}/exams/exam-meta/submit`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${auth.token}`,
+      },
+      body: JSON.stringify({
+        answers: {
+          'q-meta-1': 'B',
+          'q-meta-2': 'T',
+        },
+        questionIds: ['q-meta-1', 'q-meta-2'],
+        startedAt,
+        submittedAt,
+      }),
+    })
+
+    assert.equal(submitRes.status, 200)
+
+    const attempts = JSON.parse(fs.readFileSync(attemptsFile, 'utf-8'))
+    assert.equal(attempts.length, 1)
+    assert.equal(attempts[0].startedAt, startedAt)
+    assert.equal(attempts[0].submittedAt, submittedAt)
+    assert.equal(attempts[0].durationSeconds, 750)
+    assert.deepEqual(attempts[0].wrongQuestionIds, ['q-meta-1'])
+    assert.equal(attempts[0].answeredCount, 2)
+  } finally {
+    await server.stop()
+    fs.writeFileSync(usersFile, backups.users)
+    fs.writeFileSync(examsFile, backups.exams)
+    fs.writeFileSync(questionsFile, backups.questions)
+    fs.writeFileSync(wrongBookFile, backups.wrongBook)
+    fs.writeFileSync(attemptsFile, backups.attempts)
+  }
+})
+
+test('admin can view exam score analytics and student trends', async () => {
+  const backups = {
+    users: fs.readFileSync(usersFile, 'utf-8'),
+    exams: fs.existsSync(examsFile) ? fs.readFileSync(examsFile, 'utf-8') : '[]',
+    questions: fs.existsSync(questionsFile) ? fs.readFileSync(questionsFile, 'utf-8') : '[]',
+    wrongBook: fs.existsSync(wrongBookFile) ? fs.readFileSync(wrongBookFile, 'utf-8') : '[]',
+    attempts: fs.existsSync(attemptsFile) ? fs.readFileSync(attemptsFile, 'utf-8') : '[]',
+  }
+
+  writeJson(usersFile, {
+    ...fixtures.users,
+    amy: {
+      username: 'amy',
+      password: '123456',
+      nickname: '小艾',
+      role: 'user',
+      level: '高级',
+      createdAt: '2026-03-13T00:02:00.000Z',
+    },
+  })
+  writeJson(examsFile, [
+    {
+      id: 'exam-a',
+      title: '第一阶段测试一',
+      startTime: '2026-03-01T08:00:00.000Z',
+      endTime: '2026-03-01T10:00:00.000Z',
+      duration: 1800,
+      questionCount: 2,
+      totalScore: 100,
+      bankIds: ['bank-a'],
+      levelRequired: '初级',
+      createdAt: '2026-03-01T00:00:00.000Z',
+      status: 'scheduled',
+    },
+    {
+      id: 'exam-b',
+      title: '第一阶段测试二',
+      startTime: '2026-03-10T08:00:00.000Z',
+      endTime: '2026-03-10T10:00:00.000Z',
+      duration: 1800,
+      questionCount: 2,
+      totalScore: 100,
+      bankIds: ['bank-b'],
+      levelRequired: '初级',
+      createdAt: '2026-03-10T00:00:00.000Z',
+      status: 'scheduled',
+    },
+  ])
+  writeJson(questionsFile, [
+    {
+      id: 'q-a-1',
+      bankId: 'bank-a',
+      order: 1,
+      title: 'A1',
+      type: 'single',
+      section: 'single',
+      score: 50,
+      answer: 'A',
+      options: [],
+    },
+    {
+      id: 'q-a-2',
+      bankId: 'bank-a',
+      order: 2,
+      title: 'A2',
+      type: 'single',
+      section: 'single',
+      score: 50,
+      answer: 'B',
+      options: [],
+    },
+    {
+      id: 'q-b-1',
+      bankId: 'bank-b',
+      order: 1,
+      title: 'B1',
+      type: 'single',
+      section: 'single',
+      score: 50,
+      answer: 'A',
+      options: [],
+    },
+    {
+      id: 'q-b-2',
+      bankId: 'bank-b',
+      order: 2,
+      title: 'B2',
+      type: 'single',
+      section: 'single',
+      score: 50,
+      answer: 'B',
+      options: [],
+    },
+  ])
+  writeJson(wrongBookFile, [
+    {
+      username: 'vic',
+      questionId: 'q-a-2',
+      questionTitle: 'A2',
+      yourAnswer: 'A',
+      correctAnswer: 'B',
+      examId: 'exam-a',
+      examTitle: '第一阶段测试一',
+      at: '2026-03-01T08:25:00.000Z',
+      analysis: '示例解析',
+    },
+  ])
+  writeJson(attemptsFile, [
+    {
+      id: 'attempt-a-vic',
+      examId: 'exam-a',
+      username: 'vic',
+      score: 50,
+      rawScore: 50,
+      rawTotal: 100,
+      totalScore: 100,
+      at: '2026-03-01T08:25:00.000Z',
+      startedAt: '2026-03-01T08:00:00.000Z',
+      submittedAt: '2026-03-01T08:25:00.000Z',
+      durationSeconds: 1500,
+      wrongQuestionIds: ['q-a-2'],
+      answeredCount: 2,
+    },
+    {
+      id: 'attempt-a-amy',
+      examId: 'exam-a',
+      username: 'amy',
+      score: 100,
+      rawScore: 100,
+      rawTotal: 100,
+      totalScore: 100,
+      at: '2026-03-01T08:18:00.000Z',
+      startedAt: '2026-03-01T08:02:00.000Z',
+      submittedAt: '2026-03-01T08:18:00.000Z',
+      durationSeconds: 960,
+      wrongQuestionIds: [],
+      answeredCount: 2,
+    },
+    {
+      id: 'attempt-b-vic',
+      examId: 'exam-b',
+      username: 'vic',
+      score: 100,
+      rawScore: 100,
+      rawTotal: 100,
+      totalScore: 100,
+      at: '2026-03-10T08:20:00.000Z',
+      startedAt: '2026-03-10T08:01:00.000Z',
+      submittedAt: '2026-03-10T08:20:00.000Z',
+      durationSeconds: 1140,
+      wrongQuestionIds: [],
+      answeredCount: 2,
+    },
+  ])
+
+  const server = await startServer()
+
+  try {
+    const admin = await login(server.baseUrl)
+    const res = await fetch(`${server.baseUrl}/admin/exam-results`, {
+      headers: {
+        Authorization: `Bearer ${admin.token}`,
+      },
+    })
+
+    assert.equal(res.status, 200)
+    const data = await res.json()
+    assert.equal(Array.isArray(data.examSummaries), true)
+    assert.equal(Array.isArray(data.examAttempts), true)
+    assert.equal(Array.isArray(data.studentSummaries), true)
+    assert.equal(Array.isArray(data.studentTrendLines), true)
+
+    const examA = data.examSummaries.find(item => item.examId === 'exam-a')
+    assert.equal(examA.participantCount, 2)
+    assert.equal(examA.averageScore, 75)
+
+    const vicExamA = data.examAttempts.find(item => item.examId === 'exam-a' && item.username === 'vic')
+    assert.deepEqual(vicExamA.wrongQuestionIds, ['q-a-2'])
+    assert.deepEqual(vicExamA.wrongQuestionNumbers, [2])
+    assert.equal(vicExamA.nickname, '蔡臻')
+    assert.equal(vicExamA.durationSeconds, 1500)
+
+    const vicSummary = data.studentSummaries.find(item => item.username === 'vic')
+    assert.equal(vicSummary.examCount, 2)
+    assert.equal(vicSummary.averageScore, 75)
+
+    const vicTrend = data.studentTrendLines.filter(item => item.username === 'vic')
+    assert.equal(vicTrend.length, 2)
+
+    const filteredRes = await fetch(`${server.baseUrl}/admin/exam-results?student=vic&from=2026-03-05&to=2026-03-18`, {
+      headers: {
+        Authorization: `Bearer ${admin.token}`,
+      },
+    })
+    assert.equal(filteredRes.status, 200)
+    const filtered = await filteredRes.json()
+    assert.equal(filtered.examAttempts.length, 1)
+    assert.equal(filtered.examAttempts[0].examId, 'exam-b')
+  } finally {
+    await server.stop()
+    fs.writeFileSync(usersFile, backups.users)
+    fs.writeFileSync(examsFile, backups.exams)
+    fs.writeFileSync(questionsFile, backups.questions)
+    fs.writeFileSync(wrongBookFile, backups.wrongBook)
+    fs.writeFileSync(attemptsFile, backups.attempts)
+  }
+})
+
 test('admin exams list includes active and expired exams together', async () => {
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),

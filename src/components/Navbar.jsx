@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
 import { useAuth } from '../contexts/AuthContext'
 import { DEFAULT_USER_LEVEL } from '../../shared/courseAccess.js'
+import { VISUALGO_SORTING_URL } from '../utils/visualgo'
 
 function Navbar() {
   const { theme, toggleTheme, isDark } = useTheme()
@@ -21,11 +22,12 @@ function Navbar() {
         )}
         <Link to="/exams" className="navbar-link">在线考试</Link>
         <Link to="/my/wrong-book" className="navbar-link">错题本</Link>
-        <Link to="/visualizer/bubble" className="navbar-link">排序可视化</Link>
+        <a href={VISUALGO_SORTING_URL} target="_blank" rel="noreferrer" className="navbar-link">排序可视化</a>
         {user?.role === 'admin' && (
           <>
             <Link to="/admin/users" className="navbar-link">用户管理</Link>
             <Link to="/admin/exams" className="navbar-link">考试管理</Link>
+            <Link to="/admin/scores" className="navbar-link">学生成绩</Link>
           </>
         )}
 

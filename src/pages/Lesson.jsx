@@ -3,6 +3,7 @@ import { useParams, Link, Navigate } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { motion } from 'framer-motion'
+import { openSortingVisualizer } from '../utils/visualgo'
 import { courses } from '../data/courses'
 import Modal from '../components/Modal'
 import { useAuth, isCourseUnlocked, getCourseUnlockTime, getUnlockedCourses } from '../contexts/AuthContext'
@@ -252,13 +253,14 @@ function Lesson() {
           </div>
           
           {course.hasAnimation && (
-            <Link 
-              to={`/visualizer/${course.animationType}`}
+            <button
+              type="button"
               className="btn btn-primary"
               style={{ marginTop: '16px', display: 'inline-flex' }}
+              onClick={openSortingVisualizer}
             >
               <span>🎬</span> 查看算法动画演示
-            </Link>
+            </button>
           )}
         </div>
         
