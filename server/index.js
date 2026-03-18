@@ -1025,12 +1025,18 @@ async function buildStudentExamResults(username) {
 
 async function buildAttemptWrongQuestionDetail(attempt) {
   if (Array.isArray(attempt.wrongQuestions) && attempt.wrongQuestions.length > 0) {
-    return cloneJson(attempt.wrongQuestions)
+    return {
+      wrongQuestions: cloneJson(attempt.wrongQuestions),
+      hydratedFromLegacy: false,
+    }
   }
 
   const legacyWrongBook = await dataStore.readLegacyWrongBook()
   if (!Array.isArray(legacyWrongBook) || legacyWrongBook.length === 0) {
-    return []
+    return {
+      wrongQuestions: [],
+      hydratedFromLegacy: false,
+    }
   }
 
   const targetSubmittedAt = toIsoTime(attempt.submittedAt || attempt.at || '', '')
@@ -1049,7 +1055,7 @@ async function buildAttemptWrongQuestionDetail(attempt) {
     }
   }
 
-  return matchedItems.map((item, index) => ({
+  const wrongQuestions = matchedItems.map((item, index) => ({
     questionId: item.questionId || `legacy-${attempt.examId}-${index}`,
     questionNumber: Number.isFinite(Number(item.questionNumber)) ? Number(item.questionNumber) : null,
     title: item.questionTitle || item.title || '',
@@ -1059,14 +1065,31 @@ async function buildAttemptWrongQuestionDetail(attempt) {
     correctAnswer: item.correctAnswer || '',
     analysis: item.analysis || '',
   }))
+
+  return {
+    wrongQuestions,
+    hydratedFromLegacy: wrongQuestions.length > 0,
+  }
 }
 
 async function buildStudentExamResultDetail(username, attemptId) {
   const attempts = await readAttempts()
-  const attempt = attempts.find(item => String(item.id) === String(attemptId) && item.username === username)
+  const attemptIndex = attempts.findIndex(item => String(item.id) === String(attemptId) && item.username === username)
+  const attempt = attemptIndex >= 0 ? attempts[attemptIndex] : null
   if (!attempt) return null
 
-  const wrongQuestions = await buildAttemptWrongQuestionDetail(attempt)
+  const detail = await buildAttemptWrongQuestionDetail(attempt)
+  const wrongQuestions = detail.wrongQuestions
+
+  if (detail.hydratedFromLegacy) {
+    attempts[attemptIndex] = {
+      ...attempt,
+      wrongQuestions: cloneJson(wrongQuestions),
+      wrongQuestionIds: wrongQuestions.map(item => item.questionId),
+    }
+    await writeAttempts(attempts)
+    clearUserCaches(username)
+  }
 
   return {
     ...buildStudentExamResultSummary(attempt),

@@ -44,6 +44,10 @@ function sanitizeText(value) {
     .trim()
 }
 
+function getOptionText(option) {
+  return sanitizeText(option?.text || '')
+}
+
 export default function ExamResults() {
   const { attemptId } = useParams()
   const navigate = useNavigate()
@@ -346,6 +350,85 @@ export default function ExamResults() {
                           </div>
                           <div style={{ fontWeight: 800, color: 'var(--text-heading)', lineHeight: 1.7 }}>
                             {sanitizeText(item.title)}
+                          </div>
+                          {Array.isArray(item.options) && item.options.length > 0 ? (
+                            <div style={{ display: 'grid', gap: 10 }}>
+                              {item.options.map((option) => {
+                                const isCorrect = option.label === item.correctAnswer
+                                const isUserWrong = option.label === item.yourAnswer && item.yourAnswer !== item.correctAnswer
+                                const borderColor = isCorrect
+                                  ? 'var(--status-success-border)'
+                                  : isUserWrong
+                                    ? 'var(--status-danger-border)'
+                                    : 'var(--border-default)'
+                                const background = isCorrect
+                                  ? 'var(--status-success-bg)'
+                                  : isUserWrong
+                                    ? 'var(--status-danger-bg)'
+                                    : 'var(--panel-strong)'
+                                const color = isCorrect
+                                  ? 'var(--status-success-fg)'
+                                  : isUserWrong
+                                    ? 'var(--status-danger-fg)'
+                                    : 'var(--text-body)'
+
+                                return (
+                                  <div
+                                    key={`${item.questionId}-${option.label}`}
+                                    style={{
+                                      padding: '12px 14px',
+                                      borderRadius: 16,
+                                      border: `1px solid ${borderColor}`,
+                                      background,
+                                      color,
+                                      lineHeight: 1.7,
+                                    }}
+                                  >
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+                                      <div>
+                                        <strong>{option.label}.</strong> {getOptionText(option)}
+                                      </div>
+                                      {isCorrect ? (
+                                        <span style={{ fontSize: '0.82rem', fontWeight: 800, whiteSpace: 'nowrap' }}>正确答案</span>
+                                      ) : null}
+                                      {isUserWrong ? (
+                                        <span style={{ fontSize: '0.82rem', fontWeight: 800, whiteSpace: 'nowrap' }}>你的答案</span>
+                                      ) : null}
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          ) : null}
+                          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                            <div style={{
+                              padding: '8px 12px',
+                              borderRadius: 999,
+                              background: 'var(--status-success-bg)',
+                              border: '1px solid var(--status-success-border)',
+                              color: 'var(--status-success-fg)',
+                              fontWeight: 700,
+                              fontSize: '0.88rem',
+                            }}>
+                              正确答案：{item.correctAnswer || '暂无'}
+                            </div>
+                            <div style={{
+                              padding: '8px 12px',
+                              borderRadius: 999,
+                              background: item.yourAnswer && item.yourAnswer !== item.correctAnswer
+                                ? 'var(--status-danger-bg)'
+                                : 'var(--panel-soft)',
+                              border: item.yourAnswer && item.yourAnswer !== item.correctAnswer
+                                ? '1px solid var(--status-danger-border)'
+                                : '1px solid var(--border-default)',
+                              color: item.yourAnswer && item.yourAnswer !== item.correctAnswer
+                                ? 'var(--status-danger-fg)'
+                                : 'var(--text-secondary)',
+                              fontWeight: 700,
+                              fontSize: '0.88rem',
+                            }}>
+                              你的答案：{item.yourAnswer || '未作答'}
+                            </div>
                           </div>
                           <div style={{
                             padding: '14px 16px',

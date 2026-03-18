@@ -291,6 +291,11 @@ test('student exam detail falls back to legacy wrong book analysis for historica
     assert.equal(detail.wrongQuestions.length, 1)
     assert.equal(detail.wrongQuestions[0].title, '下面哪个选项是正确答案？')
     assert.equal(detail.wrongQuestions[0].analysis, '这是遗留错题本里的解析。')
+
+    const storedAttempts = JSON.parse(fs.readFileSync(attemptsFile, 'utf-8'))
+    assert.equal(Array.isArray(storedAttempts[0].wrongQuestions), true)
+    assert.equal(storedAttempts[0].wrongQuestions.length, 1)
+    assert.equal(storedAttempts[0].wrongQuestions[0].analysis, '这是遗留错题本里的解析。')
   } finally {
     await server.stop()
     fs.writeFileSync(usersFile, backups.users)
