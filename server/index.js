@@ -49,7 +49,9 @@ function hasSubmittedExam(attempts, username, examId) {
 }
 
 const API_CACHE_MS = Math.max(0, Number(process.env.API_CACHE_MS || 5000) || 5000)
+const GRADING_POLL_MS = Math.max(200, Number(process.env.GRADING_POLL_MS || 2000) || 2000)
 const endpointCache = new Map()
+let gradingLoopBusy = false
 
 function cacheClone(value) {
   return value === undefined ? undefined : JSON.parse(JSON.stringify(value))
@@ -85,7 +87,8 @@ function clearExamCaches() {
 
 function clearUserCaches(username) {
   endpointCache.delete(`exams:available:${username}`)
-  endpointCache.delete(`wrong-book:${username}`)
+  endpointCache.delete(`exam-results:${username}`)
+  clearCachedEndpoint(`exam-result-detail:${username}:`)
 }
 
 const LEVELS = COURSE_LEVELS
@@ -187,6 +190,10 @@ function buildFallbackAnalysis(item) {
 
 function trimTrailingSlash(value) {
   return String(value || '').replace(/\/+$/, '')
+}
+
+function cloneJson(value) {
+  return value === undefined ? undefined : JSON.parse(JSON.stringify(value))
 }
 
 function getAiAnalysisConfigs() {
@@ -327,6 +334,162 @@ async function buildWrongQuestionAnalyses(items) {
     ...item,
     analysis: buildFallbackAnalysis(item),
   }))
+}
+
+function buildAttemptGradingPayload({ exam, answers = {}, questionIds = [], questionMap, startedAt = '', submittedAt = '' }) {
+  const normalizedQuestionIds = Array.isArray(questionIds) ? questionIds : Object.keys(answers || {})
+  const questions = []
+  let totalRawScore = 0
+  let answeredCount = 0
+
+  normalizedQuestionIds.forEach((questionId) => {
+    const question = questionMap.get(questionId)
+    if (!question) return
+    const yourAnswer = answers?.[questionId]
+    const answered = hasSubmittedAnswer(yourAnswer)
+    if (answered) answeredCount += 1
+    totalRawScore += Number(question.score || 0)
+    questions.push({
+      questionId,
+      questionNumber: questions.length + 1,
+      title: question.title,
+      type: question.type || 'single',
+      section: question.section || '',
+      score: Number(question.score || 0),
+      options: Array.isArray(question.options) ? question.options : [],
+      correctAnswer: question.answer,
+      yourAnswer: yourAnswer || '',
+      answered,
+    })
+  })
+
+  return {
+    examId: exam.id,
+    examTitle: exam.title,
+    totalScore: toPositiveInt(exam.totalScore, DEFAULT_TOTAL_SCORE),
+    startedAt,
+    submittedAt,
+    questionIds: questions.map(item => item.questionId),
+    answeredCount,
+    totalRawScore,
+    questions,
+  }
+}
+
+async function finalizeAttemptGrading(attempt) {
+  const payload = attempt?.gradingPayload
+  if (!payload || !Array.isArray(payload.questions)) {
+    throw new Error('missing grading payload')
+  }
+
+  const wrongQuestions = []
+  let earnedRawScore = 0
+
+  payload.questions.forEach((item) => {
+    const isCorrect = item.answered && item.yourAnswer === item.correctAnswer
+    if (isCorrect) {
+      earnedRawScore += Number(item.score || 0)
+      return
+    }
+
+    if (!item.answered) return
+
+    wrongQuestions.push({
+      questionId: item.questionId,
+      questionNumber: item.questionNumber,
+      title: item.title,
+      type: item.type || 'single',
+      options: item.options || [],
+      yourAnswer: item.yourAnswer || '',
+      correctAnswer: item.correctAnswer || '',
+    })
+  })
+
+  const wrongQuestionsWithAnalysis = await buildWrongQuestionAnalyses(wrongQuestions)
+  const scoreScaled = payload.totalRawScore > 0
+    ? Math.round((earnedRawScore / payload.totalRawScore) * payload.totalScore)
+    : 0
+
+  return {
+    status: 'graded',
+    gradedAt: new Date().toISOString(),
+    score: scoreScaled,
+    totalScore: payload.totalScore,
+    rawScore: earnedRawScore,
+    rawTotal: payload.totalRawScore,
+    answeredCount: Number(payload.answeredCount || 0),
+    wrongQuestionIds: wrongQuestionsWithAnalysis.map(item => item.questionId),
+    wrongQuestions: wrongQuestionsWithAnalysis,
+    durationSeconds: payload.startedAt
+      ? (diffSeconds(payload.startedAt, payload.submittedAt) || 0)
+      : null,
+    submittedAt: payload.submittedAt || attempt.submittedAt || attempt.at || new Date().toISOString(),
+    startedAt: payload.startedAt || attempt.startedAt || '',
+    gradingError: '',
+  }
+}
+
+async function processPendingAttemptQueue() {
+  if (gradingLoopBusy) return
+  gradingLoopBusy = true
+
+  try {
+    while (true) {
+      const attempts = await readAttempts()
+      const nextAttempt = attempts.find(item => item?.status === 'pending')
+      if (!nextAttempt) break
+
+      const lockingAttempts = attempts.map(item => item.id === nextAttempt.id
+        ? {
+            ...item,
+            status: 'grading',
+            gradingStartedAt: new Date().toISOString(),
+          }
+        : item)
+      await writeAttempts(lockingAttempts)
+
+      try {
+        const graded = await finalizeAttemptGrading(nextAttempt)
+        const updatedAttempts = await readAttempts()
+        const mergedAttempts = updatedAttempts.map(item => item.id === nextAttempt.id
+          ? {
+              ...item,
+              ...graded,
+            }
+          : item)
+        await writeAttempts(mergedAttempts)
+        clearUserCaches(nextAttempt.username)
+        clearExamCaches()
+      } catch (error) {
+        const failedAttempts = await readAttempts()
+        const mergedAttempts = failedAttempts.map(item => item.id === nextAttempt.id
+          ? {
+              ...item,
+              status: 'failed',
+              gradingError: error instanceof Error ? error.message : String(error),
+            }
+          : item)
+        await writeAttempts(mergedAttempts)
+        clearUserCaches(nextAttempt.username)
+        clearExamCaches()
+      }
+    }
+  } finally {
+    gradingLoopBusy = false
+  }
+}
+
+function buildStudentExamResultSummary(attempt) {
+  return {
+    attemptId: attempt.id,
+    examId: attempt.examId,
+    examTitle: attempt.examTitle || attempt.examId,
+    status: attempt.status || 'graded',
+    score: attempt.score ?? null,
+    totalScore: attempt.totalScore ?? DEFAULT_TOTAL_SCORE,
+    submittedAt: attempt.submittedAt || attempt.at || '',
+    gradedAt: attempt.gradedAt || '',
+  }
 }
 
 function createSession(user) {
@@ -507,12 +670,11 @@ function toUserTemplateCsv() {
 }
 
 async function buildAdminBackupPayload() {
-  const [users, questions, exams, attempts, wrongBook] = await Promise.all([
+  const [users, questions, exams, attempts] = await Promise.all([
     readUsers(),
     readQuestions(),
     readExams(),
     readAttempts(),
-    readWrongBook(),
   ])
 
   return {
@@ -522,7 +684,6 @@ async function buildAdminBackupPayload() {
     questions,
     exams,
     attempts,
-    wrongBook,
   }
 }
 
@@ -535,7 +696,6 @@ function validateBackupPayload(payload = {}) {
   const questions = payload.questions
   const exams = payload.exams
   const attempts = payload.attempts
-  const wrongBook = payload.wrongBook
 
   if (!users || typeof users !== 'object' || Array.isArray(users)) {
     return { error: 'backup.users must be an object' }
@@ -548,9 +708,6 @@ function validateBackupPayload(payload = {}) {
   }
   if (!Array.isArray(attempts)) {
     return { error: 'backup.attempts must be an array' }
-  }
-  if (!Array.isArray(wrongBook)) {
-    return { error: 'backup.wrongBook must be an array' }
   }
 
   const normalizedUsers = {}
@@ -573,7 +730,6 @@ function validateBackupPayload(payload = {}) {
         levelRequired: normalizeCourseLevel(item.levelRequired, DEFAULT_EXAM_LEVEL),
       })),
       attempts,
-      wrongBook,
     },
   }
 }
@@ -654,8 +810,6 @@ const readQuestions = () => dataStore.readQuestions()
 const writeQuestions = (data) => dataStore.writeQuestions(data)
 const readExams = () => dataStore.readExams()
 const writeExams = (data) => dataStore.writeExams(data)
-const readWrongBook = () => dataStore.readWrongBook()
-const writeWrongBook = (data) => dataStore.writeWrongBook(data)
 const readAttempts = () => dataStore.readAttempts()
 const writeAttempts = (data) => dataStore.writeAttempts(data)
 
@@ -676,33 +830,22 @@ function buildExamQuestionNumberMap(exam, allQuestions) {
 }
 
 async function buildAdminExamResults({ examId = '', student = '', from = '', to = '' } = {}) {
-  const [users, exams, attempts, wrongBook, allQuestions] = await Promise.all([
+  const [users, exams, attempts, allQuestions] = await Promise.all([
     readUsers(),
     readExams(),
     readAttempts(),
-    readWrongBook(),
     readQuestions(),
   ])
 
   const examMap = new Map(exams.map(exam => [exam.id, exam]))
-  const wrongByAttemptKey = new Map()
   const questionNumberMaps = new Map()
 
   exams.forEach((exam) => {
     questionNumberMaps.set(exam.id, buildExamQuestionNumberMap(exam, allQuestions))
   })
 
-  wrongBook.forEach((item) => {
-    if (!item?.examId || !item?.username || !item?.questionId) return
-    const key = item.attemptId
-      ? `${item.examId}:${item.username}:${item.attemptId}`
-      : `${item.examId}:${item.username}`
-    const list = wrongByAttemptKey.get(key) || []
-    list.push(item)
-    wrongByAttemptKey.set(key, list)
-  })
-
   const filteredAttempts = attempts
+    .filter(attempt => !attempt.status || attempt.status === 'graded')
     .filter(attempt => {
       if (examId && attempt.examId !== examId) return false
       if (student && attempt.username !== student) return false
@@ -716,11 +859,7 @@ async function buildAdminExamResults({ examId = '', student = '', from = '', to 
     const exam = examMap.get(attempt.examId) || {}
     const user = users[attempt.username] || {}
     const questionNumberMap = questionNumberMaps.get(attempt.examId) || new Map()
-    const wrongItems = wrongByAttemptKey.get(
-      attempt.id
-        ? `${attempt.examId}:${attempt.username}:${attempt.id}`
-        : `${attempt.examId}:${attempt.username}`
-    ) || wrongByAttemptKey.get(`${attempt.examId}:${attempt.username}`) || []
+    const wrongItems = Array.isArray(attempt.wrongQuestions) ? attempt.wrongQuestions : []
     const wrongQuestionIds = Array.isArray(attempt.wrongQuestionIds) && attempt.wrongQuestionIds.length > 0
       ? Array.from(new Set(attempt.wrongQuestionIds))
       : Array.from(new Set(wrongItems.map(item => item.questionId)))
@@ -740,7 +879,7 @@ async function buildAdminExamResults({ examId = '', student = '', from = '', to 
     return {
       id: attempt.id,
       examId: attempt.examId,
-      examTitle: exam.title || attempt.examTitle || wrongItems[0]?.examTitle || attempt.examId,
+      examTitle: exam.title || attempt.examTitle || attempt.examId,
       examStartTime: exam.startTime || '',
       examEndTime: exam.endTime || '',
       username: attempt.username,
@@ -873,6 +1012,30 @@ async function buildAdminExamResults({ examId = '', student = '', from = '', to 
     examAttempts,
     studentSummaries,
     studentTrendLines,
+  }
+}
+
+async function buildStudentExamResults(username) {
+  const attempts = await readAttempts()
+  return attempts
+    .filter(item => item.username === username)
+    .sort((a, b) => new Date(b.submittedAt || b.at || 0) - new Date(a.submittedAt || a.at || 0))
+    .map(buildStudentExamResultSummary)
+}
+
+async function buildStudentExamResultDetail(username, attemptId) {
+  const attempts = await readAttempts()
+  const attempt = attempts.find(item => item.id === attemptId && item.username === username)
+  if (!attempt) return null
+
+  return {
+    ...buildStudentExamResultSummary(attempt),
+    rawScore: attempt.rawScore ?? null,
+    rawTotal: attempt.rawTotal ?? null,
+    answeredCount: attempt.answeredCount ?? 0,
+    durationSeconds: attempt.durationSeconds ?? null,
+    wrongQuestions: Array.isArray(attempt.wrongQuestions) ? cloneJson(attempt.wrongQuestions) : [],
+    gradingError: attempt.gradingError || '',
   }
 }
 
@@ -1019,7 +1182,6 @@ app.post('/api/admin/backup/restore', requireAdmin, asyncRoute(async (req, res) 
       questionCount: result.data.questions.length,
       examCount: result.data.exams.length,
       attemptCount: result.data.attempts.length,
-      wrongBookCount: result.data.wrongBook.length,
     },
   })
 }))
@@ -1190,9 +1352,7 @@ app.delete('/api/users/:username', requireAdmin, asyncRoute(async (req, res) => 
   await writeUsers(users)
 
   const attempts = (await readAttempts()).filter(item => item.username !== username)
-  const wrongBook = (await readWrongBook()).filter(item => item.username !== username)
   await writeAttempts(attempts)
-  await writeWrongBook(wrongBook)
   clearUserCaches(username)
   clearExamCaches()
 
@@ -1397,6 +1557,31 @@ app.get('/api/admin/exam-results', requireAdmin, asyncRoute(async (req, res) => 
   res.json(payload)
 }))
 
+app.get('/api/my/exam-results', requireAuth, asyncRoute(async (req, res) => {
+  const username = req.authUser.username
+  const cacheKey = `exam-results:${username}`
+  const cached = getCachedEndpoint(cacheKey)
+  if (cached) return res.json(cached)
+
+  const payload = await buildStudentExamResults(username)
+  setCachedEndpoint(cacheKey, payload)
+  res.json(payload)
+}))
+
+app.get('/api/my/exam-results/:attemptId', requireAuth, asyncRoute(async (req, res) => {
+  const username = req.authUser.username
+  const { attemptId } = req.params
+  const cacheKey = `exam-result-detail:${username}:${attemptId}`
+  const cached = getCachedEndpoint(cacheKey)
+  if (cached) return res.json(cached)
+
+  const payload = await buildStudentExamResultDetail(username, attemptId)
+  if (!payload) return res.status(404).json({ error: 'attempt_not_found' })
+
+  setCachedEndpoint(cacheKey, payload)
+  res.json(payload)
+}))
+
 app.patch('/api/admin/exams/:id', requireAdmin, asyncRoute(async (req, res) => {
   const { id } = req.params
   const payload = req.body || {}
@@ -1526,179 +1711,61 @@ app.post('/api/exams/:id/submit', requireAuth, asyncRoute(async (req, res) => {
   
   const allQuestions = await readQuestions()
   const questionMap = new Map(allQuestions.map(q => [q.id, q]))
-  const wrongBook = await readWrongBook()
   const attempts = await readAttempts()
   if (hasSubmittedExam(attempts, username, id)) {
     return res.status(409).json({ error: 'already_submitted' })
   }
   
-  const validQuestionIds = Array.isArray(questionIds) ? questionIds : Object.keys(answers || {})
   const submitTime = toIsoTime(submittedAt)
   const startTime = startedAt ? toIsoTime(startedAt) : ''
   const attemptId = Date.now().toString()
-  let totalRawScore = 0
-  let earnedRawScore = 0
-  const results = []
-  const wrongQuestions = []
-  const wrongBookRecords = []
-  let answeredCount = 0
-
-  validQuestionIds.forEach(qId => {
-    const question = questionMap.get(qId)
-    if (!question) return
-    const questionNumber = results.length + 1
-
-    totalRawScore += question.score
-    const userAns = answers?.[qId]
-    const isCorrect = userAns === question.answer
-    const answered = hasSubmittedAnswer(userAns)
-    if (answered) answeredCount += 1
-
-    if (isCorrect) {
-      earnedRawScore += question.score
-    } else if (answered) {
-      // 记录错题
-      const record = {
-        username,
-        questionId: qId,
-        questionTitle: question.title,
-        yourAnswer: userAns,
-        correctAnswer: question.answer,
-        examId: id,
-        examTitle: exam.title,
-        questionNumber,
-        attemptId,
-        at: submitTime
-      }
-      wrongBookRecords.push(record)
-      wrongQuestions.push({
-        questionId: qId,
-        title: question.title,
-        type: question.type || 'single',
-        options: question.options || [],
-        yourAnswer: userAns,
-        correctAnswer: question.answer,
-      })
-    }
-    
-    results.push({
-      questionId: qId,
-      isCorrect,
-      score: isCorrect ? question.score : 0,
-      correctAnswer: question.answer // 返回正确答案供查看
-    })
+  const gradingPayload = buildAttemptGradingPayload({
+    exam,
+    answers,
+    questionIds,
+    questionMap,
+    startedAt: startTime,
+    submittedAt: submitTime,
   })
 
-  const configuredTotalScore = toPositiveInt(exam.totalScore, DEFAULT_TOTAL_SCORE)
-  const scoreScaled = totalRawScore > 0 ? Math.round((earnedRawScore / totalRawScore) * configuredTotalScore) : 0
-  
-  // 记录本次尝试
   const attempt = {
     id: attemptId,
     examId: id,
     examTitle: exam.title,
     username,
-    score: scoreScaled,
-    rawScore: earnedRawScore,
-    rawTotal: totalRawScore,
-    totalScore: configuredTotalScore,
-    answeredCount,
-    wrongQuestionIds: wrongQuestions.map(item => item.questionId),
+    status: 'pending',
+    score: null,
+    rawScore: null,
+    rawTotal: gradingPayload.totalRawScore,
+    totalScore: gradingPayload.totalScore,
+    answeredCount: gradingPayload.answeredCount,
+    wrongQuestionIds: [],
+    wrongQuestions: [],
     startedAt: startTime,
     submittedAt: submitTime,
     durationSeconds: startTime ? (diffSeconds(startTime, submitTime) || 0) : null,
-    at: submitTime
+    at: submitTime,
+    gradedAt: '',
+    gradingError: '',
+    gradingPayload,
   }
   attempts.push(attempt)
-  const wrongQuestionsWithAnalysis = await buildWrongQuestionAnalyses(wrongQuestions)
-
-  const analysisMap = new Map(
-    wrongQuestionsWithAnalysis.map(item => [item.questionId, item.analysis || ''])
-  )
-
-  wrongBookRecords.forEach((record) => {
-    wrongBook.push({
-      ...record,
-      analysis: analysisMap.get(record.questionId) || buildFallbackAnalysis(record),
-    })
-  })
-
-  await writeWrongBook(wrongBook)
   await writeAttempts(attempts)
   clearUserCaches(username)
   clearExamCaches()
+  setTimeout(() => {
+    processPendingAttemptQueue().catch((error) => {
+      console.warn('[grading-queue] failed to process pending attempts')
+      console.warn(error instanceof Error ? error.message : String(error))
+    })
+  }, 0)
   
-  res.json({
+  res.status(202).json({
     success: true,
-    score: scoreScaled,
-    totalScore: configuredTotalScore,
-    rawScore: earnedRawScore,
-    rawTotal: totalRawScore,
-    results,
-    wrongQuestions: wrongQuestionsWithAnalysis,
+    attemptId,
+    status: 'pending',
+    message: '考试已提交，正在判题中。',
   })
-}))
-
-// 获取错题本
-app.get('/api/my/wrong-book', requireAuth, asyncRoute(async (req, res) => {
-  const username = req.authUser.username
-  const cacheKey = `wrong-book:${username}`
-  const cached = getCachedEndpoint(cacheKey)
-  if (cached) return res.json(cached)
-  const wrongBook = (await readWrongBook()).filter(w => w.username === username)
-  const allQuestions = await readQuestions()
-  const questionMap = new Map(allQuestions.map(q => [q.id, q]))
-  const optionSignatureCache = new Map()
-  const map = new Map()
-
-  const buildWrongBookDedupKey = (item, question) => {
-    const title = sanitizeQuestionText(item.questionTitle || question?.title || '')
-    const correctAnswer = String(item.correctAnswer || question?.answer || '').trim().toUpperCase()
-    const type = String(question?.type || 'single').trim().toLowerCase()
-    const optionsSignature = question?.id ? (optionSignatureCache.get(question.id) || '') : ''
-    return `${title}::${correctAnswer}::${type}::${optionsSignature}`
-  }
-
-  wrongBook.forEach(item => {
-    const q = questionMap.get(item.questionId) || {}
-    if (q.id && !optionSignatureCache.has(q.id)) {
-      const optionsSignature = Array.isArray(q.options)
-        ? q.options
-            .map(opt => `${String(opt?.label || '').trim().toUpperCase()}:${normalizeOptionText(opt?.text || '')}`)
-            .join('|')
-        : ''
-      optionSignatureCache.set(q.id, optionsSignature)
-    }
-    const dedupKey = buildWrongBookDedupKey(item, q)
-    const prev = map.get(dedupKey)
-    if (!prev) {
-      map.set(dedupKey, {
-        questionId: item.questionId,
-        title: item.questionTitle || q.title || '',
-        type: q.type || 'single',
-        options: q.options || [],
-        codeSnippet: q.codeSnippet || '',
-        correctAnswer: item.correctAnswer,
-        analysis: item.analysis || '',
-        wrongCount: 1,
-        firstWrongAt: item.at,
-        lastWrongAt: item.at,
-        lastYourAnswer: item.yourAnswer,
-        examTitle: item.examTitle,
-      })
-    } else {
-      prev.wrongCount += 1
-      prev.lastWrongAt = item.at
-      prev.lastYourAnswer = item.yourAnswer
-      prev.correctAnswer = item.correctAnswer
-      if (!prev.analysis && item.analysis) {
-        prev.analysis = item.analysis
-      }
-    }
-  })
-  const list = Array.from(map.values()).sort((a, b) => new Date(b.lastWrongAt) - new Date(a.lastWrongAt))
-  setCachedEndpoint(cacheKey, list)
-  res.json(list)
 }))
 
 app.use((error, req, res, next) => {
@@ -1711,6 +1778,13 @@ app.use((error, req, res, next) => {
 })
 
 const PORT = process.env.PORT || 8787
+setInterval(() => {
+  processPendingAttemptQueue().catch((error) => {
+    console.warn('[grading-queue] polling failed')
+    console.warn(error instanceof Error ? error.message : String(error))
+  })
+}, GRADING_POLL_MS)
+
 app.listen(PORT, () => {
   process.stdout.write(`server at http://localhost:${PORT}\n`)
   process.stdout.write(`storage mode: ${dataStore.config.mode}\n`)

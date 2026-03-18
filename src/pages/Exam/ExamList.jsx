@@ -124,7 +124,7 @@ export default function ExamList() {
             </div>
             <h2 style={{ marginBottom: 10 }}>在线考试</h2>
             <p style={{ maxWidth: 620, color: 'var(--text-secondary)', margin: 0 }}>
-              {isAdmin ? '管理员视角会展示全部考试，并用颜色区分未开始、进行中和已过期。' : '进入考试前先确认等级要求和时间窗口，提交后将自动记录成绩与错题。'}
+              {isAdmin ? '管理员视角会展示全部考试，并用颜色区分未开始、进行中和已过期。' : '进入考试前先确认等级要求和时间窗口，提交后将进入后台判题，最终成绩会保存在考试成绩页面。'}
             </p>
           </div>
           <div style={{

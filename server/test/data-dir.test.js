@@ -60,7 +60,7 @@ test('server stores runtime json files under DATA_DIR when provided', async () =
 
     assert.equal(loginRes.status, 200)
 
-    const files = ['users.json', 'questions.json', 'exams.json', 'wrong_book.json', 'attempts.json']
+    const files = ['users.json', 'questions.json', 'exams.json', 'attempts.json']
     files.forEach((name) => {
       const file = path.join(tempDir, name)
       assert.equal(fs.existsSync(file), true, `${name} should be created in DATA_DIR`)

@@ -13,7 +13,6 @@ const dataDir = path.join(serverDir, 'data')
 const usersFile = path.join(dataDir, 'users.json')
 const examsFile = path.join(dataDir, 'exams.json')
 const questionsFile = path.join(dataDir, 'questions.json')
-const wrongBookFile = path.join(dataDir, 'wrong_book.json')
 const attemptsFile = path.join(dataDir, 'attempts.json')
 
 const fixtures = {
@@ -39,6 +38,22 @@ const fixtures = {
 
 function writeJson(file, data) {
   fs.writeFileSync(file, JSON.stringify(data, null, 2))
+}
+
+async function waitFor(assertion, { timeout = 5000, interval = 50 } = {}) {
+  const startedAt = Date.now()
+  let lastError = null
+
+  while ((Date.now() - startedAt) < timeout) {
+    try {
+      return await assertion()
+    } catch (error) {
+      lastError = error
+      await new Promise(resolve => setTimeout(resolve, interval))
+    }
+  }
+
+  throw lastError || new Error('waitFor timeout')
 }
 
 async function startServer() {
@@ -112,14 +127,12 @@ test('admin can download exam markdown template', async () => {
     users: fs.readFileSync(usersFile, 'utf-8'),
     exams: fs.existsSync(examsFile) ? fs.readFileSync(examsFile, 'utf-8') : '[]',
     questions: fs.existsSync(questionsFile) ? fs.readFileSync(questionsFile, 'utf-8') : '[]',
-    wrongBook: fs.existsSync(wrongBookFile) ? fs.readFileSync(wrongBookFile, 'utf-8') : '[]',
     attempts: fs.existsSync(attemptsFile) ? fs.readFileSync(attemptsFile, 'utf-8') : '[]',
   }
 
   writeJson(usersFile, fixtures.users)
   writeJson(examsFile, [])
   writeJson(questionsFile, [])
-  writeJson(wrongBookFile, [])
   writeJson(attemptsFile, [])
 
   const server = await startServer()
@@ -144,7 +157,6 @@ test('admin can download exam markdown template', async () => {
     fs.writeFileSync(usersFile, backups.users)
     fs.writeFileSync(examsFile, backups.exams)
     fs.writeFileSync(questionsFile, backups.questions)
-    fs.writeFileSync(wrongBookFile, backups.wrongBook)
     fs.writeFileSync(attemptsFile, backups.attempts)
   }
 })
@@ -154,28 +166,12 @@ test('exam result export falls back to stored question numbers when exam metadat
     users: fs.readFileSync(usersFile, 'utf-8'),
     exams: fs.readFileSync(examsFile, 'utf-8'),
     questions: fs.readFileSync(questionsFile, 'utf-8'),
-    wrongBook: fs.readFileSync(wrongBookFile, 'utf-8'),
     attempts: fs.readFileSync(attemptsFile, 'utf-8'),
   }
 
   writeJson(usersFile, fixtures.users)
   writeJson(examsFile, [])
   writeJson(questionsFile, [])
-  writeJson(wrongBookFile, [
-    {
-      username: 'vic',
-      questionId: 'missing-q-2',
-      questionTitle: '第二题',
-      yourAnswer: 'A',
-      correctAnswer: 'B',
-      examId: 'missing-exam',
-      examTitle: '历史阶段测试',
-      questionNumber: 2,
-      attemptId: 'attempt-missing',
-      at: '2026-03-18T00:25:53.000Z',
-      analysis: '示例解析',
-    },
-  ])
   writeJson(attemptsFile, [
     {
       id: 'attempt-missing',
@@ -190,6 +186,16 @@ test('exam result export falls back to stored question numbers when exam metadat
       submittedAt: '2026-03-18T00:25:53.000Z',
       durationSeconds: 0,
       wrongQuestionIds: ['missing-q-2'],
+      wrongQuestions: [
+        {
+          questionId: 'missing-q-2',
+          questionNumber: 2,
+          title: '第二题',
+          yourAnswer: 'A',
+          correctAnswer: 'B',
+          analysis: '示例解析',
+        },
+      ],
       answeredCount: 1,
     },
   ])
@@ -214,7 +220,6 @@ test('exam result export falls back to stored question numbers when exam metadat
     fs.writeFileSync(usersFile, backups.users)
     fs.writeFileSync(examsFile, backups.exams)
     fs.writeFileSync(questionsFile, backups.questions)
-    fs.writeFileSync(wrongBookFile, backups.wrongBook)
     fs.writeFileSync(attemptsFile, backups.attempts)
   }
 })
@@ -224,14 +229,12 @@ test('admin can preview exam markdown before creating the exam', async () => {
     users: fs.readFileSync(usersFile, 'utf-8'),
     exams: fs.existsSync(examsFile) ? fs.readFileSync(examsFile, 'utf-8') : '[]',
     questions: fs.existsSync(questionsFile) ? fs.readFileSync(questionsFile, 'utf-8') : '[]',
-    wrongBook: fs.existsSync(wrongBookFile) ? fs.readFileSync(wrongBookFile, 'utf-8') : '[]',
     attempts: fs.existsSync(attemptsFile) ? fs.readFileSync(attemptsFile, 'utf-8') : '[]',
   }
 
   writeJson(usersFile, fixtures.users)
   writeJson(examsFile, [])
   writeJson(questionsFile, [])
-  writeJson(wrongBookFile, [])
   writeJson(attemptsFile, [])
 
   const server = await startServer()
@@ -268,17 +271,15 @@ test('admin can preview exam markdown before creating the exam', async () => {
     fs.writeFileSync(usersFile, backups.users)
     fs.writeFileSync(examsFile, backups.exams)
     fs.writeFileSync(questionsFile, backups.questions)
-    fs.writeFileSync(wrongBookFile, backups.wrongBook)
     fs.writeFileSync(attemptsFile, backups.attempts)
   }
 })
 
-test('submit returns wrong-question analyses and wrong-book stays deduplicated by question', async () => {
+test('submit queues async grading and stores final wrong-question analyses on attempt record', async () => {
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),
     exams: fs.existsSync(examsFile) ? fs.readFileSync(examsFile, 'utf-8') : '[]',
     questions: fs.existsSync(questionsFile) ? fs.readFileSync(questionsFile, 'utf-8') : '[]',
-    wrongBook: fs.existsSync(wrongBookFile) ? fs.readFileSync(wrongBookFile, 'utf-8') : '[]',
     attempts: fs.existsSync(attemptsFile) ? fs.readFileSync(attemptsFile, 'utf-8') : '[]',
   }
 
@@ -325,7 +326,6 @@ test('submit returns wrong-question analyses and wrong-book stays deduplicated b
       options: [],
     },
   ])
-  writeJson(wrongBookFile, [])
   writeJson(attemptsFile, [])
 
   const server = await startServer()
@@ -333,60 +333,59 @@ test('submit returns wrong-question analyses and wrong-book stays deduplicated b
   try {
     const auth = await loginAs(server.baseUrl, 'vic', '123456')
 
-    const submitOnce = async () => {
-      const res = await fetch(`${server.baseUrl}/exams/exam-1/submit`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${auth.token}`,
-        },
-        body: JSON.stringify({
-          answers: {
-            'q-1': 'A',
-            'q-2': 'T',
-          },
-          questionIds: ['q-1', 'q-2'],
-        }),
-      })
-      assert.equal(res.status, 200)
-      return res.json()
-    }
-
-    const first = await submitOnce()
-    assert.equal(Array.isArray(first.wrongQuestions), true)
-    assert.equal(first.wrongQuestions.length, 1)
-    assert.equal(first.wrongQuestions[0].questionId, 'q-1')
-    assert.equal(typeof first.wrongQuestions[0].analysis, 'string')
-    assert.equal(first.wrongQuestions[0].analysis.length > 0, true)
-
-    const wrongBookRes = await fetch(`${server.baseUrl}/my/wrong-book`, {
+    const submitRes = await fetch(`${server.baseUrl}/exams/exam-1/submit`, {
+      method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${auth.token}`,
       },
+      body: JSON.stringify({
+        answers: {
+          'q-1': 'A',
+          'q-2': 'T',
+        },
+        questionIds: ['q-1', 'q-2'],
+      }),
     })
-    assert.equal(wrongBookRes.status, 200)
-    const wrongBook = await wrongBookRes.json()
-    assert.equal(wrongBook.length, 1)
-    assert.equal(wrongBook[0].questionId, 'q-1')
-    assert.equal(wrongBook[0].wrongCount, 1)
-    assert.equal(typeof wrongBook[0].analysis, 'string')
-    assert.equal(wrongBook[0].analysis.length > 0, true)
+    assert.equal(submitRes.status, 202)
+
+    const queued = await submitRes.json()
+    assert.equal(queued.success, true)
+    assert.equal(queued.status, 'pending')
+    assert.equal(typeof queued.attemptId, 'string')
+    assert.equal(queued.attemptId.length > 0, true)
+
+    const initialAttempts = JSON.parse(fs.readFileSync(attemptsFile, 'utf-8'))
+    assert.equal(initialAttempts.length, 1)
+    assert.equal(['pending', 'grading'].includes(initialAttempts[0].status), true)
+    assert.equal(initialAttempts[0].score, null)
+    assert.equal(Array.isArray(initialAttempts[0].gradingPayload?.questionIds), true)
+    assert.equal(initialAttempts[0].gradingPayload.questionIds.length, 2)
+
+    await waitFor(() => {
+      const attempts = JSON.parse(fs.readFileSync(attemptsFile, 'utf-8'))
+      assert.equal(attempts[0].status, 'graded')
+      assert.equal(attempts[0].score, 50)
+      assert.equal(Array.isArray(attempts[0].wrongQuestions), true)
+      assert.equal(attempts[0].wrongQuestions.length, 1)
+      assert.equal(attempts[0].wrongQuestions[0].questionId, 'q-1')
+      assert.equal(typeof attempts[0].wrongQuestions[0].analysis, 'string')
+      assert.equal(attempts[0].wrongQuestions[0].analysis.length > 0, true)
+    })
   } finally {
     await server.stop()
     fs.writeFileSync(usersFile, backups.users)
     fs.writeFileSync(examsFile, backups.exams)
     fs.writeFileSync(questionsFile, backups.questions)
-    fs.writeFileSync(wrongBookFile, backups.wrongBook)
     fs.writeFileSync(attemptsFile, backups.attempts)
   }
 })
 
-test('unanswered questions do not enter wrong-book or wrong-question analyses', async () => {
+test('student can view exam score list and details after async grading finishes', async () => {
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),
     exams: fs.existsSync(examsFile) ? fs.readFileSync(examsFile, 'utf-8') : '[]',
     questions: fs.existsSync(questionsFile) ? fs.readFileSync(questionsFile, 'utf-8') : '[]',
-    wrongBook: fs.existsSync(wrongBookFile) ? fs.readFileSync(wrongBookFile, 'utf-8') : '[]',
     attempts: fs.existsSync(attemptsFile) ? fs.readFileSync(attemptsFile, 'utf-8') : '[]',
   }
 
@@ -433,7 +432,6 @@ test('unanswered questions do not enter wrong-book or wrong-question analyses', 
       options: [],
     },
   ])
-  writeJson(wrongBookFile, [])
   writeJson(attemptsFile, [])
 
   const server = await startServer()
@@ -454,27 +452,46 @@ test('unanswered questions do not enter wrong-book or wrong-question analyses', 
       }),
     })
 
-    assert.equal(submitRes.status, 200)
-    const data = await submitRes.json()
-    assert.equal(Array.isArray(data.wrongQuestions), true)
-    assert.equal(data.wrongQuestions.length, 1)
-    assert.equal(data.wrongQuestions[0].questionId, 'q-3')
+    assert.equal(submitRes.status, 202)
+    const queued = await submitRes.json()
+    assert.equal(queued.status, 'pending')
 
-    const wrongBookRes = await fetch(`${server.baseUrl}/my/wrong-book`, {
+    await waitFor(async () => {
+      const listRes = await fetch(`${server.baseUrl}/my/exam-results`, {
+        headers: {
+          Authorization: `Bearer ${auth.token}`,
+        },
+      })
+      assert.equal(listRes.status, 200)
+      const list = await listRes.json()
+      assert.equal(list.length, 1)
+      assert.equal(list[0].attemptId, queued.attemptId)
+      assert.equal(list[0].status, 'graded')
+      assert.equal(list[0].score, 0)
+      assert.equal(list[0].examTitle, '留空题样例考试')
+    })
+
+    const detailRes = await fetch(`${server.baseUrl}/my/exam-results/${queued.attemptId}`, {
       headers: {
         Authorization: `Bearer ${auth.token}`,
       },
     })
-    assert.equal(wrongBookRes.status, 200)
-    const wrongBook = await wrongBookRes.json()
-    assert.equal(wrongBook.length, 1)
-    assert.equal(wrongBook[0].questionId, 'q-3')
+    assert.equal(detailRes.status, 200)
+    const detail = await detailRes.json()
+    assert.equal(detail.attemptId, queued.attemptId)
+    assert.equal(detail.status, 'graded')
+    assert.equal(detail.score, 0)
+    assert.equal(Array.isArray(detail.wrongQuestions), true)
+    assert.equal(detail.wrongQuestions.length, 1)
+    assert.equal(detail.wrongQuestions[0].questionId, 'q-3')
+    assert.equal(detail.wrongQuestions[0].title, 'C++ 中用于输入的流对象是？')
+    assert.equal(typeof detail.wrongQuestions[0].analysis, 'string')
+    assert.equal(detail.wrongQuestions[0].analysis.length > 0, true)
   } finally {
     await server.stop()
     fs.writeFileSync(usersFile, backups.users)
     fs.writeFileSync(examsFile, backups.exams)
     fs.writeFileSync(questionsFile, backups.questions)
-    fs.writeFileSync(wrongBookFile, backups.wrongBook)
     fs.writeFileSync(attemptsFile, backups.attempts)
   }
 })
@@ -484,7 +501,6 @@ test('submitted exam disappears from available list and cannot be started again'
     users: fs.readFileSync(usersFile, 'utf-8'),
     exams: fs.existsSync(examsFile) ? fs.readFileSync(examsFile, 'utf-8') : '[]',
     questions: fs.existsSync(questionsFile) ? fs.readFileSync(questionsFile, 'utf-8') : '[]',
-    wrongBook: fs.existsSync(wrongBookFile) ? fs.readFileSync(wrongBookFile, 'utf-8') : '[]',
     attempts: fs.existsSync(attemptsFile) ? fs.readFileSync(attemptsFile, 'utf-8') : '[]',
   }
 
@@ -520,7 +536,6 @@ test('submitted exam disappears from available list and cannot be started again'
       ],
     },
   ])
-  writeJson(wrongBookFile, [])
   writeJson(attemptsFile, [])
 
   const server = await startServer()
@@ -550,7 +565,7 @@ test('submitted exam disappears from available list and cannot be started again'
         questionIds: ['q-once-1'],
       }),
     })
-    assert.equal(submitRes.status, 200)
+    assert.equal(submitRes.status, 202)
 
     const availableAfter = await fetch(`${server.baseUrl}/exams/available`, {
       headers: {
@@ -574,7 +589,6 @@ test('submitted exam disappears from available list and cannot be started again'
     fs.writeFileSync(usersFile, backups.users)
     fs.writeFileSync(examsFile, backups.exams)
     fs.writeFileSync(questionsFile, backups.questions)
-    fs.writeFileSync(wrongBookFile, backups.wrongBook)
     fs.writeFileSync(attemptsFile, backups.attempts)
   }
 })
@@ -584,7 +598,6 @@ test('submit stores attempt timing metadata and wrong question ids', async () =>
     users: fs.readFileSync(usersFile, 'utf-8'),
     exams: fs.existsSync(examsFile) ? fs.readFileSync(examsFile, 'utf-8') : '[]',
     questions: fs.existsSync(questionsFile) ? fs.readFileSync(questionsFile, 'utf-8') : '[]',
-    wrongBook: fs.existsSync(wrongBookFile) ? fs.readFileSync(wrongBookFile, 'utf-8') : '[]',
     attempts: fs.existsSync(attemptsFile) ? fs.readFileSync(attemptsFile, 'utf-8') : '[]',
   }
 
@@ -631,7 +644,6 @@ test('submit stores attempt timing metadata and wrong question ids', async () =>
       options: [],
     },
   ])
-  writeJson(wrongBookFile, [])
   writeJson(attemptsFile, [])
 
   const server = await startServer()
@@ -658,21 +670,27 @@ test('submit stores attempt timing metadata and wrong question ids', async () =>
       }),
     })
 
-    assert.equal(submitRes.status, 200)
+    assert.equal(submitRes.status, 202)
 
-    const attempts = JSON.parse(fs.readFileSync(attemptsFile, 'utf-8'))
-    assert.equal(attempts.length, 1)
-    assert.equal(attempts[0].startedAt, startedAt)
-    assert.equal(attempts[0].submittedAt, submittedAt)
-    assert.equal(attempts[0].durationSeconds, 750)
-    assert.deepEqual(attempts[0].wrongQuestionIds, ['q-meta-1'])
-    assert.equal(attempts[0].answeredCount, 2)
+    await waitFor(() => {
+      const attempts = JSON.parse(fs.readFileSync(attemptsFile, 'utf-8'))
+      assert.equal(attempts.length, 1)
+      assert.equal(attempts[0].startedAt, startedAt)
+      assert.equal(attempts[0].submittedAt, submittedAt)
+      assert.equal(attempts[0].durationSeconds, 750)
+      assert.equal(attempts[0].answeredCount, 2)
+    })
+
+    await waitFor(() => {
+      const nextAttempts = JSON.parse(fs.readFileSync(attemptsFile, 'utf-8'))
+      assert.equal(nextAttempts[0].status, 'graded')
+      assert.deepEqual(nextAttempts[0].wrongQuestionIds, ['q-meta-1'])
+    })
   } finally {
     await server.stop()
     fs.writeFileSync(usersFile, backups.users)
     fs.writeFileSync(examsFile, backups.exams)
     fs.writeFileSync(questionsFile, backups.questions)
-    fs.writeFileSync(wrongBookFile, backups.wrongBook)
     fs.writeFileSync(attemptsFile, backups.attempts)
   }
 })
@@ -682,7 +700,6 @@ test('admin can view exam score analytics and student trends', async () => {
     users: fs.readFileSync(usersFile, 'utf-8'),
     exams: fs.existsSync(examsFile) ? fs.readFileSync(examsFile, 'utf-8') : '[]',
     questions: fs.existsSync(questionsFile) ? fs.readFileSync(questionsFile, 'utf-8') : '[]',
-    wrongBook: fs.existsSync(wrongBookFile) ? fs.readFileSync(wrongBookFile, 'utf-8') : '[]',
     attempts: fs.existsSync(attemptsFile) ? fs.readFileSync(attemptsFile, 'utf-8') : '[]',
   }
 
@@ -769,19 +786,6 @@ test('admin can view exam score analytics and student trends', async () => {
       score: 50,
       answer: 'B',
       options: [],
-    },
-  ])
-  writeJson(wrongBookFile, [
-    {
-      username: 'vic',
-      questionId: 'q-a-2',
-      questionTitle: 'A2',
-      yourAnswer: 'A',
-      correctAnswer: 'B',
-      examId: 'exam-a',
-      examTitle: '第一阶段测试一',
-      at: '2026-03-01T08:25:00.000Z',
-      analysis: '示例解析',
     },
   ])
   writeJson(attemptsFile, [
@@ -880,7 +884,6 @@ test('admin can view exam score analytics and student trends', async () => {
     fs.writeFileSync(usersFile, backups.users)
     fs.writeFileSync(examsFile, backups.exams)
     fs.writeFileSync(questionsFile, backups.questions)
-    fs.writeFileSync(wrongBookFile, backups.wrongBook)
     fs.writeFileSync(attemptsFile, backups.attempts)
   }
 })
@@ -890,7 +893,6 @@ test('admin exams list includes active and expired exams together', async () => 
     users: fs.readFileSync(usersFile, 'utf-8'),
     exams: fs.existsSync(examsFile) ? fs.readFileSync(examsFile, 'utf-8') : '[]',
     questions: fs.existsSync(questionsFile) ? fs.readFileSync(questionsFile, 'utf-8') : '[]',
-    wrongBook: fs.existsSync(wrongBookFile) ? fs.readFileSync(wrongBookFile, 'utf-8') : '[]',
     attempts: fs.existsSync(attemptsFile) ? fs.readFileSync(attemptsFile, 'utf-8') : '[]',
   }
 
@@ -924,7 +926,6 @@ test('admin exams list includes active and expired exams together', async () => 
     },
   ])
   writeJson(questionsFile, [])
-  writeJson(wrongBookFile, [])
   writeJson(attemptsFile, [])
 
   const server = await startServer()
@@ -945,7 +946,6 @@ test('admin exams list includes active and expired exams together', async () => 
     fs.writeFileSync(usersFile, backups.users)
     fs.writeFileSync(examsFile, backups.exams)
     fs.writeFileSync(questionsFile, backups.questions)
-    fs.writeFileSync(wrongBookFile, backups.wrongBook)
     fs.writeFileSync(attemptsFile, backups.attempts)
   }
 })

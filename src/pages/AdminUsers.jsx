@@ -187,7 +187,7 @@ function AdminUsers() {
       return
     }
 
-    const confirmed = window.confirm(`确认删除用户 ${target.username} 吗？相关考试记录和错题本也会一并清理。`)
+    const confirmed = window.confirm(`确认删除用户 ${target.username} 吗？相关考试记录也会一并清理。`)
     if (!confirmed) return
 
     try {

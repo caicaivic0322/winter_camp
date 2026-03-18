@@ -41,6 +41,43 @@ function Home() {
           </div>
         )}
 
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 24 }}>
+          <Link
+            to="/exams"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '12px 18px',
+              borderRadius: 16,
+              background: 'linear-gradient(135deg, var(--primary), var(--accent-secondary))',
+              color: '#fff',
+              fontWeight: 700,
+              textDecoration: 'none',
+              boxShadow: 'var(--shadow-glow)',
+            }}
+          >
+            进入在线考试
+          </Link>
+          <Link
+            to="/my/exam-results"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '12px 18px',
+              borderRadius: 16,
+              background: 'var(--panel-strong)',
+              color: 'var(--text-heading)',
+              border: '1px solid var(--border-default)',
+              fontWeight: 700,
+              textDecoration: 'none',
+            }}
+          >
+            考试成绩
+          </Link>
+        </div>
+
         <div className="hero-stats page-enter-delay-2">
           {visibleParts.map((part) => {
             const partCount = part.id === 4 ? (part.moduleCount || 0) : getPartCourses(part.id).length

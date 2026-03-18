@@ -103,11 +103,9 @@ test('user can fetch and update own competition progress', async () => {
   const server = await startServer()
   const usersFile = path.join(server.dataDir, 'users.json')
   const attemptsFile = path.join(server.dataDir, 'attempts.json')
-  const wrongBookFile = path.join(server.dataDir, 'wrong_book.json')
 
   writeJson(usersFile, fixtures.users)
   writeJson(attemptsFile, [])
-  writeJson(wrongBookFile, [])
 
   try {
     const loginData = await login(server.baseUrl, 'alice', '123456')
@@ -158,11 +156,9 @@ test('non-admin user cannot read or write another user competition progress', as
   const server = await startServer()
   const usersFile = path.join(server.dataDir, 'users.json')
   const attemptsFile = path.join(server.dataDir, 'attempts.json')
-  const wrongBookFile = path.join(server.dataDir, 'wrong_book.json')
 
   writeJson(usersFile, fixtures.users)
   writeJson(attemptsFile, [])
-  writeJson(wrongBookFile, [])
 
   try {
     const loginData = await login(server.baseUrl, 'bob', '123456')

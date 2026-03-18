@@ -71,7 +71,6 @@ export function createDataStore({
   const usersFile = path.join(config.dataDir, 'users.json')
   const questionsFile = path.join(config.dataDir, 'questions.json')
   const examsFile = path.join(config.dataDir, 'exams.json')
-  const wrongBookFile = path.join(config.dataDir, 'wrong_book.json')
   const attemptsFile = path.join(config.dataDir, 'attempts.json')
 
   const supabase = config.mode === 'supabase'
@@ -133,9 +132,6 @@ export function createDataStore({
     if (!fs.existsSync(examsFile)) {
       fs.writeFileSync(examsFile, JSON.stringify([], null, 2))
     }
-    if (!fs.existsSync(wrongBookFile)) {
-      fs.writeFileSync(wrongBookFile, JSON.stringify([], null, 2))
-    }
     if (!fs.existsSync(attemptsFile)) {
       fs.writeFileSync(attemptsFile, JSON.stringify([], null, 2))
     }
@@ -190,7 +186,6 @@ export function createDataStore({
         users: JSON.parse(fs.readFileSync(usersFile, 'utf-8')),
         questions: JSON.parse(fs.readFileSync(questionsFile, 'utf-8')),
         exams: JSON.parse(fs.readFileSync(examsFile, 'utf-8')),
-        wrong_book: JSON.parse(fs.readFileSync(wrongBookFile, 'utf-8')),
         attempts: JSON.parse(fs.readFileSync(attemptsFile, 'utf-8')),
       }
 
@@ -198,7 +193,6 @@ export function createDataStore({
         sqliteWriteStateRowSync('users', localData.users)
         sqliteWriteStateRowSync('questions', localData.questions)
         sqliteWriteStateRowSync('exams', localData.exams)
-        sqliteWriteStateRowSync('wrong_book', localData.wrong_book)
         sqliteWriteStateRowSync('attempts', localData.attempts)
       })()
     }
@@ -237,7 +231,6 @@ export function createDataStore({
         users: usersFile,
         questions: questionsFile,
         exams: examsFile,
-        wrong_book: wrongBookFile,
         attempts: attemptsFile,
       }
 
@@ -273,7 +266,6 @@ export function createDataStore({
         users: usersFile,
         questions: questionsFile,
         exams: examsFile,
-        wrong_book: wrongBookFile,
         attempts: attemptsFile,
       }
       fs.writeFileSync(fileMap[key], JSON.stringify(value, null, 2))
@@ -356,15 +348,6 @@ export function createDataStore({
     await writeCollection('exams', data)
   }
 
-  async function readWrongBook() {
-    const data = await readCollection('wrong_book', [])
-    return Array.isArray(data) ? data : []
-  }
-
-  async function writeWrongBook(data) {
-    await writeCollection('wrong_book', data)
-  }
-
   async function readAttempts() {
     const data = await readCollection('attempts', [])
     return Array.isArray(data) ? data : []
@@ -391,13 +374,12 @@ export function createDataStore({
     return { storage: config.mode, reachable: true }
   }
 
-  async function replaceAll({ users, questions, exams, attempts, wrongBook }) {
+  async function replaceAll({ users, questions, exams, attempts }) {
     await Promise.all([
       writeUsers(users),
       writeQuestions(questions),
       writeExams(exams),
       writeAttempts(attempts),
-      writeWrongBook(wrongBook),
     ])
   }
 
@@ -411,8 +393,6 @@ export function createDataStore({
     writeQuestions,
     readExams,
     writeExams,
-    readWrongBook,
-    writeWrongBook,
     readAttempts,
     writeAttempts,
   }

@@ -21,7 +21,7 @@ function Navbar() {
           <Link to="/competition" className="navbar-link">竞赛单元</Link>
         )}
         <Link to="/exams" className="navbar-link">在线考试</Link>
-        <Link to="/my/wrong-book" className="navbar-link">错题本</Link>
+        <Link to="/my/exam-results" className="navbar-link">考试成绩</Link>
         <a href={VISUALGO_SORTING_URL} target="_blank" rel="noreferrer" className="navbar-link">排序可视化</a>
         {user?.role === 'admin' && (
           <>

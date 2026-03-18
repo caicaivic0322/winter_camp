@@ -5,5 +5,5 @@ create table if not exists public.app_state (
 );
 
 comment on table public.app_state is 'Application runtime state for cpp-training-camp';
-comment on column public.app_state.key is 'Logical dataset key such as users, exams, questions, wrong_book, attempts';
+comment on column public.app_state.key is 'Logical dataset key such as users, exams, questions, attempts';
 comment on column public.app_state.value is 'Serialized JSON payload for the dataset';

@@ -5,7 +5,6 @@ import { useAuth } from '../../contexts/AuthContext'
 import API_BASE from '../../config/api'
 import { buildAuthHeaders } from '../../utils/auth'
 import { clearExamSession, hydrateExamSession, readExamSession, writeExamSession } from '../../utils/examSession'
-import { buildWrongQuestionsPrintHtml } from '../../utils/wrongQuestionExport'
 
 const sectionConfig = [
   { key: 'single', title: '单选题', accent: 'var(--status-success-fg)' },
@@ -29,13 +28,14 @@ export default function ExamPaper() {
   const [timeLeft, setTimeLeft] = useState(0)
   const [answers, setAnswers] = useState({})
   const [submitted, setSubmitted] = useState(false)
-  const [result, setResult] = useState(null)
+  const [submissionReceipt, setSubmissionReceipt] = useState(null)
   const [loading, setLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const [direction, setDirection] = useState(1)
   const [isCompact, setIsCompact] = useState(() => window.innerWidth < 960)
   const [expiresAt, setExpiresAt] = useState(null)
+  const [redirectCountdown, setRedirectCountdown] = useState(10)
 
   const timerRef = useRef(null)
   const sessionRef = useRef(null)
@@ -256,6 +256,25 @@ export default function ExamPaper() {
     return () => window.removeEventListener('beforeunload', beforeUnload)
   }, [exam, submitted])
 
+  useEffect(() => {
+    if (!submissionReceipt?.attemptId) return undefined
+
+    setRedirectCountdown(10)
+
+    const timer = setInterval(() => {
+      setRedirectCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(timer)
+          navigate('/my/exam-results', { replace: true })
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [submissionReceipt, navigate])
+
   const fetchPaper = async () => {
     try {
       const res = await fetch(`${API_BASE}/exams/${id}/start`, {
@@ -370,7 +389,7 @@ export default function ExamPaper() {
       }
       sessionRef.current = null
       setExpiresAt(null)
-      setResult(data)
+      setSubmissionReceipt(data)
       setIsSubmitting(false)
     } catch {
       alert('提交失败，请重试')
@@ -378,33 +397,6 @@ export default function ExamPaper() {
       setIsSubmitting(false)
       submittedRef.current = false
     }
-  }
-
-  const exportWrongQuestionsPdf = () => {
-    if (!result) return
-
-    const wrongQuestions = Array.isArray(result.wrongQuestions) ? result.wrongQuestions : []
-    const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=960,height=820')
-
-    if (!printWindow) {
-      alert('浏览器拦截了导出窗口，请允许弹窗后重试。')
-      return
-    }
-
-    const html = buildWrongQuestionsPrintHtml({
-      examTitle: exam?.title || result?.title || '考试结果',
-      score: result.score,
-      totalScore: result.totalScore,
-      wrongQuestions,
-    })
-
-    printWindow.document.open()
-    printWindow.document.write(html)
-    printWindow.document.close()
-    printWindow.focus()
-    setTimeout(() => {
-      printWindow.print()
-    }, 300)
   }
 
   const handleSubmit = async (auto = false) => {
@@ -437,14 +429,10 @@ export default function ExamPaper() {
     )
   }
 
-  if (result) {
-    const wrongQuestions = Array.isArray(result.wrongQuestions) ? result.wrongQuestions : []
-    const wrongQuestionMap = new Map(wrongQuestions.map(item => [item.questionId, item]))
-    const accuracy = result.totalScore > 0 ? Math.round((result.score / result.totalScore) * 100) : 0
-
+  if (submissionReceipt) {
     return (
       <div style={{ ...pageStyle, padding: '32px 20px' }}>
-        <div style={{ maxWidth: 860, margin: '0 auto' }}>
+        <div style={{ maxWidth: 760, margin: '0 auto' }}>
           <div style={{
             textAlign: 'center',
             padding: '40px',
@@ -453,231 +441,30 @@ export default function ExamPaper() {
             marginBottom: 32,
             boxShadow: 'var(--shadow-xl)',
           }}>
-            <h2 style={{ fontSize: '2rem', marginBottom: 16 }}>考试结果</h2>
-            <div style={{ fontSize: '4rem', fontWeight: 800, color: 'var(--accent-secondary)' }}>
-              {result.score} <span style={{ fontSize: '1.5rem', color: 'var(--text-muted)' }}>/ {result.totalScore}</span>
+            <h2 style={{ fontSize: '2rem', marginBottom: 16 }}>试卷已提交</h2>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '8px 14px',
+              borderRadius: 999,
+              background: 'var(--status-warn-bg)',
+              border: '1px solid var(--status-warn-border)',
+              color: 'var(--status-warn-fg)',
+              fontWeight: 700,
+            }}>
+              正在判题
             </div>
-            <p style={{ marginTop: 16, color: 'var(--text-secondary)' }}>
-              正确率: {accuracy}%
+            <p style={{ marginTop: 18, color: 'var(--text-secondary)', lineHeight: 1.8, fontSize: '1.02rem' }}>
+              正在判题，5分钟后进入考试成绩页面查看最终成绩。
+            </p>
+            <p style={{ marginTop: 8, color: 'var(--text-muted)' }}>
+              页面将在 {redirectCountdown} 秒后自动跳转到考试成绩页面。
             </p>
             <div style={{ marginTop: 24, display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <button onClick={() => navigate('/exams')} style={secondaryActionStyle}>返回列表</button>
-              <button onClick={() => navigate('/my/wrong-book')} style={primaryActionStyle}>查看错题本</button>
-              {wrongQuestions.length > 0 && (
-                <button onClick={exportWrongQuestionsPdf} style={secondaryActionStyle}>导出错题分析 PDF</button>
-              )}
+              <button onClick={() => navigate('/my/exam-results', { replace: true })} style={primaryActionStyle}>进入考试成绩</button>
+              <button onClick={() => navigate('/exams', { replace: true })} style={secondaryActionStyle}>返回考试列表</button>
             </div>
-          </div>
-
-          {wrongQuestions.length > 0 && (
-            <div style={{
-              padding: 24,
-              marginBottom: 28,
-              borderRadius: 24,
-              background: 'var(--panel-strong)',
-              boxShadow: 'var(--shadow-lg)',
-            }}>
-              <h3 style={{ margin: '0 0 10px' }}>错题解析</h3>
-              <p style={{ margin: '0 0 18px', color: 'var(--text-muted)' }}>
-                已将以下错题加入错题本。这里会展示本次提交的即时解析，错题本内不保存解析内容。
-              </p>
-              <div style={{ marginBottom: 18 }}>
-                <button onClick={exportWrongQuestionsPdf} style={secondaryActionStyle}>导出本次错题分析 PDF</button>
-              </div>
-              <div style={{ display: 'grid', gap: 14 }}>
-                {wrongQuestions.map((item, idx) => {
-                  const options = Array.isArray(item.options) ? item.options : []
-
-                  return (
-                  <div
-                    key={item.questionId}
-                    style={{
-                      borderRadius: 24,
-                      padding: 20,
-                      border: '1px solid var(--status-warn-border)',
-                      background: 'var(--panel-glass)',
-                      boxShadow: 'var(--shadow-md)',
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 14 }}>
-                      <div style={{ fontWeight: 800, fontSize: '1.02rem', color: 'var(--text-heading)' }}>
-                        第 {idx + 1} 题
-                      </div>
-                      <span style={{
-                        padding: '6px 12px',
-                        borderRadius: 999,
-                        background: 'var(--status-warn-bg)',
-                        color: 'var(--status-warn-fg)',
-                        fontSize: '0.82rem',
-                        fontWeight: 700,
-                      }}>
-                        {item.type === 'judge' ? '判断题' : '单选题'}
-                      </span>
-                    </div>
-
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: isCompact ? '1fr' : 'minmax(0, 1.2fr) minmax(280px, 0.9fr)',
-                      gap: 16,
-                      alignItems: 'start',
-                    }}>
-                      <div style={{
-                        padding: 18,
-                        borderRadius: 20,
-                        background: 'var(--panel-bg)',
-                        border: '1px solid var(--border-default)',
-                      }}>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700, marginBottom: 8 }}>
-                          原题
-                        </div>
-                        <div style={{ fontWeight: 700, marginBottom: 12, lineHeight: 1.7, color: 'var(--text-heading)' }}>
-                          {renderInlineRich(item.title, item.type === 'judge')}
-                        </div>
-
-                        {options.length > 0 ? (
-                          <div style={{ display: 'grid', gap: 10 }}>
-                            {options.map(option => {
-                              const isCorrectOption = option.label === item.correctAnswer
-                              const isSelectedOption = option.label === item.yourAnswer
-
-                              return (
-                                <div
-                                  key={`${item.questionId}-${option.label}`}
-                                  style={{
-                                    padding: '12px 14px',
-                                    borderRadius: 16,
-                                    border: '1px solid',
-                                    borderColor: isCorrectOption
-                                      ? 'var(--status-success-border)'
-                                      : isSelectedOption
-                                        ? 'var(--status-danger-border)'
-                                        : 'var(--border-default)',
-                                    background: isCorrectOption
-                                      ? 'var(--status-success-bg)'
-                                      : isSelectedOption
-                                        ? 'var(--status-danger-bg)'
-                                        : 'var(--panel-soft)',
-                                  }}
-                                >
-                                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
-                                    <div style={{ color: 'var(--text-heading)', lineHeight: 1.6 }}>
-                                      <strong>{option.label}.</strong> {renderInlineRich(displayOptionText(option.text))}
-                                    </div>
-                                    {(isCorrectOption || isSelectedOption) ? (
-                                      <span style={{
-                                        whiteSpace: 'nowrap',
-                                        fontSize: '0.78rem',
-                                        fontWeight: 700,
-                                        color: isCorrectOption ? 'var(--status-success-fg)' : 'var(--status-danger-fg)',
-                                      }}>
-                                        {isCorrectOption ? '正确项' : '你的选择'}
-                                      </span>
-                                    ) : null}
-                                  </div>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        ) : null}
-                      </div>
-
-                      <div style={{
-                        display: 'grid',
-                        gap: 14,
-                      }}>
-                        <div style={{
-                          padding: 18,
-                          borderRadius: 20,
-                          background: 'var(--panel-bg)',
-                          border: '1px solid var(--border-default)',
-                        }}>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700, marginBottom: 8 }}>
-                            正确答案
-                          </div>
-                          <div style={{ display: 'grid', gap: 10 }}>
-                            <div style={{
-                              padding: '12px 14px',
-                              borderRadius: 16,
-                              background: 'var(--status-success-bg)',
-                              color: 'var(--status-success-fg)',
-                              fontWeight: 800,
-                            }}>
-                              {item.correctAnswer || '未设置'}
-                            </div>
-                            <div style={{ color: 'var(--text-muted)', fontSize: '0.92rem', lineHeight: 1.6 }}>
-                              你的答案：{item.yourAnswer || '未作答'}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div style={{
-                          padding: 18,
-                          borderRadius: 20,
-                          background: 'var(--panel-bg)',
-                          border: '1px solid var(--border-default)',
-                        }}>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 700, marginBottom: 8 }}>
-                            答案解析
-                          </div>
-                          <div style={{
-                            padding: '12px 14px',
-                            borderRadius: 16,
-                            background: 'var(--panel-soft)',
-                            color: 'var(--text-body)',
-                            lineHeight: 1.7,
-                          }}>
-                            {item.analysis}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          <h3 style={{ marginBottom: 16 }}>答题详情</h3>
-          <div>
-            {result.results.map((r, idx) => {
-              const q = exam.questions.find(item => item.id === r.questionId)
-              const wrongQuestion = wrongQuestionMap.get(r.questionId)
-              return (
-                <div
-                  key={r.questionId}
-                  style={{
-                    padding: 18,
-                    marginBottom: 16,
-                    border: '1px solid',
-                    borderColor: r.isCorrect ? 'var(--status-success-border)' : 'var(--status-danger-border)',
-                    borderRadius: 18,
-                    background: r.isCorrect ? 'var(--status-success-bg)' : 'var(--status-danger-bg)',
-                  }}
-                >
-                  <div style={{ fontWeight: 700, marginBottom: 8 }}>
-                    {idx + 1}. {renderInlineRich(q?.title, true)}
-                  </div>
-                  <div style={{ display: 'flex', gap: 16, fontSize: '0.95rem', flexWrap: 'wrap', color: 'var(--text-body)' }}>
-                    <span>你的答案: {answers[r.questionId] || '未作答'}</span>
-                    {!r.isCorrect ? <span>正确答案: {r.correctAnswer || '(未设置)'}</span> : null}
-                    <span style={{ marginLeft: 'auto' }}>{r.isCorrect ? `+${r.score}分` : '0分'}</span>
-                  </div>
-                  {!r.isCorrect && wrongQuestion?.analysis ? (
-                    <div style={{
-                      marginTop: 12,
-                      padding: '12px 14px',
-                      borderRadius: 14,
-                      background: 'var(--panel-bg)',
-                      color: 'var(--text-secondary)',
-                      lineHeight: 1.65,
-                    }}>
-                      {wrongQuestion.analysis}
-                    </div>
-                  ) : null}
-                </div>
-              )
-            })}
           </div>
         </div>
       </div>
@@ -703,9 +490,9 @@ export default function ExamPaper() {
                 style={gradingCardStyle}
               >
                 <div style={gradingSpinnerStyle} />
-                <h3 style={{ margin: '0 0 10px', fontSize: '1.35rem' }}>改卷中，请等待</h3>
+                <h3 style={{ margin: '0 0 10px', fontSize: '1.35rem' }}>提交中，请等待</h3>
                 <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-                  正在统计分数并生成错题分析，DeepSeek 解析可能需要一些时间，请不要关闭页面。
+                  正在提交试卷并创建判题任务，请不要关闭页面。
                 </p>
               </motion.div>
             </motion.div>

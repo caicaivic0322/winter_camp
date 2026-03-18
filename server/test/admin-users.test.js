@@ -12,7 +12,6 @@ const usersFile = path.join(dataDir, 'users.json')
 const questionsFile = path.join(dataDir, 'questions.json')
 const examsFile = path.join(dataDir, 'exams.json')
 const attemptsFile = path.join(dataDir, 'attempts.json')
-const wrongBookFile = path.join(dataDir, 'wrong_book.json')
 
 const fixtures = {
   users: {
@@ -43,18 +42,6 @@ const fixtures = {
       rawTotal: 100,
       totalScore: 100,
       at: '2026-03-13T00:02:00.000Z',
-    },
-  ],
-  wrongBook: [
-    {
-      username: 'student-a',
-      questionId: 'q-1',
-      questionTitle: '样例题',
-      yourAnswer: 'A',
-      correctAnswer: 'B',
-      examId: 'exam-1',
-      examTitle: '样例卷',
-      at: '2026-03-13T00:03:00.000Z',
     },
   ],
   questions: [
@@ -149,14 +136,12 @@ test('admin can create a user and delete that user with related records cleanup'
     questions: fs.existsSync(questionsFile) ? fs.readFileSync(questionsFile, 'utf-8') : '[]',
     exams: fs.existsSync(examsFile) ? fs.readFileSync(examsFile, 'utf-8') : '[]',
     attempts: fs.readFileSync(attemptsFile, 'utf-8'),
-    wrongBook: fs.readFileSync(wrongBookFile, 'utf-8'),
   }
 
   writeJson(usersFile, fixtures.users)
   writeJson(questionsFile, fixtures.questions)
   writeJson(examsFile, fixtures.exams)
   writeJson(attemptsFile, fixtures.attempts)
-  writeJson(wrongBookFile, fixtures.wrongBook)
 
   const server = await startServer()
 
@@ -195,14 +180,11 @@ test('admin can create a user and delete that user with related records cleanup'
     assert.equal(users['student-a'], undefined)
 
     const attempts = JSON.parse(fs.readFileSync(attemptsFile, 'utf-8'))
-    const wrongBook = JSON.parse(fs.readFileSync(wrongBookFile, 'utf-8'))
     assert.equal(attempts.some(item => item.username === 'student-a'), false)
-    assert.equal(wrongBook.some(item => item.username === 'student-a'), false)
   } finally {
     await server.stop()
     fs.writeFileSync(usersFile, backups.users)
     fs.writeFileSync(attemptsFile, backups.attempts)
-    fs.writeFileSync(wrongBookFile, backups.wrongBook)
   }
 })
 
@@ -210,12 +192,10 @@ test('self registration defaults to 试用 and admin can promote a user to 竞�
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),
     attempts: fs.readFileSync(attemptsFile, 'utf-8'),
-    wrongBook: fs.readFileSync(wrongBookFile, 'utf-8'),
   }
 
   writeJson(usersFile, fixtures.users)
   writeJson(attemptsFile, fixtures.attempts)
-  writeJson(wrongBookFile, fixtures.wrongBook)
 
   const server = await startServer()
 
@@ -258,7 +238,6 @@ test('self registration defaults to 试用 and admin can promote a user to 竞�
     await server.stop()
     fs.writeFileSync(usersFile, backups.users)
     fs.writeFileSync(attemptsFile, backups.attempts)
-    fs.writeFileSync(wrongBookFile, backups.wrongBook)
   }
 })
 
@@ -266,12 +245,10 @@ test('admin can update user level but cannot delete admin account', async () => 
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),
     attempts: fs.readFileSync(attemptsFile, 'utf-8'),
-    wrongBook: fs.readFileSync(wrongBookFile, 'utf-8'),
   }
 
   writeJson(usersFile, fixtures.users)
   writeJson(attemptsFile, fixtures.attempts)
-  writeJson(wrongBookFile, fixtures.wrongBook)
 
   const server = await startServer()
 
@@ -309,7 +286,6 @@ test('admin can update user level but cannot delete admin account', async () => 
     await server.stop()
     fs.writeFileSync(usersFile, backups.users)
     fs.writeFileSync(attemptsFile, backups.attempts)
-    fs.writeFileSync(wrongBookFile, backups.wrongBook)
   }
 })
 
@@ -317,12 +293,10 @@ test('admin routes require a logged-in admin session', async () => {
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),
     attempts: fs.readFileSync(attemptsFile, 'utf-8'),
-    wrongBook: fs.readFileSync(wrongBookFile, 'utf-8'),
   }
 
   writeJson(usersFile, fixtures.users)
   writeJson(attemptsFile, fixtures.attempts)
-  writeJson(wrongBookFile, fixtures.wrongBook)
 
   const server = await startServer()
 
@@ -356,7 +330,6 @@ test('admin routes require a logged-in admin session', async () => {
     await server.stop()
     fs.writeFileSync(usersFile, backups.users)
     fs.writeFileSync(attemptsFile, backups.attempts)
-    fs.writeFileSync(wrongBookFile, backups.wrongBook)
   }
 })
 
@@ -364,12 +337,10 @@ test('admin can reset another user password and the new password takes effect im
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),
     attempts: fs.readFileSync(attemptsFile, 'utf-8'),
-    wrongBook: fs.readFileSync(wrongBookFile, 'utf-8'),
   }
 
   writeJson(usersFile, fixtures.users)
   writeJson(attemptsFile, fixtures.attempts)
-  writeJson(wrongBookFile, fixtures.wrongBook)
 
   const server = await startServer()
 
@@ -414,7 +385,6 @@ test('admin can reset another user password and the new password takes effect im
     await server.stop()
     fs.writeFileSync(usersFile, backups.users)
     fs.writeFileSync(attemptsFile, backups.attempts)
-    fs.writeFileSync(wrongBookFile, backups.wrongBook)
   }
 })
 
@@ -422,12 +392,10 @@ test('admin can update another user role but cannot demote the current admin acc
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),
     attempts: fs.readFileSync(attemptsFile, 'utf-8'),
-    wrongBook: fs.readFileSync(wrongBookFile, 'utf-8'),
   }
 
   writeJson(usersFile, fixtures.users)
   writeJson(attemptsFile, fixtures.attempts)
-  writeJson(wrongBookFile, fixtures.wrongBook)
 
   const server = await startServer()
 
@@ -465,7 +433,6 @@ test('admin can update another user role but cannot demote the current admin acc
     await server.stop()
     fs.writeFileSync(usersFile, backups.users)
     fs.writeFileSync(attemptsFile, backups.attempts)
-    fs.writeFileSync(wrongBookFile, backups.wrongBook)
   }
 })
 
@@ -473,12 +440,10 @@ test('admin can import users from csv and skips duplicates with a summary', asyn
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),
     attempts: fs.readFileSync(attemptsFile, 'utf-8'),
-    wrongBook: fs.readFileSync(wrongBookFile, 'utf-8'),
   }
 
   writeJson(usersFile, fixtures.users)
   writeJson(attemptsFile, fixtures.attempts)
-  writeJson(wrongBookFile, fixtures.wrongBook)
 
   const server = await startServer()
 
@@ -515,7 +480,6 @@ test('admin can import users from csv and skips duplicates with a summary', asyn
     await server.stop()
     fs.writeFileSync(usersFile, backups.users)
     fs.writeFileSync(attemptsFile, backups.attempts)
-    fs.writeFileSync(wrongBookFile, backups.wrongBook)
   }
 })
 
@@ -523,12 +487,10 @@ test('admin can export users as csv', async () => {
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),
     attempts: fs.readFileSync(attemptsFile, 'utf-8'),
-    wrongBook: fs.readFileSync(wrongBookFile, 'utf-8'),
   }
 
   writeJson(usersFile, fixtures.users)
   writeJson(attemptsFile, fixtures.attempts)
-  writeJson(wrongBookFile, fixtures.wrongBook)
 
   const server = await startServer()
 
@@ -550,7 +512,6 @@ test('admin can export users as csv', async () => {
     await server.stop()
     fs.writeFileSync(usersFile, backups.users)
     fs.writeFileSync(attemptsFile, backups.attempts)
-    fs.writeFileSync(wrongBookFile, backups.wrongBook)
   }
 })
 
@@ -560,14 +521,12 @@ test('admin can download a csv template for bulk import', async () => {
     questions: fs.existsSync(questionsFile) ? fs.readFileSync(questionsFile, 'utf-8') : '[]',
     exams: fs.existsSync(examsFile) ? fs.readFileSync(examsFile, 'utf-8') : '[]',
     attempts: fs.readFileSync(attemptsFile, 'utf-8'),
-    wrongBook: fs.readFileSync(wrongBookFile, 'utf-8'),
   }
 
   writeJson(usersFile, fixtures.users)
   writeJson(questionsFile, fixtures.questions)
   writeJson(examsFile, fixtures.exams)
   writeJson(attemptsFile, fixtures.attempts)
-  writeJson(wrongBookFile, fixtures.wrongBook)
 
   const server = await startServer()
 
@@ -590,7 +549,6 @@ test('admin can download a csv template for bulk import', async () => {
     fs.writeFileSync(questionsFile, backups.questions)
     fs.writeFileSync(examsFile, backups.exams)
     fs.writeFileSync(attemptsFile, backups.attempts)
-    fs.writeFileSync(wrongBookFile, backups.wrongBook)
   }
 })
 
@@ -600,14 +558,12 @@ test('admin can export a full json backup and non-admin users are forbidden', as
     questions: fs.existsSync(questionsFile) ? fs.readFileSync(questionsFile, 'utf-8') : '[]',
     exams: fs.existsSync(examsFile) ? fs.readFileSync(examsFile, 'utf-8') : '[]',
     attempts: fs.readFileSync(attemptsFile, 'utf-8'),
-    wrongBook: fs.readFileSync(wrongBookFile, 'utf-8'),
   }
 
   writeJson(usersFile, fixtures.users)
   writeJson(questionsFile, fixtures.questions)
   writeJson(examsFile, fixtures.exams)
   writeJson(attemptsFile, fixtures.attempts)
-  writeJson(wrongBookFile, fixtures.wrongBook)
 
   const server = await startServer()
 
@@ -632,8 +588,7 @@ test('admin can export a full json backup and non-admin users are forbidden', as
     assert.equal(backup.exams[0].id, 'exam-1')
     assert.equal(Array.isArray(backup.attempts), true)
     assert.equal(backup.attempts[0].id, 'attempt-1')
-    assert.equal(Array.isArray(backup.wrongBook), true)
-    assert.equal(backup.wrongBook[0].questionId, 'q-1')
+    assert.deepEqual(Object.keys(backup).sort(), ['attempts', 'exams', 'exportedAt', 'questions', 'storage', 'users'])
 
     const userLogin = await login(server.baseUrl, 'vic', '123456')
     const forbiddenRes = await fetch(`${server.baseUrl}/admin/backup`, {
@@ -649,7 +604,6 @@ test('admin can export a full json backup and non-admin users are forbidden', as
     fs.writeFileSync(questionsFile, backups.questions)
     fs.writeFileSync(examsFile, backups.exams)
     fs.writeFileSync(attemptsFile, backups.attempts)
-    fs.writeFileSync(wrongBookFile, backups.wrongBook)
   }
 })
 
@@ -659,14 +613,12 @@ test('admin can restore a json backup and non-admin users are forbidden', async 
     questions: fs.existsSync(questionsFile) ? fs.readFileSync(questionsFile, 'utf-8') : '[]',
     exams: fs.existsSync(examsFile) ? fs.readFileSync(examsFile, 'utf-8') : '[]',
     attempts: fs.readFileSync(attemptsFile, 'utf-8'),
-    wrongBook: fs.readFileSync(wrongBookFile, 'utf-8'),
   }
 
   writeJson(usersFile, fixtures.users)
   writeJson(questionsFile, fixtures.questions)
   writeJson(examsFile, fixtures.exams)
   writeJson(attemptsFile, fixtures.attempts)
-  writeJson(wrongBookFile, fixtures.wrongBook)
 
   const server = await startServer()
 
@@ -723,17 +675,6 @@ test('admin can restore a json backup and non-admin users are forbidden', async 
         totalScore: 100,
         at: '2026-03-15T00:10:00.000Z',
       }],
-      wrongBook: [{
-        username: 'restored',
-        questionId: 'restored-q',
-        questionTitle: '恢复题目',
-        yourAnswer: 'B',
-        correctAnswer: 'A',
-        examId: 'restored-exam',
-        examTitle: '恢复考试',
-        at: '2026-03-15T00:11:00.000Z',
-        analysis: '恢复的解析',
-      }],
     }
 
     const res = await fetch(`${server.baseUrl}/admin/backup/restore`, {
@@ -765,8 +706,6 @@ test('admin can restore a json backup and non-admin users are forbidden', async 
     assert.equal(exams[0].id, 'restored-exam')
     const attempts = JSON.parse(fs.readFileSync(attemptsFile, 'utf-8'))
     assert.equal(attempts[0].id, 'restored-attempt')
-    const wrongBook = JSON.parse(fs.readFileSync(wrongBookFile, 'utf-8'))
-    assert.equal(wrongBook[0].questionId, 'restored-q')
 
     const userLogin = await login(server.baseUrl, 'restored', '123456')
     const forbiddenRes = await fetch(`${server.baseUrl}/admin/backup/restore`, {
@@ -785,7 +724,6 @@ test('admin can restore a json backup and non-admin users are forbidden', async 
     fs.writeFileSync(questionsFile, backups.questions)
     fs.writeFileSync(examsFile, backups.exams)
     fs.writeFileSync(attemptsFile, backups.attempts)
-    fs.writeFileSync(wrongBookFile, backups.wrongBook)
   }
 })
 
@@ -793,12 +731,10 @@ test('login token remains valid after server restart', async () => {
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),
     attempts: fs.readFileSync(attemptsFile, 'utf-8'),
-    wrongBook: fs.readFileSync(wrongBookFile, 'utf-8'),
   }
 
   writeJson(usersFile, fixtures.users)
   writeJson(attemptsFile, fixtures.attempts)
-  writeJson(wrongBookFile, fixtures.wrongBook)
 
   const firstServer = await startServer()
 
@@ -825,6 +761,5 @@ test('login token remains valid after server restart', async () => {
   } finally {
     fs.writeFileSync(usersFile, backups.users)
     fs.writeFileSync(attemptsFile, backups.attempts)
-    fs.writeFileSync(wrongBookFile, backups.wrongBook)
   }
 })

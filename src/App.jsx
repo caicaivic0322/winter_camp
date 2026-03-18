@@ -20,7 +20,7 @@ const CompetitionProblemDetail = lazy(() => import('./pages/CompetitionProblemDe
 const CompetitionProgressProvider = lazy(() => import('./contexts/CompetitionProgressContext').then((mod) => ({ default: mod.CompetitionProgressProvider })))
 const ExamList = lazy(() => import('./pages/Exam/ExamList'))
 const ExamPaper = lazy(() => import('./pages/Exam/ExamPaper'))
-const WrongBook = lazy(() => import('./pages/Exam/WrongBook'))
+const ExamResults = lazy(() => import('./pages/Exam/ExamResults'))
 const AdminExams = lazy(() => import('./pages/AdminExams'))
 const AdminUsers = lazy(() => import('./pages/AdminUsers'))
 const AdminScores = lazy(() => import('./pages/AdminScores'))
@@ -167,9 +167,14 @@ function AppContent() {
               <ExamPaper />
             </ProtectedRoute>
           } />
-          <Route path="/my/wrong-book" element={
+          <Route path="/my/exam-results" element={
             <ProtectedRoute>
-              <WrongBook />
+              <ExamResults />
+            </ProtectedRoute>
+          } />
+          <Route path="/my/exam-results/:attemptId" element={
+            <ProtectedRoute>
+              <ExamResults />
             </ProtectedRoute>
           } />
           <Route path="/login" element={<Login />} />
