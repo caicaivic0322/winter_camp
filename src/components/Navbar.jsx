@@ -6,6 +6,8 @@ import { VISUALGO_SORTING_URL } from '../utils/visualgo'
 import API_BASE from '../config/api'
 import { buildAuthHeaders, clearStoredAuth } from '../utils/auth'
 
+const CPP_COMPILER_URL = 'https://onecompiler.com/cpp'
+
 function Navbar() {
   const { theme, toggleTheme, isDark } = useTheme()
   const { user, canAccessCompetitionUnit, logout, refreshUser } = useAuth()
@@ -79,6 +81,9 @@ function Navbar() {
         )}
         <Link to="/exams" className="navbar-link">在线考试</Link>
         <Link to="/my/exam-results" className="navbar-link">考试成绩</Link>
+        {user?.role !== 'admin' && (
+          <a href={CPP_COMPILER_URL} target="_blank" rel="noreferrer" className="navbar-link">编译器</a>
+        )}
         <a href={VISUALGO_SORTING_URL} target="_blank" rel="noreferrer" className="navbar-link">算法演示</a>
         {user?.role === 'admin' && (
           <>
