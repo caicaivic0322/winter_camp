@@ -42,6 +42,12 @@ async function readResponseError(res, fallback = '请求失败') {
   }
 }
 
+function formatDateTime(value) {
+  if (!value) return '-'
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString()
+}
+
 function AdminUsers() {
   const { user, refreshUser } = useAuth()
   const [list, setList] = useState([])
@@ -585,6 +591,9 @@ function AdminUsers() {
                   <th style={cellHeadStyle}>昵称</th>
                   <th style={cellHeadStyle}>角色</th>
                   <th style={cellHeadStyle}>等级</th>
+                  <th style={cellHeadStyle}>最近登录</th>
+                  <th style={cellHeadStyle}>最近活跃</th>
+                  <th style={cellHeadStyle}>登录次数</th>
                   <th style={cellHeadStyle}>创建时间</th>
                   <th style={cellHeadStyle}>操作</th>
                 </tr>
@@ -623,9 +632,18 @@ function AdminUsers() {
                         </select>
                       </td>
                       <td style={cellBodyStyle}>
-                        {item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}
+                        {formatDateTime(item.lastLoginAt)}
                       </td>
                       <td style={cellBodyStyle}>
+                        {formatDateTime(item.lastActiveAt)}
+                      </td>
+                      <td style={cellBodyStyle}>
+                        {Number(item.loginCount || 0)}
+                      </td>
+                      <td style={cellBodyStyle}>
+                        {item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}
+                      </td>
+                      <td style={{ ...cellBodyStyle, minWidth: 160 }}>
                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                           <button
                             type="button"

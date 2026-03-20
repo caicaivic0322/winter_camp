@@ -161,6 +161,9 @@ function toPublicUser(user) {
     role: user.role || 'user',
     level: normalizeCourseLevel(user.level, DEFAULT_USER_LEVEL),
     createdAt: user.createdAt,
+    lastLoginAt: user.lastLoginAt || '',
+    lastActiveAt: user.lastActiveAt || '',
+    loginCount: Number(user.loginCount || 0),
   }
 }
 
@@ -561,7 +564,11 @@ async function attachAuthUser(req, res, next) {
     return next()
   }
 
-  req.authUser = toPublicUser(user)
+  const nextUser = await updateUserActivity(user.username, {
+    lastActiveAt: new Date().toISOString(),
+  }) || user
+
+  req.authUser = toPublicUser(nextUser)
   req.authToken = token
   next()
 }
@@ -817,6 +824,23 @@ const readExams = () => dataStore.readExams()
 const writeExams = (data) => dataStore.writeExams(data)
 const readAttempts = () => dataStore.readAttempts()
 const writeAttempts = (data) => dataStore.writeAttempts(data)
+
+async function updateUserActivity(username, changes = {}) {
+  if (!username) return null
+  const users = await readUsers()
+  const user = users[username]
+  if (!user) return null
+
+  const nextUser = {
+    ...user,
+    ...changes,
+  }
+
+  users[username] = nextUser
+  await writeUsers(users)
+  clearAdminUserCaches()
+  return nextUser
+}
 
 function buildExamQuestionNumberMap(exam, allQuestions) {
   const bankIdSet = new Set(exam.bankIds || [])
@@ -1302,11 +1326,17 @@ app.post('/api/login', asyncRoute(async (req, res) => {
   if (user.password !== password) {
     return res.status(401).json({ success: false, error: '密码错误' })
   }
-  const token = createSession(user)
+  const now = new Date().toISOString()
+  const nextUser = await updateUserActivity(user.username, {
+    lastLoginAt: now,
+    lastActiveAt: now,
+    loginCount: Number(user.loginCount || 0) + 1,
+  }) || user
+  const token = createSession(nextUser)
   res.json({ 
     success: true, 
     token,
-    user: toPublicUser(user)
+    user: toPublicUser(nextUser)
   })
 }))
 

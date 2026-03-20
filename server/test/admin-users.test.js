@@ -449,6 +449,60 @@ test('user can change own password with current password', async () => {
   }
 })
 
+test('login and authenticated requests update user activity fields and admin list exposes them', async () => {
+  const backups = {
+    users: fs.readFileSync(usersFile, 'utf-8'),
+    attempts: fs.readFileSync(attemptsFile, 'utf-8'),
+  }
+
+  writeJson(usersFile, fixtures.users)
+  writeJson(attemptsFile, fixtures.attempts)
+
+  const server = await startServer()
+
+  try {
+    const vicLogin = await login(server.baseUrl, 'vic', '123456')
+
+    const usersAfterLogin = JSON.parse(fs.readFileSync(usersFile, 'utf-8'))
+    assert.equal(typeof usersAfterLogin.vic.lastLoginAt, 'string')
+    assert.equal(typeof usersAfterLogin.vic.lastActiveAt, 'string')
+    assert.equal(usersAfterLogin.vic.loginCount, 1)
+
+    const firstLastActiveAt = usersAfterLogin.vic.lastActiveAt
+
+    await new Promise(resolve => setTimeout(resolve, 20))
+
+    const profileRes = await fetch(`${server.baseUrl}/users/vic`, {
+      headers: {
+        Authorization: `Bearer ${vicLogin.token}`,
+      },
+    })
+    assert.equal(profileRes.status, 200)
+
+    const usersAfterProfile = JSON.parse(fs.readFileSync(usersFile, 'utf-8'))
+    assert.equal(typeof usersAfterProfile.vic.lastActiveAt, 'string')
+    assert.notEqual(usersAfterProfile.vic.lastActiveAt, firstLastActiveAt)
+
+    const adminLogin = await login(server.baseUrl, 'admin', '123456')
+    const listRes = await fetch(`${server.baseUrl}/users`, {
+      headers: {
+        Authorization: `Bearer ${adminLogin.token}`,
+      },
+    })
+    assert.equal(listRes.status, 200)
+
+    const list = await listRes.json()
+    const vic = list.find(item => item.username === 'vic')
+    assert.equal(typeof vic.lastLoginAt, 'string')
+    assert.equal(typeof vic.lastActiveAt, 'string')
+    assert.equal(vic.loginCount, 1)
+  } finally {
+    await server.stop()
+    fs.writeFileSync(usersFile, backups.users)
+    fs.writeFileSync(attemptsFile, backups.attempts)
+  }
+})
+
 test('admin can update another user role but cannot demote the current admin account', async () => {
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),
