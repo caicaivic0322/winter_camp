@@ -19,6 +19,29 @@ const emptyForm = {
   level: DEFAULT_USER_LEVEL,
 }
 
+async function readResponseError(res, fallback = '请求失败') {
+  const contentType = res.headers.get('content-type') || ''
+
+  if (contentType.includes('application/json')) {
+    try {
+      const data = await res.json()
+      const message = String(data?.error || data?.message || '').trim()
+      if (message === 'exists') return '用户名已存在'
+      if (message === 'no file') return '请先选择一个 CSV 文件'
+      return message || fallback
+    } catch {
+      return fallback
+    }
+  }
+
+  try {
+    const text = (await res.text()).trim()
+    return text || fallback
+  } catch {
+    return fallback
+  }
+}
+
 function AdminUsers() {
   const { user, refreshUser } = useAuth()
   const [list, setList] = useState([])
@@ -153,18 +176,32 @@ function AdminUsers() {
   const onCreateUser = async (e) => {
     e.preventDefault()
 
+    const username = form.username.trim()
+    const password = form.password
+    if (username.length < 3) {
+      setMessage('error', '添加失败：用户名至少需要 3 个字符')
+      return
+    }
+    if (password.length < 6) {
+      setMessage('error', '添加失败：密码至少需要 6 个字符')
+      return
+    }
+
     try {
       setCreating(true)
       const res = await fetch(`${API_BASE}/admin/users`, {
         method: 'POST',
         headers: buildAuthHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          username,
+        }),
       })
 
-      const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        throw new Error(data?.error || `HTTP ${res.status}`)
+        throw new Error(await readResponseError(res, `HTTP ${res.status}`))
       }
+      const data = await res.json().catch(() => ({}))
 
       setList(prev => [data, ...prev])
       setForm(emptyForm)
@@ -249,6 +286,11 @@ function AdminUsers() {
       return
     }
 
+    if (!/\.csv$/i.test(importFile.name || '')) {
+      setMessage('error', '导入失败：请选择 CSV 文件')
+      return
+    }
+
     try {
       setImporting(true)
       const formData = new FormData()
@@ -260,10 +302,10 @@ function AdminUsers() {
         body: formData,
       })
 
-      const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        throw new Error(data?.error || `HTTP ${res.status}`)
+        throw new Error(await readResponseError(res, `HTTP ${res.status}`))
       }
+      const data = await res.json().catch(() => ({}))
 
       setImportFile(null)
       await fetchUsers()
@@ -438,7 +480,7 @@ function AdminUsers() {
         <div style={sectionHeaderStyle}>
           <div>
             <h3 style={{ margin: 0 }}>批量导入与导出</h3>
-            <p style={sectionDescStyle}>CSV 表头建议使用：username,password,nickname,role,level</p>
+            <p style={sectionDescStyle}>CSV 表头建议使用：username,password,nickname,role,level；用户名至少 3 位，密码至少 6 位。</p>
           </div>
         </div>
 

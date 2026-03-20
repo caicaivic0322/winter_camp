@@ -83,6 +83,11 @@ function clearCachedEndpoint(prefix) {
 function clearExamCaches() {
   clearCachedEndpoint('admin:exams')
   clearCachedEndpoint('exams:available:')
+  clearCachedEndpoint('exam-paper:')
+}
+
+function clearAdminUserCaches() {
+  clearCachedEndpoint('admin:users')
 }
 
 function clearUserCaches(username) {
@@ -1178,6 +1183,7 @@ app.post('/api/admin/users', requireAdmin, asyncRoute(async (req, res) => {
   if (users[user.username]) return res.status(409).json({ error: 'exists' })
   users[user.username] = user
   await writeUsers(users)
+  clearAdminUserCaches()
   res.status(201).json(toPublicUser(user))
 }))
 
@@ -1219,6 +1225,7 @@ app.post('/api/admin/users/import', requireAdmin, upload.single('file'), asyncRo
     })
 
     await writeUsers(users)
+    clearAdminUserCaches()
     res.json({
       ok: true,
       createdCount: createdUsers.length,
@@ -1312,8 +1319,12 @@ app.post('/api/logout', requireAuth, (req, res) => {
 })
 
 app.get('/api/users', requireAdmin, asyncRoute(async (req, res) => {
+  const cacheKey = 'admin:users:list'
+  const cached = getCachedEndpoint(cacheKey)
+  if (cached) return res.json(cached)
   const users = await readUsers()
   const list = Object.values(users).map(toPublicUser)
+  setCachedEndpoint(cacheKey, list)
   res.json(list)
 }))
 
@@ -1385,6 +1396,7 @@ app.patch('/api/users/:username/level', requireAdmin, asyncRoute(async (req, res
   u.level = level
   users[username] = u
   await writeUsers(users)
+  clearAdminUserCaches()
   res.json({ ok: true, username, level })
 }))
 
@@ -1408,6 +1420,7 @@ app.patch('/api/users/:username/role', requireAdmin, asyncRoute(async (req, res)
   target.role = role
   users[username] = target
   await writeUsers(users)
+  clearAdminUserCaches()
   res.json({ ok: true, username, role })
 }))
 
@@ -1428,6 +1441,7 @@ app.patch('/api/users/:username/password', requireAdmin, asyncRoute(async (req, 
   target.password = password
   users[username] = target
   await writeUsers(users)
+  clearAdminUserCaches()
   res.json({ ok: true, username })
 }))
 
@@ -1446,6 +1460,7 @@ app.delete('/api/users/:username', requireAdmin, asyncRoute(async (req, res) => 
 
   delete users[username]
   await writeUsers(users)
+  clearAdminUserCaches()
 
   const attempts = (await readAttempts()).filter(item => item.username !== username)
   await writeAttempts(attempts)
@@ -1766,6 +1781,12 @@ app.get('/api/exams/:id/start', requireAuth, asyncRoute(async (req, res) => {
   }
   
   // 抽取题目（按试卷顺序，不打乱）
+  const paperCacheKey = `exam-paper:${exam.id}`
+  const cachedPaper = getCachedEndpoint(paperCacheKey)
+  if (cachedPaper) {
+    return res.json(cachedPaper)
+  }
+
   const allQuestions = await readQuestions()
   const bankIdSet = new Set(exam.bankIds || [])
   const bankOrder = new Map((exam.bankIds || []).map((bid, index) => [bid, index]))
@@ -1779,20 +1800,20 @@ app.get('/api/exams/:id/start', requireAuth, asyncRoute(async (req, res) => {
 
   const count = exam.questionCount || candidates.length
   const selected = count >= candidates.length ? candidates : candidates.slice(0, count)
-  
-  // 屏蔽答案后返回
-  const paper = selected.map(q => {
-    const { answer, ...rest } = q
-    return rest
-  })
-  
-  res.json({ 
-    examId: exam.id, 
-    title: exam.title, 
+
+  const payload = {
+    examId: exam.id,
+    title: exam.title,
     duration: exam.duration,
     totalScore: exam.totalScore || DEFAULT_TOTAL_SCORE,
-    questions: paper 
-  })
+    questions: selected.map(q => {
+      const { answer, ...rest } = q
+      return rest
+    }),
+  }
+
+  setCachedEndpoint(paperCacheKey, payload)
+  res.json(payload)
 }))
 
 // 提交试卷与判分

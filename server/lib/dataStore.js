@@ -5,6 +5,7 @@ import { createClient } from '@supabase/supabase-js'
 
 const DEFAULT_SUPABASE_TABLE = 'app_state'
 const DEFAULT_SQLITE_FILE = 'app_state.sqlite'
+const DEFAULT_COLLECTION_CACHE_MS = 3000
 const require = createRequire(import.meta.url)
 
 function loadSqliteDriver() {
@@ -68,11 +69,13 @@ export function createDataStore({
   defaultExamLevel,
 }) {
   const config = resolveStorageConfig(env, fallbackDataDir)
+  const collectionCacheMs = Math.max(0, Number(env.COLLECTION_CACHE_MS || DEFAULT_COLLECTION_CACHE_MS) || DEFAULT_COLLECTION_CACHE_MS)
   const usersFile = path.join(config.dataDir, 'users.json')
   const questionsFile = path.join(config.dataDir, 'questions.json')
   const examsFile = path.join(config.dataDir, 'exams.json')
   const attemptsFile = path.join(config.dataDir, 'attempts.json')
   const legacyWrongBookFile = path.join(config.dataDir, 'wrong_book.json')
+  const collectionCache = new Map()
 
   const supabase = config.mode === 'supabase'
     ? createClient(config.supabaseUrl, config.supabaseServiceRoleKey, {
@@ -166,6 +169,31 @@ export function createDataStore({
       })
   }
 
+  function cloneCollection(value) {
+    return value === undefined ? undefined : JSON.parse(JSON.stringify(value))
+  }
+
+  function getCachedCollection(key) {
+    const hit = collectionCache.get(key)
+    if (!hit) return undefined
+    if ((Date.now() - hit.at) > collectionCacheMs) {
+      collectionCache.delete(key)
+      return undefined
+    }
+    return cloneCollection(hit.value)
+  }
+
+  function setCachedCollection(key, value) {
+    collectionCache.set(key, {
+      at: Date.now(),
+      value: cloneCollection(value),
+    })
+  }
+
+  function clearCachedCollection(key) {
+    collectionCache.delete(key)
+  }
+
   function ensureSqliteData() {
     if (!fs.existsSync(config.dataDir)) fs.mkdirSync(config.dataDir, { recursive: true })
     sqlite.pragma('journal_mode = WAL')
@@ -226,6 +254,9 @@ export function createDataStore({
   }
 
   async function readCollection(key, defaultValue) {
+    const cached = getCachedCollection(key)
+    if (cached !== undefined) return cached
+
     if (config.mode === 'local') {
       ensureLocalData()
       const fileMap = {
@@ -236,8 +267,11 @@ export function createDataStore({
       }
 
       try {
-        return JSON.parse(fs.readFileSync(fileMap[key], 'utf-8'))
+        const parsed = JSON.parse(fs.readFileSync(fileMap[key], 'utf-8'))
+        setCachedCollection(key, parsed)
+        return parsed
       } catch {
+        setCachedCollection(key, defaultValue)
         return defaultValue
       }
     }
@@ -247,20 +281,26 @@ export function createDataStore({
       const value = sqliteReadStateRowSync(key)
       if (value === undefined || value === null) {
         sqliteWriteStateRowSync(key, defaultValue)
+        setCachedCollection(key, defaultValue)
         return defaultValue
       }
+      setCachedCollection(key, value)
       return value
     }
 
     const value = await readStateRow(key)
     if (value === undefined || value === null) {
       await writeStateRow(key, defaultValue)
+      setCachedCollection(key, defaultValue)
       return defaultValue
     }
+    setCachedCollection(key, value)
     return value
   }
 
   async function writeCollection(key, value) {
+    clearCachedCollection(key)
+
     if (config.mode === 'local') {
       ensureLocalData()
       const fileMap = {
@@ -270,16 +310,19 @@ export function createDataStore({
         attempts: attemptsFile,
       }
       fs.writeFileSync(fileMap[key], JSON.stringify(value, null, 2))
+      setCachedCollection(key, value)
       return
     }
 
     if (config.mode === 'sqlite') {
       ensureSqliteData()
       sqliteWriteStateRowSync(key, value)
+      setCachedCollection(key, value)
       return
     }
 
     await writeStateRow(key, value)
+    setCachedCollection(key, value)
   }
 
   async function readUsers() {
@@ -355,10 +398,14 @@ export function createDataStore({
   }
 
   async function readLegacyWrongBook() {
+    const cached = getCachedCollection('wrong_book')
+    if (cached !== undefined) return Array.isArray(cached) ? cached : []
+
     if (config.mode === 'local') {
       if (!fs.existsSync(legacyWrongBookFile)) return []
       try {
         const data = JSON.parse(fs.readFileSync(legacyWrongBookFile, 'utf-8'))
+        setCachedCollection('wrong_book', data)
         return Array.isArray(data) ? data : []
       } catch {
         return []
@@ -368,10 +415,12 @@ export function createDataStore({
     if (config.mode === 'sqlite') {
       ensureSqliteData()
       const data = sqliteReadStateRowSync('wrong_book')
+      setCachedCollection('wrong_book', data)
       return Array.isArray(data) ? data : []
     }
 
     const data = await readStateRow('wrong_book')
+    setCachedCollection('wrong_book', data)
     return Array.isArray(data) ? data : []
   }
 
