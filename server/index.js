@@ -1318,6 +1318,33 @@ app.post('/api/logout', requireAuth, (req, res) => {
   res.json({ success: true })
 })
 
+app.patch('/api/my/password', requireAuth, asyncRoute(async (req, res) => {
+  const username = req.authUser.username
+  const { currentPassword, newPassword } = req.body || {}
+
+  const passwordError = validatePassword(newPassword)
+  if (passwordError) {
+    return res.status(400).json({ error: passwordError })
+  }
+
+  const users = await readUsers()
+  const target = users[username]
+  if (!target) {
+    return res.status(404).json({ error: 'user not found' })
+  }
+
+  if (target.password !== currentPassword) {
+    return res.status(400).json({ error: '当前密码不正确' })
+  }
+
+  target.password = newPassword
+  users[username] = target
+  await writeUsers(users)
+  clearAdminUserCaches()
+
+  res.json({ ok: true, username })
+}))
+
 app.get('/api/users', requireAdmin, asyncRoute(async (req, res) => {
   const cacheKey = 'admin:users:list'
   const cached = getCachedEndpoint(cacheKey)

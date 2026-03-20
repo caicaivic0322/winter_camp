@@ -388,6 +388,67 @@ test('admin can reset another user password and the new password takes effect im
   }
 })
 
+test('user can change own password with current password', async () => {
+  const backups = {
+    users: fs.readFileSync(usersFile, 'utf-8'),
+    attempts: fs.readFileSync(attemptsFile, 'utf-8'),
+  }
+
+  writeJson(usersFile, fixtures.users)
+  writeJson(attemptsFile, fixtures.attempts)
+
+  const server = await startServer()
+
+  try {
+    const vicLogin = await login(server.baseUrl, 'vic', '123456')
+
+    const wrongPasswordRes = await fetch(`${server.baseUrl}/my/password`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${vicLogin.token}`,
+      },
+      body: JSON.stringify({
+        currentPassword: '000000',
+        newPassword: '654321',
+      }),
+    })
+    assert.equal(wrongPasswordRes.status, 400)
+
+    const changeRes = await fetch(`${server.baseUrl}/my/password`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${vicLogin.token}`,
+      },
+      body: JSON.stringify({
+        currentPassword: '123456',
+        newPassword: '654321',
+      }),
+    })
+
+    assert.equal(changeRes.status, 200)
+
+    const oldPasswordLogin = await fetch(`${server.baseUrl}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'vic', password: '123456' }),
+    })
+    assert.equal(oldPasswordLogin.status, 401)
+
+    const newPasswordLogin = await fetch(`${server.baseUrl}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: 'vic', password: '654321' }),
+    })
+    assert.equal(newPasswordLogin.status, 200)
+  } finally {
+    await server.stop()
+    fs.writeFileSync(usersFile, backups.users)
+    fs.writeFileSync(attemptsFile, backups.attempts)
+  }
+})
+
 test('admin can update another user role but cannot demote the current admin account', async () => {
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),

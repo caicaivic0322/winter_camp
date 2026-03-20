@@ -14,6 +14,7 @@
   padding-top: 86px;
   position: relative;
   z-index: 1;
+  width: 100%;
 }
 
 .page-enter,
@@ -74,7 +75,7 @@
   top: 18px;
   left: 24px;
   right: 24px;
-  height: 68px;
+  min-height: 68px;
   background: var(--bg-overlay);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
@@ -86,6 +87,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 32px;
+  gap: 16px;
 }
 
 .navbar-brand {
@@ -120,6 +122,10 @@
   display: flex;
   align-items: center;
   gap: 18px;
+  flex: 1;
+  min-width: 0;
+  justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 .navbar-link {
@@ -131,6 +137,7 @@
   position: relative;
   padding: 10px 14px;
   border-radius: 999px;
+  white-space: nowrap;
 }
 
 .navbar-link::after {
@@ -156,24 +163,100 @@
   opacity: 1;
 }
 
+@media (max-width: 1200px) {
+  .navbar {
+    left: 18px;
+    right: 18px;
+    padding: 12px 18px;
+  }
+
+  .main-content {
+    padding-top: 108px;
+  }
+
+  .navbar-menu {
+    gap: 10px;
+  }
+}
+
+@media (max-width: 900px) {
+  .navbar {
+    top: 14px;
+    align-items: flex-start;
+  }
+
+  .main-content {
+    padding-top: 122px;
+  }
+
+  .navbar-brand {
+    font-size: 1rem;
+  }
+
+  .navbar-brand .logo {
+    width: 38px;
+    height: 38px;
+  }
+
+  .navbar-menu {
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    width: 100%;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .navbar-menu::-webkit-scrollbar {
+    display: none;
+  }
+
+  .theme-toggle {
+    display: none;
+  }
+}
+
 @media (max-width: 768px) {
   .navbar-menu {
     display: flex;
     gap: 8px;
-    overflow-x: auto;
-    max-width: calc(100vw - 170px);
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    max-width: 100%;
   }
-  .navbar-menu::-webkit-scrollbar { display: none; }
-  .navbar-user-pill { display: none; }
+  .navbar-user-pill,
+  .navbar-user-actions { display: none; }
   .navbar {
     left: 16px;
     right: 16px;
     top: 14px;
-    padding: 0 20px;
+    padding: 10px 14px;
+  }
+  .main-content {
+    padding-top: 116px;
   }
   .navbar-right-mobile { display: flex; }
+}
+
+@media (max-width: 560px) {
+  .navbar {
+    left: 10px;
+    right: 10px;
+    top: 10px;
+    min-height: 62px;
+  }
+
+  .main-content {
+    padding-top: 108px;
+  }
+
+  .navbar-brand span:last-child {
+    font-size: 0.92rem;
+  }
+
+  .navbar-link {
+    padding: 7px 10px;
+    font-size: 0.82rem;
+  }
 }
 
 .navbar-user-pill {
@@ -187,6 +270,12 @@
   color: var(--text-body);
   font-size: 0.82rem;
   font-weight: 600;
+}
+
+.navbar-user-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .navbar-user-dot {
@@ -259,6 +348,16 @@
 .theme-toggle-mobile:hover {
   border-color: var(--brand-primary);
   transform: scale(1.05);
+}
+
+.navbar-action-btn {
+  border: 1px solid var(--border-default);
+  background: rgba(255,255,255,0.05);
+  cursor: pointer;
+}
+
+.navbar-action-btn:hover {
+  background: rgba(255,255,255,0.1);
 }
 
 /* ==================== 侧边栏 ==================== */
@@ -615,6 +714,107 @@
 .competition-lesson-page,
 .competition-practice-page {
   padding: 40px 0 96px;
+}
+
+@media (max-width: 1024px) {
+  .home {
+    padding: 42px 0 72px;
+  }
+
+  .hero {
+    padding: 72px 28px 64px;
+    margin-bottom: 40px;
+    border-radius: 28px;
+  }
+
+  .hero-subtitle {
+    margin-bottom: 32px;
+  }
+
+  .hero-stats {
+    gap: 24px;
+  }
+
+  .parts-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 18px;
+  }
+}
+
+@media (max-width: 768px) {
+  .home {
+    padding: 28px 0 56px;
+  }
+
+  .hero {
+    padding: 56px 18px 42px;
+    margin-bottom: 28px;
+    border-radius: 24px;
+  }
+
+  .hero::before {
+    width: 220px;
+  }
+
+  .hero-title {
+    font-size: clamp(2rem, 10vw, 3rem);
+  }
+
+  .hero-subtitle {
+    font-size: 0.98rem;
+    margin-bottom: 24px;
+  }
+
+  .hero-badge {
+    padding: 7px 12px;
+    font-size: 0.74rem;
+  }
+
+  .hero-stats {
+    gap: 14px;
+  }
+
+  .stat-item {
+    min-width: calc(50% - 10px);
+    padding: 14px 12px;
+  }
+
+  .stat-value {
+    font-size: 2.2rem;
+  }
+
+  .section-title {
+    font-size: 1.2rem;
+    margin-bottom: 22px;
+  }
+
+  .parts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .part-card-top {
+    height: 84px;
+    padding: 0 16px;
+  }
+
+  .part-card-body {
+    padding: 18px 16px 20px;
+  }
+
+  .part-card-meta {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stat-item {
+    min-width: 100%;
+  }
+
+  .part-card {
+    border-radius: 24px;
+  }
 }
 
 .competition-hero {
