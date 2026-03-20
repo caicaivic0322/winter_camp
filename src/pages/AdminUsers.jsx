@@ -48,6 +48,20 @@ function formatDateTime(value) {
   return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString()
 }
 
+function isSameLocalDay(value, now = new Date()) {
+  if (!value) return false
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return false
+  return date.toDateString() === now.toDateString()
+}
+
+function isWithinPastDays(value, days, now = new Date()) {
+  if (!value) return false
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return false
+  return (now.getTime() - date.getTime()) <= days * 24 * 60 * 60 * 1000
+}
+
 function AdminUsers() {
   const { user, refreshUser } = useAuth()
   const [list, setList] = useState([])
@@ -87,6 +101,16 @@ function AdminUsers() {
       return matchesKeyword && matchesRole && matchesLevel
     })
   }, [sortedUsers, keyword, roleFilter, levelFilter])
+
+  const overview = useMemo(() => {
+    const now = new Date()
+    return {
+      totalUsers: list.length,
+      activeToday: list.filter(item => isSameLocalDay(item.lastActiveAt, now)).length,
+      recentLogins: list.filter(item => isWithinPastDays(item.lastLoginAt, 7, now)).length,
+      totalExamAttempts: list.reduce((sum, item) => sum + Number(item.examCount || 0), 0),
+    }
+  }, [list])
 
   const fetchUsers = async () => {
     try {
@@ -532,6 +556,29 @@ function AdminUsers() {
           </div>
         </div>
 
+        <div style={summaryGridStyle}>
+          <div style={summaryCardStyle}>
+            <div style={summaryLabelStyle}>总用户数</div>
+            <div style={summaryValueStyle}>{overview.totalUsers}</div>
+            <div style={summaryHintStyle}>当前后台可管理的全部账号</div>
+          </div>
+          <div style={summaryCardStyle}>
+            <div style={summaryLabelStyle}>今日活跃用户</div>
+            <div style={summaryValueStyle}>{overview.activeToday}</div>
+            <div style={summaryHintStyle}>按最近活跃时间统计今天有操作的用户</div>
+          </div>
+          <div style={summaryCardStyle}>
+            <div style={summaryLabelStyle}>近 7 天登录人数</div>
+            <div style={summaryValueStyle}>{overview.recentLogins}</div>
+            <div style={summaryHintStyle}>最近 7 天至少登录过一次的用户</div>
+          </div>
+          <div style={summaryCardStyle}>
+            <div style={summaryLabelStyle}>累计考试次数</div>
+            <div style={summaryValueStyle}>{overview.totalExamAttempts}</div>
+            <div style={summaryHintStyle}>按用户考试记录汇总，不去重</div>
+          </div>
+        </div>
+
         <div style={toolbarStyle}>
           <input
             value={keyword}
@@ -594,6 +641,8 @@ function AdminUsers() {
                   <th style={cellHeadStyle}>最近登录</th>
                   <th style={cellHeadStyle}>最近活跃</th>
                   <th style={cellHeadStyle}>登录次数</th>
+                  <th style={cellHeadStyle}>最近考试</th>
+                  <th style={cellHeadStyle}>考试次数</th>
                   <th style={cellHeadStyle}>创建时间</th>
                   <th style={cellHeadStyle}>操作</th>
                 </tr>
@@ -639,6 +688,12 @@ function AdminUsers() {
                       </td>
                       <td style={cellBodyStyle}>
                         {Number(item.loginCount || 0)}
+                      </td>
+                      <td style={cellBodyStyle}>
+                        {formatDateTime(item.lastExamAt)}
+                      </td>
+                      <td style={cellBodyStyle}>
+                        {Number(item.examCount || 0)}
                       </td>
                       <td style={cellBodyStyle}>
                         {item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}
@@ -723,6 +778,39 @@ const toolbarStyle = {
   flexWrap: 'wrap',
   alignItems: 'center',
   marginBottom: 16,
+}
+
+const summaryGridStyle = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+  gap: 14,
+  marginBottom: 18,
+}
+
+const summaryCardStyle = {
+  padding: '16px 18px',
+  borderRadius: 14,
+  border: '1px solid var(--border-default)',
+  background: 'var(--bg-surface)',
+  display: 'grid',
+  gap: 6,
+}
+
+const summaryLabelStyle = {
+  color: 'var(--text-muted)',
+  fontSize: 14,
+}
+
+const summaryValueStyle = {
+  fontSize: 28,
+  fontWeight: 700,
+  color: 'var(--text-heading)',
+}
+
+const summaryHintStyle = {
+  color: 'var(--text-muted)',
+  fontSize: 13,
+  lineHeight: 1.5,
 }
 
 const inputStyle = {

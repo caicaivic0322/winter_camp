@@ -289,6 +289,73 @@ test('admin can update user level but cannot delete admin account', async () => 
   }
 })
 
+test('admin user list includes per-user exam activity summary', async () => {
+  const backups = {
+    users: fs.readFileSync(usersFile, 'utf-8'),
+    attempts: fs.readFileSync(attemptsFile, 'utf-8'),
+  }
+
+  writeJson(usersFile, {
+    ...fixtures.users,
+    studentA: {
+      username: 'studentA',
+      password: '123456',
+      nickname: '学员A',
+      role: 'user',
+      level: '初级',
+      createdAt: '2026-03-13T00:03:00.000Z',
+    },
+  })
+  writeJson(attemptsFile, [
+    ...fixtures.attempts,
+    {
+      id: 'attempt-2',
+      examId: 'exam-1',
+      username: 'vic',
+      score: 92,
+      rawScore: 92,
+      rawTotal: 100,
+      totalScore: 100,
+      submittedAt: '2026-03-15T08:00:00.000Z',
+    },
+    {
+      id: 'attempt-3',
+      examId: 'exam-1',
+      username: 'vic',
+      score: 95,
+      rawScore: 95,
+      rawTotal: 100,
+      totalScore: 100,
+      submittedAt: '2026-03-18T09:30:00.000Z',
+    },
+  ])
+
+  const server = await startServer()
+
+  try {
+    const adminLogin = await login(server.baseUrl, 'admin', '123456')
+    const listRes = await fetch(`${server.baseUrl}/users`, {
+      headers: {
+        Authorization: `Bearer ${adminLogin.token}`,
+      },
+    })
+
+    assert.equal(listRes.status, 200)
+    const users = await listRes.json()
+    const vic = users.find(item => item.username === 'vic')
+    const studentA = users.find(item => item.username === 'studentA')
+
+    assert.equal(vic.examCount, 2)
+    assert.equal(vic.lastExamAt, '2026-03-18T09:30:00.000Z')
+    assert.equal(studentA.examCount, 0)
+    assert.equal(studentA.lastExamAt, '')
+  } finally {
+    await server.stop()
+    fs.writeFileSync(usersFile, backups.users)
+    fs.writeFileSync(attemptsFile, backups.attempts)
+  }
+})
+
 test('admin routes require a logged-in admin session', async () => {
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),

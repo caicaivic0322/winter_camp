@@ -167,6 +167,31 @@ function toPublicUser(user) {
   }
 }
 
+function toAttemptActivityTime(attempt) {
+  return toIsoTime(attempt?.submittedAt || attempt?.at || '', '')
+}
+
+function buildUserExamStats(attempts = []) {
+  const stats = new Map()
+
+  for (const attempt of attempts) {
+    const username = String(attempt?.username || '').trim()
+    if (!username) continue
+
+    const time = toAttemptActivityTime(attempt)
+    const current = stats.get(username) || { examCount: 0, lastExamAt: '' }
+    current.examCount += 1
+
+    if (time && (!current.lastExamAt || new Date(time) > new Date(current.lastExamAt))) {
+      current.lastExamAt = time
+    }
+
+    stats.set(username, current)
+  }
+
+  return stats
+}
+
 function sanitizeQuestionText(value) {
   return String(value || '')
     .replace(/\*\*/g, '')
@@ -1380,7 +1405,16 @@ app.get('/api/users', requireAdmin, asyncRoute(async (req, res) => {
   const cached = getCachedEndpoint(cacheKey)
   if (cached) return res.json(cached)
   const users = await readUsers()
-  const list = Object.values(users).map(toPublicUser)
+  const attempts = await readAttempts()
+  const examStats = buildUserExamStats(attempts)
+  const list = Object.values(users).map(item => {
+    const stats = examStats.get(item.username) || { examCount: 0, lastExamAt: '' }
+    return {
+      ...toPublicUser(item),
+      examCount: stats.examCount,
+      lastExamAt: stats.lastExamAt,
+    }
+  })
   setCachedEndpoint(cacheKey, list)
   res.json(list)
 }))
