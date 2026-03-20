@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
 import API_BASE from '../config/api'
 import { buildAuthHeaders } from '../utils/auth'
-import { COURSE_LEVELS, DEFAULT_EXAM_LEVEL } from '../../shared/courseAccess.js'
+import { COURSE_LEVELS, DEFAULT_EXAM_LEVEL, formatExamAudienceLabel, normalizeExamAudienceLevels } from '../../shared/courseAccess.js'
 
 const LEVELS = COURSE_LEVELS
 
@@ -173,7 +173,7 @@ export default function AdminExams() {
     totalScore: 100,
     duration: 1800,
     questionCount: '',
-    levelRequired: DEFAULT_EXAM_LEVEL,
+    levelRequireds: [DEFAULT_EXAM_LEVEL],
     startTime: '',
     endTime: '',
     file: null,
@@ -227,7 +227,7 @@ export default function AdminExams() {
     fd.append('title', form.title || form.file.name.replace(/\.md$/i, ''))
     fd.append('totalScore', String(form.totalScore))
     fd.append('duration', String(form.duration))
-    fd.append('levelRequired', form.levelRequired)
+    fd.append('levelRequireds', JSON.stringify(form.levelRequireds))
     if (form.questionCount) fd.append('questionCount', String(form.questionCount))
     fd.append('startTime', toIso(form.startTime))
     fd.append('endTime', toIso(form.endTime))
@@ -288,7 +288,7 @@ export default function AdminExams() {
       totalScore: exam.totalScore || 100,
       duration: exam.duration || 60,
       questionCount: exam.questionCount || '',
-      levelRequired: exam.levelRequired || DEFAULT_EXAM_LEVEL,
+      levelRequireds: normalizeExamAudienceLevels(exam.levelRequireds || exam.levelRequired),
       startTime: toDatetimeLocal(exam.startTime),
       endTime: toDatetimeLocal(exam.endTime),
       status: exam.status || 'scheduled'
@@ -300,6 +300,7 @@ export default function AdminExams() {
       setError('')
       const body = {
         ...editMap,
+        levelRequireds: normalizeExamAudienceLevels(editMap.levelRequireds),
         startTime: toIso(editMap.startTime),
         endTime: toIso(editMap.endTime),
       }
@@ -534,9 +535,35 @@ export default function AdminExams() {
           <input type="number" value={form.totalScore} onChange={e => setForm(v => ({ ...v, totalScore: e.target.value }))} placeholder="总分" style={formInputStyle} />
           <input type="number" value={form.duration} onChange={e => setForm(v => ({ ...v, duration: e.target.value }))} placeholder="时长（分钟）" style={formInputStyle} />
           <input type="number" value={form.questionCount} onChange={e => setForm(v => ({ ...v, questionCount: e.target.value }))} placeholder="题量（空=全量）" style={formInputStyle} />
-          <select value={form.levelRequired} onChange={e => setForm(v => ({ ...v, levelRequired: e.target.value }))} style={formInputStyle}>
-            {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
-          </select>
+          <div style={{ ...formInputStyle, display: 'grid', gap: 8 }}>
+            <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>可参加等级</div>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              {LEVELS.map(level => {
+                const checked = form.levelRequireds.includes(level)
+                return (
+                  <label key={level} style={levelChipLabelStyle(checked)}>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => setForm(v => {
+                        const next = checked
+                          ? v.levelRequireds.filter(item => item !== level)
+                          : [...v.levelRequireds, level]
+                        return {
+                          ...v,
+                          levelRequireds: normalizeExamAudienceLevels(next),
+                        }
+                      })}
+                    />
+                    <span>{level}</span>
+                  </label>
+                )
+              })}
+            </div>
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+              当前可见范围：{formatExamAudienceLabel(form.levelRequireds)}
+            </div>
+          </div>
         </div>
 
         <div style={{
@@ -753,7 +780,7 @@ export default function AdminExams() {
                   <th style={{ padding: 10 }}>总分</th>
                   <th style={{ padding: 10 }}>时长</th>
                   <th style={{ padding: 10 }}>题量</th>
-                  <th style={{ padding: 10 }}>等级</th>
+                  <th style={{ padding: 10 }}>可参加等级</th>
                   <th style={{ padding: 10 }}>时间段</th>
                   <th style={{ padding: 10 }}>操作</th>
                 </tr>
@@ -792,7 +819,39 @@ export default function AdminExams() {
                       <td style={{ padding: 10 }}>{editing ? <input type="number" value={editMap.totalScore} onChange={e => setEditMap(v => ({ ...v, totalScore: e.target.value }))} style={{ width: 80 }} /> : (exam.totalScore || 100)}</td>
                       <td style={{ padding: 10 }}>{editing ? <input type="number" value={editMap.duration} onChange={e => setEditMap(v => ({ ...v, duration: e.target.value }))} style={{ width: 80 }} /> : `${Math.round(exam.duration / 60)}分钟`}</td>
                       <td style={{ padding: 10 }}>{editing ? <input type="number" value={editMap.questionCount} onChange={e => setEditMap(v => ({ ...v, questionCount: e.target.value }))} style={{ width: 80 }} /> : exam.questionCount}</td>
-                      <td style={{ padding: 10 }}>{editing ? <select value={editMap.levelRequired} onChange={e => setEditMap(v => ({ ...v, levelRequired: e.target.value }))}>{LEVELS.map(l => <option key={l} value={l}>{l}</option>)}</select> : exam.levelRequired}</td>
+                      <td style={{ padding: 10 }}>
+                        {editing ? (
+                          <div style={{ display: 'grid', gap: 8 }}>
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                              {LEVELS.map(level => {
+                                const checked = normalizeExamAudienceLevels(editMap.levelRequireds).includes(level)
+                                return (
+                                  <label key={level} style={levelChipLabelStyle(checked)}>
+                                    <input
+                                      type="checkbox"
+                                      checked={checked}
+                                      onChange={() => setEditMap(v => {
+                                        const current = normalizeExamAudienceLevels(v.levelRequireds)
+                                        const next = checked
+                                          ? current.filter(item => item !== level)
+                                          : [...current, level]
+                                        return {
+                                          ...v,
+                                          levelRequireds: normalizeExamAudienceLevels(next),
+                                        }
+                                      })}
+                                    />
+                                    <span>{level}</span>
+                                  </label>
+                                )
+                              })}
+                            </div>
+                            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                              {formatExamAudienceLabel(editMap.levelRequireds)}
+                            </div>
+                          </div>
+                        ) : formatExamAudienceLabel(exam.levelRequireds || exam.levelRequired)}
+                      </td>
                       <td style={{ padding: 10 }}>
                         {editing ? (
                           <div style={{ display: 'grid', gap: 6 }}>
@@ -850,6 +909,20 @@ const adminSummaryCardStyle = {
   border: '1px solid var(--border-default)',
   boxShadow: 'var(--shadow-md)',
 }
+
+const levelChipLabelStyle = (checked) => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
+  padding: '8px 12px',
+  borderRadius: 999,
+  border: `1px solid ${checked ? 'var(--status-success-border)' : 'var(--border-default)'}`,
+  background: checked ? 'var(--status-success-bg)' : 'var(--panel-soft)',
+  color: checked ? 'var(--status-success-fg)' : 'var(--text-body)',
+  fontSize: '0.88rem',
+  fontWeight: 600,
+  cursor: 'pointer',
+})
 
 const templateGhostButtonStyle = {
   padding: '9px 16px',

@@ -376,10 +376,29 @@ export function createDataStore({
 
     let changed = false
     const normalized = data.map((item) => {
-      const levelRequired = normalizeCourseLevel(item.levelRequired, defaultExamLevel)
-      if (levelRequired !== item.levelRequired) {
+      if (Array.isArray(item.levelRequireds)) {
+        const nextLevels = item.levelRequireds
+          .map(level => normalizeCourseLevel(level, defaultExamLevel))
+          .filter((level, index, list) => list.indexOf(level) === index)
+
+        const normalizedLevels = nextLevels.length > 0 ? nextLevels : [defaultExamLevel]
+        if (JSON.stringify(item.levelRequireds) !== JSON.stringify(normalizedLevels)) {
+          changed = true
+          return {
+            ...item,
+            levelRequireds: normalizedLevels,
+          }
+        }
+        return item
+      }
+
+      const nextLevel = normalizeCourseLevel(item.levelRequired, defaultExamLevel)
+      if (nextLevel !== item.levelRequired) {
         changed = true
-        return { ...item, levelRequired }
+        return {
+          ...item,
+          levelRequired: nextLevel,
+        }
       }
       return item
     })

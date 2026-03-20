@@ -7,6 +7,8 @@ import {
   DEFAULT_EXAM_LEVEL,
   getLevelRank,
   canAccessExamLevel,
+  normalizeExamAudienceLevels,
+  formatExamAudienceLabel,
   getCourseAccessProfile,
   isCourseAccessible,
 } from './courseAccess.js'
@@ -50,4 +52,19 @@ test('level metadata keeps defaults and ordering stable', () => {
   assert.equal(getLevelRank('高级') < getLevelRank('竞赛'), true)
   assert.equal(canAccessExamLevel('竞赛', '高级'), true)
   assert.equal(canAccessExamLevel('初级', '中级'), false)
+})
+
+test('exam audience levels support exact multi-select matching with legacy fallback', () => {
+  assert.deepEqual(normalizeExamAudienceLevels('中级'), ['中级'])
+  assert.deepEqual(normalizeExamAudienceLevels(['竞赛', '中级', '高级', '中级']), ['中级', '高级', '竞赛'])
+  assert.deepEqual(normalizeExamAudienceLevels([]), [DEFAULT_EXAM_LEVEL])
+
+  assert.equal(canAccessExamLevel('中级', ['中级', '高级', '竞赛']), true)
+  assert.equal(canAccessExamLevel('高级', ['中级', '高级', '竞赛']), true)
+  assert.equal(canAccessExamLevel('初级', ['中级', '高级', '竞赛']), false)
+  assert.equal(canAccessExamLevel('竞赛', '高级'), true)
+  assert.equal(canAccessExamLevel('中级', '高级'), false)
+
+  assert.equal(formatExamAudienceLabel(['中级', '高级', '竞赛']), '中级 / 高级 / 竞赛')
+  assert.equal(formatExamAudienceLabel('高级'), '高级及以上')
 })

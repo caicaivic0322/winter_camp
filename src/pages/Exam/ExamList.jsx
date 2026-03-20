@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import API_BASE from '../../config/api'
 import { buildAuthHeaders } from '../../utils/auth'
-import { canAccessExamLevel, DEFAULT_EXAM_LEVEL, DEFAULT_USER_LEVEL } from '../../../shared/courseAccess.js'
+import { canAccessExamLevel, DEFAULT_EXAM_LEVEL, DEFAULT_USER_LEVEL, formatExamAudienceLabel, normalizeExamAudienceLevels } from '../../../shared/courseAccess.js'
 
 function getExamStatus(exam) {
   const now = Date.now()
@@ -82,8 +82,9 @@ export default function ExamList() {
       return
     }
     // 检查等级
-    if (!canAccessExamLevel(user.level || DEFAULT_USER_LEVEL, exam.levelRequired || DEFAULT_EXAM_LEVEL)) {
-      alert(`您的等级 (${user.level}) 不足，需要 ${exam.levelRequired} 及以上才能参加`)
+    const allowedLevels = normalizeExamAudienceLevels(exam.levelRequireds || exam.levelRequired || DEFAULT_EXAM_LEVEL)
+    if (!canAccessExamLevel(user.level || DEFAULT_USER_LEVEL, allowedLevels)) {
+      alert(`您的等级 (${user.level}) 不在本次考试开放范围内，仅 ${formatExamAudienceLabel(allowedLevels)} 可参加`)
       return
     }
     
@@ -183,7 +184,7 @@ export default function ExamList() {
               <h3 style={{ fontSize: '1.25rem', fontWeight: '600' }}>{exam.title}</h3>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <span className="tag" style={{ background: 'var(--status-info-bg)', color: 'var(--status-info-fg)', border: '1px solid var(--status-info-border)', padding: '4px 10px', borderRadius: '999px', fontSize: '0.82rem', fontWeight: 700 }}>
-                  {exam.levelRequired}及以上
+                  {formatExamAudienceLabel(exam.levelRequireds || exam.levelRequired || DEFAULT_EXAM_LEVEL)}
                 </span>
                 <span className="tag" style={{ background: status.background, color: status.color, border: `1px solid ${status.borderColor}`, padding: '4px 10px', borderRadius: '999px', fontSize: '0.82rem', fontWeight: '700' }}>
                   {status.label}

@@ -15,6 +15,7 @@ import {
   DEFAULT_EXAM_LEVEL,
   DEFAULT_USER_LEVEL,
   canAccessExamLevel,
+  normalizeExamAudienceLevels,
   normalizeCourseLevel,
 } from '../shared/courseAccess.js'
 
@@ -110,6 +111,17 @@ function normalizeExamWindow(payload = {}) {
   const startTime = payload.startTime || payload.activeStartTime || payload.activateFrom
   const endTime = payload.endTime || payload.activeEndTime || payload.activateTo
   return { startTime, endTime }
+}
+
+function normalizeExamAudience(levels, fallback = DEFAULT_EXAM_LEVEL) {
+  return normalizeExamAudienceLevels(levels, fallback)
+}
+
+function resolveExamAccessRequirement(exam) {
+  if (Array.isArray(exam?.levelRequireds) && exam.levelRequireds.length > 0) {
+    return normalizeExamAudience(exam.levelRequireds, DEFAULT_EXAM_LEVEL)
+  }
+  return normalizeCourseLevel(exam?.levelRequired, DEFAULT_EXAM_LEVEL)
 }
 
 function parseIsoTime(value) {
@@ -762,10 +774,15 @@ function validateBackupPayload(payload = {}) {
     data: {
       users: normalizedUsers,
       questions,
-      exams: exams.map(item => ({
-        ...item,
-        levelRequired: normalizeCourseLevel(item.levelRequired, DEFAULT_EXAM_LEVEL),
-      })),
+      exams: exams.map(item => Array.isArray(item.levelRequireds)
+        ? {
+            ...item,
+            levelRequireds: normalizeExamAudience(item.levelRequireds, DEFAULT_EXAM_LEVEL),
+          }
+        : {
+            ...item,
+            levelRequired: normalizeCourseLevel(item.levelRequired, DEFAULT_EXAM_LEVEL),
+          }),
       attempts,
     },
   }
@@ -1612,7 +1629,7 @@ app.get('/api/admin/questions', requireAdmin, asyncRoute(async (req, res) => {
 
 // 发起考试
 app.post('/api/admin/exams', requireAdmin, asyncRoute(async (req, res) => {
-  const { title, duration, questionCount, bankIds, levelRequired, totalScore } = req.body || {}
+  const { title, duration, questionCount, bankIds, levelRequired, levelRequireds, totalScore } = req.body || {}
   const { startTime, endTime } = normalizeExamWindow(req.body || {})
   
   if (!title || !startTime || !endTime) {
@@ -1629,7 +1646,7 @@ app.post('/api/admin/exams', requireAdmin, asyncRoute(async (req, res) => {
     questionCount: toPositiveInt(questionCount, 10),
     totalScore: toPositiveInt(totalScore, DEFAULT_TOTAL_SCORE),
     bankIds: bankIds || [], // 指定从哪些题库抽题
-    levelRequired: normalizeCourseLevel(levelRequired, DEFAULT_EXAM_LEVEL),
+    levelRequireds: normalizeExamAudience(levelRequireds || levelRequired, DEFAULT_EXAM_LEVEL),
     createdAt: new Date().toISOString(),
     status: 'scheduled',
     source: 'manual'
@@ -1666,7 +1683,7 @@ app.post('/api/admin/exams/upload', requireAdmin, upload.single('file'), asyncRo
   const payload = req.body || {}
   const title = payload.title || req.file.originalname?.replace(/\.md$/i, '') || '未命名考试'
   const duration = toPositiveInt(payload.duration, 180)
-  const levelRequired = normalizeCourseLevel(payload.levelRequired, DEFAULT_EXAM_LEVEL)
+  const levelRequireds = normalizeExamAudience(payload.levelRequireds || payload.levelRequired, DEFAULT_EXAM_LEVEL)
   const totalScore = toPositiveInt(payload.totalScore, DEFAULT_TOTAL_SCORE)
   const { startTime, endTime } = normalizeExamWindow(payload)
   const requestedCount = toPositiveInt(payload.questionCount, 0)
@@ -1707,7 +1724,7 @@ app.post('/api/admin/exams/upload', requireAdmin, upload.single('file'), asyncRo
       questionCount: requestedCount > 0 ? Math.min(requestedCount, newQuestions.length) : newQuestions.length,
       totalScore,
       bankIds: [bankId],
-      levelRequired,
+      levelRequireds,
       createdAt: new Date().toISOString(),
       status: 'scheduled',
       source: 'upload',
@@ -1742,6 +1759,10 @@ app.get('/api/admin/exams', requireAdmin, asyncRoute(async (req, res) => {
   if (cached) return res.json(cached)
   const exams = await readExams()
   const list = exams
+    .map(exam => ({
+      ...exam,
+      levelRequireds: Array.isArray(exam.levelRequireds) ? normalizeExamAudience(exam.levelRequireds) : undefined,
+    }))
     .slice()
     .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
   setCachedEndpoint(cacheKey, list)
@@ -1798,7 +1819,7 @@ app.patch('/api/admin/exams/:id', requireAdmin, asyncRoute(async (req, res) => {
     duration: toPositiveInt(payload.duration, current.duration || 60),
     questionCount: toPositiveInt(payload.questionCount, current.questionCount || 10),
     totalScore: toPositiveInt(payload.totalScore, current.totalScore || DEFAULT_TOTAL_SCORE),
-    levelRequired: normalizeCourseLevel(payload.levelRequired || current.levelRequired, DEFAULT_EXAM_LEVEL),
+    levelRequireds: normalizeExamAudience(payload.levelRequireds || payload.levelRequired || current.levelRequireds || current.levelRequired, DEFAULT_EXAM_LEVEL),
     status: payload.status || current.status || 'scheduled'
   }
   const windowPayload = normalizeExamWindow(payload)
@@ -1839,9 +1860,11 @@ app.get('/api/exams/available', requireAuth, asyncRoute(async (req, res) => {
   
   const available = exams
     .filter(e => new Date(e.endTime) >= now)
+    .filter(e => canAccessExamLevel(req.authUser.level, resolveExamAccessRequirement(e)))
     .filter(e => !submittedExamIds.has(e.id))
     .map(e => ({
       ...e,
+      levelRequireds: Array.isArray(e.levelRequireds) ? normalizeExamAudience(e.levelRequireds) : undefined,
       availability: new Date(e.startTime) > now ? 'upcoming' : 'active'
     }))
     .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
@@ -1867,7 +1890,7 @@ app.get('/api/exams/:id/start', requireAuth, asyncRoute(async (req, res) => {
   if (now < new Date(exam.startTime)) return res.status(400).json({ error: 'not started' })
   if (now > new Date(exam.endTime)) return res.status(400).json({ error: 'ended' })
   
-  if (!canAccessExamLevel(req.authUser.level, exam.levelRequired || DEFAULT_EXAM_LEVEL)) {
+  if (!canAccessExamLevel(req.authUser.level, resolveExamAccessRequirement(exam))) {
     return res.status(403).json({ error: 'insufficient_level' })
   }
   

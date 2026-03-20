@@ -768,6 +768,117 @@ test('submitted exam disappears from available list and cannot be started again'
   }
 })
 
+test('exam audience supports exact multi-level visibility instead of threshold access', async () => {
+  const backups = {
+    users: fs.readFileSync(usersFile, 'utf-8'),
+    exams: fs.existsSync(examsFile) ? fs.readFileSync(examsFile, 'utf-8') : '[]',
+    questions: fs.existsSync(questionsFile) ? fs.readFileSync(questionsFile, 'utf-8') : '[]',
+    attempts: fs.existsSync(attemptsFile) ? fs.readFileSync(attemptsFile, 'utf-8') : '[]',
+  }
+
+  writeJson(usersFile, {
+    admin: fixtures.users.admin,
+    beginner: {
+      username: 'beginner',
+      password: '123456',
+      nickname: '初级学员',
+      role: 'user',
+      level: '初级',
+      createdAt: '2026-03-13T01:05:00.000Z',
+    },
+    vic: fixtures.users.vic,
+    senior: {
+      username: 'senior',
+      password: '123456',
+      nickname: '高级学员',
+      role: 'user',
+      level: '高级',
+      createdAt: '2026-03-13T01:06:00.000Z',
+    },
+    pro: {
+      username: 'pro',
+      password: '123456',
+      nickname: '竞赛学员',
+      role: 'user',
+      level: '竞赛',
+      createdAt: '2026-03-13T01:07:00.000Z',
+    },
+  })
+  writeJson(examsFile, [
+    {
+      id: 'exam-audience',
+      title: '定向等级考试',
+      startTime: '2025-01-01T00:00:00.000Z',
+      endTime: '2099-01-01T00:00:00.000Z',
+      duration: 1800,
+      questionCount: 1,
+      totalScore: 100,
+      bankIds: ['bank-audience'],
+      levelRequireds: ['中级', '高级', '竞赛'],
+      createdAt: '2026-03-13T01:08:00.000Z',
+      status: 'scheduled',
+    },
+  ])
+  writeJson(questionsFile, [
+    {
+      id: 'q-audience-1',
+      bankId: 'bank-audience',
+      order: 1,
+      title: '哪一个函数是程序入口？',
+      type: 'single',
+      section: 'single',
+      score: 100,
+      answer: 'A',
+      options: [
+        { label: 'A', text: 'main' },
+        { label: 'B', text: 'print' },
+      ],
+    },
+  ])
+  writeJson(attemptsFile, [])
+
+  const server = await startServer()
+
+  try {
+    const beginner = await loginAs(server.baseUrl, 'beginner', '123456')
+    const intermediate = await loginAs(server.baseUrl, 'vic', '123456')
+    const senior = await loginAs(server.baseUrl, 'senior', '123456')
+    const pro = await loginAs(server.baseUrl, 'pro', '123456')
+
+    const beginnerListRes = await fetch(`${server.baseUrl}/exams/available`, {
+      headers: { Authorization: `Bearer ${beginner.token}` },
+    })
+    assert.equal(beginnerListRes.status, 200)
+    const beginnerList = await beginnerListRes.json()
+    assert.equal(beginnerList.some(item => item.id === 'exam-audience'), false)
+
+    for (const auth of [intermediate, senior, pro]) {
+      const listRes = await fetch(`${server.baseUrl}/exams/available`, {
+        headers: { Authorization: `Bearer ${auth.token}` },
+      })
+      assert.equal(listRes.status, 200)
+      const list = await listRes.json()
+      assert.equal(list.some(item => item.id === 'exam-audience'), true)
+    }
+
+    const deniedStart = await fetch(`${server.baseUrl}/exams/exam-audience/start`, {
+      headers: { Authorization: `Bearer ${beginner.token}` },
+    })
+    assert.equal(deniedStart.status, 403)
+
+    const allowedStart = await fetch(`${server.baseUrl}/exams/exam-audience/start`, {
+      headers: { Authorization: `Bearer ${intermediate.token}` },
+    })
+    assert.equal(allowedStart.status, 200)
+  } finally {
+    await server.stop()
+    fs.writeFileSync(usersFile, backups.users)
+    fs.writeFileSync(examsFile, backups.exams)
+    fs.writeFileSync(questionsFile, backups.questions)
+    fs.writeFileSync(attemptsFile, backups.attempts)
+  }
+})
+
 test('submit stores attempt timing metadata and wrong question ids', async () => {
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),

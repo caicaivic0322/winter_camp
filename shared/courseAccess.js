@@ -57,7 +57,43 @@ export function getLevelRank(level) {
   return LEVEL_RANK[normalized] ?? LEVEL_RANK[DEFAULT_USER_LEVEL]
 }
 
+export function normalizeExamAudienceLevels(levels, fallback = DEFAULT_EXAM_LEVEL) {
+  let rawLevels = []
+
+  if (Array.isArray(levels)) {
+    rawLevels = levels
+  } else if (typeof levels === 'string' && levels.trim().startsWith('[')) {
+    try {
+      const parsed = JSON.parse(levels)
+      rawLevels = Array.isArray(parsed) ? parsed : [levels]
+    } catch {
+      rawLevels = [levels]
+    }
+  } else if (levels) {
+    rawLevels = [levels]
+  }
+
+  const normalized = rawLevels
+    .map(level => normalizeCourseLevel(level, ''))
+    .filter(level => COURSE_LEVELS.includes(level))
+    .sort((a, b) => getLevelRank(a) - getLevelRank(b))
+    .filter((level, index, list) => list.indexOf(level) === index)
+
+  return normalized.length > 0 ? normalized : [normalizeCourseLevel(fallback, DEFAULT_EXAM_LEVEL)]
+}
+
+export function formatExamAudienceLabel(levels) {
+  if (Array.isArray(levels)) {
+    return normalizeExamAudienceLevels(levels).join(' / ')
+  }
+  return `${normalizeCourseLevel(levels, DEFAULT_EXAM_LEVEL)}及以上`
+}
+
 export function canAccessExamLevel(userLevel, requiredLevel = DEFAULT_EXAM_LEVEL) {
+  if (Array.isArray(requiredLevel)) {
+    const allowedLevels = normalizeExamAudienceLevels(requiredLevel)
+    return allowedLevels.includes(normalizeCourseLevel(userLevel, DEFAULT_USER_LEVEL))
+  }
   return getLevelRank(userLevel) >= getLevelRank(requiredLevel)
 }
 
