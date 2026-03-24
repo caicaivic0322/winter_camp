@@ -131,6 +131,27 @@ test('exam markdown template can be parsed into valid questions', () => {
   assert.equal(questions.some(item => item.section === 'code_completion'), true)
 })
 
+test('parser preserves quoted option text for code output questions', () => {
+  const markdown = `
+## 一、单选题
+
+**4.** 若执行下面代码：
+\`\`\`python
+name = "Python"
+print("Hello,", name)
+\`\`\`
+A. \`Hello,name\`
+B. \`Hello, Python\`
+C. \`"Hello, Python"\`
+D. 程序报错
+`
+
+  const { questions } = parseQuestions(markdown)
+  assert.equal(questions.length, 1)
+  assert.equal(questions[0].options[1].text, 'Hello, Python')
+  assert.equal(questions[0].options[2].text, '"Hello, Python"')
+})
+
 test('admin can download exam markdown template', async () => {
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),

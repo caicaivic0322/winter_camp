@@ -2,7 +2,6 @@ export function parseQuestions(markdown) {
   const sanitizeOptionText = (raw) =>
     String(raw || '')
       .replace(/`/g, '')
-      .replace(/^['"“”‘’]+|['"“”‘’]+$/g, '')
       .replace(/[_*]+$/g, '')
       .trim()
 

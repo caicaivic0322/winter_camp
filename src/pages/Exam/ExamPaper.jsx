@@ -46,7 +46,6 @@ export default function ExamPaper() {
   const displayOptionText = (value) =>
     String(value || '')
       .replace(/`/g, '')
-      .replace(/^['"“”‘’]+|['"“”‘’]+$/g, '')
       .trim()
 
   const displayQuestionTitle = (value) =>
