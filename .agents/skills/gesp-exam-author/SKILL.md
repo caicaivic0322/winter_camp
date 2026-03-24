@@ -26,6 +26,28 @@ Use this skill when the user wants any of the following:
 - Existing exam Markdown reviewed or repaired
 - Output that must import cleanly into this repository
 
+## One-Shot First
+
+Default to one-shot execution.
+
+If the user's single prompt already provides enough information to infer:
+
+- language
+- GESP level
+- paper type or goal
+
+then do not ask follow-up questions. Generate the paper directly using defaults from `references/exam-structure.md`.
+
+Only ask follow-up questions when a missing item would materially change the result:
+
+- language is missing
+- GESP level is missing
+- the user wants a non-default paper structure but did not specify counts clearly
+- the user wants a review/fix instead of generation and has not provided the source file or Markdown
+
+If counts are missing, use defaults.
+If output style is missing, return final Markdown plus a short self-check summary.
+
 ## Required Constraints
 
 Do not generate outside these boundaries:
@@ -45,6 +67,16 @@ Before generating, lock these parameters:
 
 If one of these is missing, ask only for the missing high-impact item. Keep questions short.
 
+## Default Values
+
+When the user does not specify these fields, use:
+
+- paper type: full paper
+- counts: from `references/exam-structure.md`
+- output style: final Markdown + short self-check
+- tone: standard teaching-style exam language
+- difficulty spread: centered on the requested GESP level with a small amount of easier warm-up content
+
 ## Workflow
 
 ### 1. Clarify the exam target
@@ -61,6 +93,24 @@ Collect or infer:
 - Preferred knowledge scope or excluded topics
 
 If the user does not specify counts, use the default structure in `references/exam-structure.md`.
+
+### 1A. One-shot parse rules
+
+When a single prompt includes compressed instructions such as:
+
+- `Python GESP2 生成一套试卷`
+- `C++ GESP4 阶段测试，默认结构`
+- `生成 10 道 Python GESP3 单选题`
+
+interpret them in this order:
+
+1. detect language
+2. detect GESP level
+3. detect whether the user wants a full paper, one section, or a review
+4. detect any explicit counts
+5. fill the rest with defaults
+
+Do not pause for confirmation unless the prompt is ambiguous in a way that changes the paper substantially.
 
 ### 2. Load only the relevant references
 
@@ -139,6 +189,16 @@ Default output:
 2. Full Markdown exam
 3. Short self-check summary
 
+### Mode A1: One-shot generate
+
+This is the preferred mode.
+
+If the prompt is sufficient, return:
+
+1. One short line confirming inferred settings
+2. Full Markdown exam
+3. Short self-check summary
+
 ### Mode B: Review existing exam Markdown
 
 Output:
@@ -159,6 +219,17 @@ If the user asks for only one section, still use repository-safe numbering and p
 - Prefer pedagogically clean examples over “clever” puzzles
 - Match GESP expectations rather than olympiad-style trickiness unless requested
 
+## Fast Prompt Examples
+
+For compact user prompts, follow these patterns without asking unnecessary follow-ups:
+
+- `用 gesp-exam-author 生成一套 Python GESP2 试卷`
+- `用 gesp-exam-author 生成一套 C++ GESP4 阶段测试，默认结构`
+- `用 gesp-exam-author 生成 10 道 Python GESP3 单选题`
+- `用 gesp-exam-author 检查这份试卷 Markdown 并修复导入问题`
+
+If helpful, read `references/one-shot-examples.md`.
+
 ## References
 
 - Difficulty and scope: `references/gesp-levels.md`
@@ -166,3 +237,4 @@ If the user asks for only one section, still use repository-safe numbering and p
 - Exact Markdown format: `references/markdown-template.md`
 - Final self-check: `references/review-checklist.md`
 - Source notes for the five design principles: `references/google-inspired-principles.md`
+- One-shot prompt patterns: `references/one-shot-examples.md`
