@@ -16,12 +16,7 @@ export function parseQuestions(markdown) {
       .replace(/\s*[（(]\s*[　 ]*[√×][　 ]*[）)]\s*$/g, '')
       .trim()
 
-  const circledToLetter = {
-    '①': 'A',
-    '②': 'B',
-    '③': 'C',
-    '④': 'D',
-  }
+  const circledNumbers = '①②③④⑤⑥⑦⑧⑨⑩'
 
   const applyAnswerSummary = (summaryText, questions) => {
     if (!summaryText) return
@@ -58,8 +53,8 @@ export function parseQuestions(markdown) {
     if (codeMatch) {
       const pairs = Array.from(codeMatch[1].matchAll(/([①②③④⑤⑥⑦⑧⑨⑩])([A-D])/g))
       pairs.forEach(([, circled, answer]) => {
-        const index = Number('①②③④⑤⑥⑦⑧⑨⑩'.indexOf(circled))
-        if (sectionQuestions.code_completion[index] && circledToLetter[circled]) {
+        const index = circledNumbers.indexOf(circled)
+        if (index >= 0 && sectionQuestions.code_completion[index]) {
           sectionQuestions.code_completion[index].answer = answer
         }
       })

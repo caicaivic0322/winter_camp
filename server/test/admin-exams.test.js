@@ -208,6 +208,104 @@ D. \`2 ** 3 * 2\`
   assert.match(questions[2].options[0].text, /2 \*\* 3 \*\* 2/)
 })
 
+test('parser maps code completion answers for circled blanks beyond ④', () => {
+  const markdown = `
+## 三、程序完善题（每题 5 分，共 20 分）
+
+### 第1题：题目1
+\`\`\`python
+a = ______①
+\`\`\`
+**① 的备选项：**
+A. 1
+B. 2
+C. 3
+D. 4
+
+### 第2题：题目2
+\`\`\`python
+b = ______②
+\`\`\`
+**② 的备选项：**
+A. 1
+B. 2
+C. 3
+D. 4
+
+### 第3题：题目3
+\`\`\`python
+c = ______③
+\`\`\`
+**③ 的备选项：**
+A. 1
+B. 2
+C. 3
+D. 4
+
+### 第4题：题目4
+\`\`\`python
+d = ______④
+\`\`\`
+**④ 的备选项：**
+A. 1
+B. 2
+C. 3
+D. 4
+
+### 第5题：题目5
+\`\`\`python
+e = ______⑤
+\`\`\`
+**⑤ 的备选项：**
+A. 1
+B. 2
+C. 3
+D. 4
+
+### 第6题：题目6
+\`\`\`python
+f = ______⑥
+\`\`\`
+**⑥ 的备选项：**
+A. 1
+B. 2
+C. 3
+D. 4
+
+### 第7题：题目7
+\`\`\`python
+g = ______⑦
+\`\`\`
+**⑦ 的备选项：**
+A. 1
+B. 2
+C. 3
+D. 4
+
+### 第8题：题目8
+\`\`\`python
+h = ______⑧
+\`\`\`
+**⑧ 的备选项：**
+A. 1
+B. 2
+C. 3
+D. 4
+
+## 参考答案汇总
+
+**程序完善题：**
+①A　②B　③C　④D　⑤B　⑥C　⑦A　⑧D
+`
+
+  const { questions } = parseQuestions(markdown)
+  assert.equal(questions.length, 8)
+  assert.deepEqual(
+    questions.map(item => item.answer),
+    ['A', 'B', 'C', 'D', 'B', 'C', 'A', 'D']
+  )
+})
+
 test('admin can download exam markdown template', async () => {
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),
