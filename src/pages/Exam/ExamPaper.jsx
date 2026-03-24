@@ -158,6 +158,7 @@ export default function ExamPaper() {
           sectionTitle: sectionMeta.title,
           accent: sectionMeta.accent,
           title: displayQuestionTitle(block.question.title),
+          description: block.question.description || '',
           rawTitle: block.question.title,
           scoreLabel: `${block.question.score}分`,
           codeSnippet: block.question.codeSnippet || '',
@@ -176,6 +177,7 @@ export default function ExamPaper() {
           sectionTitle: sectionMeta.title,
           accent: sectionMeta.accent,
           title: `${block.baseTitle} · 填空 ${item.blankNo}`,
+          description: item.description || '',
           rawTitle: block.baseTitle,
           scoreLabel: `${item.score}分`,
           codeSnippet: block.codeSnippet || '',
@@ -618,6 +620,12 @@ export default function ExamPaper() {
                 <h3 style={{ margin: '8px 0 18px', fontSize: 'clamp(1.2rem, 2vw, 1.55rem)', lineHeight: 1.45 }}>
                   {renderInlineRich(activeCard.title, true)}
                 </h3>
+
+                {activeCard.description ? (
+                  <p style={{ margin: '0 0 18px', color: 'var(--text-secondary)', lineHeight: 1.8, fontSize: '0.98rem' }}>
+                    {renderInlineRich(activeCard.description, true)}
+                  </p>
+                ) : null}
 
                 {activeCard.codeSnippet ? (
                   <pre style={codeBlockStyle}>

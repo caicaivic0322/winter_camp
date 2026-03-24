@@ -67,6 +67,7 @@ export function parseQuestions(markdown) {
   let metadata = {}
   let currentSection = 'single'
   let currentProgramTitle = ''
+  let currentProgramDescription = ''
   let lastCodeSnippet = ''
   let inCodeBlock = false
   let codeBuffer = []
@@ -151,6 +152,13 @@ export function parseQuestions(markdown) {
     if (programTitleMatch) {
       pushCurrent()
       currentProgramTitle = sanitizeQuestionTitle(programTitleMatch[1])
+      currentProgramDescription = ''
+      continue
+    }
+
+    const programDescriptionMatch = line.match(/^\*\*题目描述：\*\*\s*(.+)$/)
+    if (programDescriptionMatch && currentSection === 'code_completion') {
+      currentProgramDescription = sanitizeQuestionTitle(programDescriptionMatch[1])
       continue
     }
 
@@ -188,6 +196,7 @@ export function parseQuestions(markdown) {
       currentQ = {
         id: Date.now() + '_' + Math.random().toString(36).slice(2, 11),
         title: `${currentProgramTitle || '完善程序题'} - 填空 ${blankNo}`,
+        description: currentProgramDescription,
         options: [],
         type: 'single',
         section: 'code_completion',

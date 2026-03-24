@@ -306,6 +306,37 @@ D. 4
   )
 })
 
+test('parser preserves code completion descriptions', () => {
+  const markdown = `
+## 三、程序完善题（每题 5 分，共 5 分）
+
+### 第1题：使用 range 输出 0 到 4
+
+**题目描述：** 使用 \`for\` 循环输出 \`0 1 2 3 4\`。
+
+\`\`\`python
+for i in ______①:
+    print(i, end=" ")
+\`\`\`
+
+**① 的备选项：**
+A. \`range(1, 5)\`
+B. \`range(5)\`
+C. \`range(0, 6)\`
+D. \`range(2, 5)\`
+
+## 参考答案汇总
+
+**程序完善题：**
+①B
+`
+
+  const { questions } = parseQuestions(markdown)
+  assert.equal(questions.length, 1)
+  assert.equal(questions[0].description, '使用 `for` 循环输出 `0 1 2 3 4`。')
+  assert.equal(questions[0].answer, 'B')
+})
+
 test('admin can download exam markdown template', async () => {
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),
