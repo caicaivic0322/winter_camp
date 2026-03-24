@@ -1,46 +1,83 @@
 export function getExamMarkdownTemplate() {
   return `---
 title: 示例考试模板
-language: C++
+language: 通用
+duration: 60
 ---
 
-## 一、单选题
+# 示例考试模板
 
-**1. 下列哪个关键字用于定义常量？**
-A. let
-_B. const_
-C. static
-D. int
+考试时间：60 分钟　　满分：100 分
 
-**2. C++ 中用于标准输出的对象是？**
-A. cin
-_B. cout_
-C. scanf
-D. print
+## 一、单选题（每题 2 分，共 4 分）
 
-## 二、判断题
+**1.** 关于 Python，下列说法正确的是（　　）
+A. Python 只能编写网页前端代码
+B. Python 是一种高级程序设计语言
+C. Python 程序不能在解释器中运行
+D. Python 变量使用前必须声明类型
 
-**3. vector 可以动态扩容。（　√　）**
+**2.** 阅读下面代码，输出结果是（　　）
 
-**4. while 循环至少执行一次。（　×　）**
+\`\`\`python
+name = "Python"
+print("Hello,", name)
+\`\`\`
 
-## 三、完善程序题
+A. \`Hello,name\`
+B. \`Hello, Python\`
+C. \`"Hello, Python"\`
+D. 程序报错
 
-### 求两个数中的较大值
+## 二、判断题（每题 2 分，共 4 分）
 
-\`\`\`cpp
-int maxValue(int a, int b) {
-    if (a > b) {
-        return a;
-    }
-    return ____;
-}
+**1.** Python 中，\`name\` 和 \`Name\` 可以表示两个不同的变量。（　　）
+
+**2.** 表达式 \`2 ** 3 ** 2\` 的值是 \`64\`。（　　）
+
+## 三、程序完善题（每题 5 分，共 10 分）
+
+### 第1题：读取整数并计算平方
+
+**题目描述：** 输入一个整数，输出它的平方。
+
+\`\`\`python
+n = ______①
+print(n ** 2)
 \`\`\`
 
 **① 的备选项：**
-A. a
-_B. b_
-C. a + b
-D. 0
+A. \`input()\`
+B. \`int(input())\`
+C. \`float\`
+D. \`print(input())\`
+
+---
+
+### 第2题：补全幂运算表达式
+
+**题目描述：** 下面程序要输出 \`2 ** (3 ** 2)\` 的值。
+
+\`\`\`python
+result = ______②
+print(result)
+\`\`\`
+
+**② 的备选项：**
+A. \`2 ** 3 ** 2\`
+B. \`(2 ** 3) ** 2\`
+C. \`2 * 3 ** 2\`
+D. \`2 ** 3 * 2\`
+
+## 参考答案汇总
+
+**单选题：**
+1.B　2.B
+
+**判断题：**
+1.√　2.×
+
+**程序完善题：**
+①B　②A
 `
 }

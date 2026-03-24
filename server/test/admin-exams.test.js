@@ -152,6 +152,62 @@ D. 程序报错
   assert.equal(questions[0].options[2].text, '"Hello, Python"')
 })
 
+test('parser supports answer summary, exponent operators, and 程序完善题 sections', () => {
+  const markdown = `
+## 一、单选题（每题 2 分，共 4 分）
+
+**1.** 阅读下面代码，输出结果是（　　）
+
+\`\`\`python
+print(2 ** 3 ** 2)
+\`\`\`
+
+A. 64
+B. 512
+C. 36
+D. 256
+
+## 二、判断题（每题 2 分，共 2 分）
+
+**1.** 表达式 \`2 ** 3 ** 2\` 的值是 \`64\`。（　×　）
+
+## 三、程序完善题（每题 5 分，共 5 分）
+
+### 第1题：补全幂运算表达式
+
+\`\`\`python
+result = ______①
+print(result)
+\`\`\`
+
+**① 的备选项：**
+A. \`2 ** 3 ** 2\`
+B. \`(2 ** 3) ** 2\`
+C. \`2 * 3 ** 2\`
+D. \`2 ** 3 * 2\`
+
+## 参考答案汇总
+
+**单选题：**
+1.B
+
+**判断题：**
+1.×
+
+**程序完善题：**
+①A
+`
+
+  const { questions } = parseQuestions(markdown)
+  assert.equal(questions.length, 3)
+  assert.deepEqual(questions.map(item => item.section), ['single', 'judge', 'code_completion'])
+  assert.equal(questions[0].answer, 'B')
+  assert.equal(questions[1].answer, 'F')
+  assert.equal(questions[2].answer, 'A')
+  assert.match(questions[1].title, /2 \*\* 3 \*\* 2/)
+  assert.match(questions[2].options[0].text, /2 \*\* 3 \*\* 2/)
+})
+
 test('admin can download exam markdown template', async () => {
   const backups = {
     users: fs.readFileSync(usersFile, 'utf-8'),
@@ -181,7 +237,8 @@ test('admin can download exam markdown template', async () => {
     assert.match(text, /title: 示例考试模板/)
     assert.match(text, /## 一、单选题/)
     assert.match(text, /## 二、判断题/)
-    assert.match(text, /## 三、完善程序题/)
+    assert.match(text, /## 三、程序完善题/)
+    assert.match(text, /## 参考答案汇总/)
   } finally {
     await server.stop()
     fs.writeFileSync(usersFile, backups.users)

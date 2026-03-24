@@ -206,7 +206,8 @@ function buildUserExamStats(attempts = []) {
 
 function sanitizeQuestionText(value) {
   return String(value || '')
-    .replace(/\*\*/g, '')
+    .replace(/^\*\*/, '')
+    .replace(/\*\*$/, '')
     .replace(/\s*[（(]\s*[　 ]*[√×][　 ]*[）)]\s*$/g, '')
     .trim()
 }
@@ -398,6 +399,7 @@ function buildAttemptGradingPayload({ exam, answers = {}, questionIds = [], ques
       questionId,
       questionNumber: questions.length + 1,
       title: question.title,
+      codeSnippet: question.codeSnippet || '',
       type: question.type || 'single',
       section: question.section || '',
       score: Number(question.score || 0),
@@ -443,6 +445,7 @@ async function finalizeAttemptGrading(attempt) {
       questionId: item.questionId,
       questionNumber: item.questionNumber,
       title: item.title,
+      codeSnippet: item.codeSnippet || '',
       type: item.type || 'single',
       options: item.options || [],
       yourAnswer: item.yourAnswer || '',
@@ -1119,6 +1122,7 @@ async function buildAttemptWrongQuestionDetail(attempt) {
         questionId: item.questionId || `stored-${attempt.examId}-${index}`,
         questionNumber: Number.isFinite(Number(item.questionNumber)) ? Number(item.questionNumber) : null,
         title,
+        codeSnippet: item.codeSnippet || sourceQuestion?.codeSnippet || '',
         type: item.type || sourceQuestion?.type || 'single',
         options,
         yourAnswer: item.yourAnswer || '',
@@ -1161,6 +1165,7 @@ async function buildAttemptWrongQuestionDetail(attempt) {
     questionId: item.questionId || `legacy-${attempt.examId}-${index}`,
     questionNumber: Number.isFinite(Number(item.questionNumber)) ? Number(item.questionNumber) : null,
     title: item.questionTitle || item.title || questionMap.get(item.questionId || '')?.title || '',
+    codeSnippet: item.codeSnippet || questionMap.get(item.questionId || '')?.codeSnippet || '',
     type: item.type || 'single',
     options: Array.isArray(item.options) && item.options.length > 0
       ? cloneJson(item.options)

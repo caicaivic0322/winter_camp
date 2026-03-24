@@ -50,7 +50,8 @@ export default function ExamPaper() {
 
   const displayQuestionTitle = (value) =>
     String(value || '')
-      .replace(/\*\*/g, '')
+      .replace(/^\*\*/, '')
+      .replace(/\*\*$/, '')
       .replace(/\s*[（(]\s*[　 ]*[√×][　 ]*[）)]\s*$/g, '')
       .trim()
 

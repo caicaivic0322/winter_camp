@@ -39,7 +39,8 @@ function getStatusMeta(status) {
 
 function sanitizeText(value) {
   return String(value || '')
-    .replace(/\*\*/g, '')
+    .replace(/^\*\*/, '')
+    .replace(/\*\*$/, '')
     .replace(/\s*[（(]\s*[　 ]*[√×][　 ]*[）)]\s*$/g, '')
     .trim()
 }
@@ -351,6 +352,20 @@ export default function ExamResults() {
                           <div style={{ fontWeight: 800, color: 'var(--text-heading)', lineHeight: 1.7 }}>
                             {sanitizeText(item.title)}
                           </div>
+                          {item.codeSnippet ? (
+                            <pre style={{
+                              margin: 0,
+                              padding: '14px 16px',
+                              borderRadius: 16,
+                              border: '1px solid var(--exam-code-border)',
+                              background: 'var(--exam-code-bg)',
+                              color: 'var(--exam-code-text)',
+                              overflowX: 'auto',
+                              whiteSpace: 'pre',
+                            }}>
+                              <code style={{ color: 'inherit' }}>{item.codeSnippet}</code>
+                            </pre>
+                          ) : null}
                           {Array.isArray(item.options) && item.options.length > 0 ? (
                             <div style={{ display: 'grid', gap: 10 }}>
                               {item.options.map((option) => {

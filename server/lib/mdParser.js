@@ -1,4 +1,10 @@
 export function parseQuestions(markdown) {
+  const stripMarkdownWrapper = (raw) =>
+    String(raw || '')
+      .replace(/^\*\*/, '')
+      .replace(/\*\*$/, '')
+      .trim()
+
   const sanitizeOptionText = (raw) =>
     String(raw || '')
       .replace(/`/g, '')
@@ -6,10 +12,59 @@ export function parseQuestions(markdown) {
       .trim()
 
   const sanitizeQuestionTitle = (raw) =>
-    String(raw || '')
-      .replace(/\*\*/g, '')
+    stripMarkdownWrapper(raw)
       .replace(/\s*[（(]\s*[　 ]*[√×][　 ]*[）)]\s*$/g, '')
       .trim()
+
+  const circledToLetter = {
+    '①': 'A',
+    '②': 'B',
+    '③': 'C',
+    '④': 'D',
+  }
+
+  const applyAnswerSummary = (summaryText, questions) => {
+    if (!summaryText) return
+
+    const sectionQuestions = {
+      single: questions.filter(item => item.section === 'single'),
+      judge: questions.filter(item => item.section === 'judge'),
+      code_completion: questions.filter(item => item.section === 'code_completion'),
+    }
+
+    const singleMatch = summaryText.match(/\*\*单选题：\*\*([\s\S]*?)(?=\n\s*\*\*判断题：\*\*|$)/)
+    if (singleMatch) {
+      const pairs = Array.from(singleMatch[1].matchAll(/(\d+)\.([A-D])/g))
+      pairs.forEach(([, rawNo, answer]) => {
+        const index = Number(rawNo) - 1
+        if (sectionQuestions.single[index]) {
+          sectionQuestions.single[index].answer = answer
+        }
+      })
+    }
+
+    const judgeMatch = summaryText.match(/\*\*判断题：\*\*([\s\S]*?)(?=\n\s*\*\*程序完善题：\*\*|$)/)
+    if (judgeMatch) {
+      const pairs = Array.from(judgeMatch[1].matchAll(/(\d+)\.([√×])/g))
+      pairs.forEach(([, rawNo, symbol]) => {
+        const index = Number(rawNo) - 1
+        if (sectionQuestions.judge[index]) {
+          sectionQuestions.judge[index].answer = symbol === '√' ? 'T' : 'F'
+        }
+      })
+    }
+
+    const codeMatch = summaryText.match(/\*\*程序完善题：\*\*([\s\S]*?)$/)
+    if (codeMatch) {
+      const pairs = Array.from(codeMatch[1].matchAll(/([①②③④⑤⑥⑦⑧⑨⑩])([A-D])/g))
+      pairs.forEach(([, circled, answer]) => {
+        const index = Number('①②③④⑤⑥⑦⑧⑨⑩'.indexOf(circled))
+        if (sectionQuestions.code_completion[index] && circledToLetter[circled]) {
+          sectionQuestions.code_completion[index].answer = answer
+        }
+      })
+    }
+  }
 
   const lines = markdown.split('\n')
   const questions = []
@@ -86,10 +141,15 @@ export function parseQuestions(markdown) {
       currentSection = 'judge'
       continue
     }
-    if (line.includes('## 三、完善程序题')) {
+    if (line.includes('## 三、完善程序题') || line.includes('## 三、程序完善题')) {
       pushCurrent()
       currentSection = 'code_completion'
       continue
+    }
+
+    if (line.includes('## 参考答案汇总')) {
+      pushCurrent()
+      break
     }
 
     const programTitleMatch = line.match(/^###\s+(.+)/)
@@ -178,5 +238,6 @@ export function parseQuestions(markdown) {
   }
 
   pushCurrent()
+  applyAnswerSummary(markdown.split(/##\s+参考答案汇总/)[1] || '', questions)
   return { metadata, questions }
 }
