@@ -793,6 +793,7 @@ function validateBackupPayload(payload = {}) {
 
 function buildExamPreview(payload = {}, metadata = {}, questions = []) {
   const title = payload.title || metadata.title || '未命名考试'
+  const rawTotalScore = questions.reduce((sum, item) => sum + (Number(item.score) || 0), 0)
   const sectionCounts = {
     single: questions.filter(item => item.section === 'single').length,
     judge: questions.filter(item => item.section === 'judge').length,
@@ -803,6 +804,8 @@ function buildExamPreview(payload = {}, metadata = {}, questions = []) {
     title,
     language: metadata.language || 'C++',
     questionCount: questions.length,
+    totalScore: toPositiveInt(payload.totalScore, toPositiveInt(metadata.totalScore, rawTotalScore || DEFAULT_TOTAL_SCORE)),
+    rawTotalScore,
     sectionCounts,
     previewQuestions: questions.slice(0, 8).map(item => ({
       id: item.id,
@@ -1689,9 +1692,7 @@ app.post('/api/admin/exams/upload', requireAdmin, upload.single('file'), asyncRo
   const title = payload.title || req.file.originalname?.replace(/\.md$/i, '') || '未命名考试'
   const duration = toPositiveInt(payload.duration, 180)
   const levelRequireds = normalizeExamAudience(payload.levelRequireds || payload.levelRequired, DEFAULT_EXAM_LEVEL)
-  const totalScore = toPositiveInt(payload.totalScore, DEFAULT_TOTAL_SCORE)
   const { startTime, endTime } = normalizeExamWindow(payload)
-  const requestedCount = toPositiveInt(payload.questionCount, 0)
 
   if (!startTime || !endTime) {
     try { fs.unlinkSync(req.file.path) } catch {}
@@ -1708,6 +1709,8 @@ app.post('/api/admin/exams/upload', requireAdmin, upload.single('file'), asyncRo
     const allQuestions = await readQuestions()
     const exams = await readExams()
     const bankId = Date.now().toString()
+    const rawTotalScore = questions.reduce((sum, item) => sum + (Number(item.score) || 0), 0)
+    const totalScore = toPositiveInt(payload.totalScore, toPositiveInt(metadata.totalScore, rawTotalScore || DEFAULT_TOTAL_SCORE))
 
     const newQuestions = questions.map((q, idx) => ({
       ...q,
@@ -1726,7 +1729,7 @@ app.post('/api/admin/exams/upload', requireAdmin, upload.single('file'), asyncRo
       startTime,
       endTime,
       duration,
-      questionCount: requestedCount > 0 ? Math.min(requestedCount, newQuestions.length) : newQuestions.length,
+      questionCount: newQuestions.length,
       totalScore,
       bankIds: [bankId],
       levelRequireds,

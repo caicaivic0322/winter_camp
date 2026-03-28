@@ -1,4 +1,9 @@
 export function parseQuestions(markdown) {
+  const parsePositiveInt = (value) => {
+    const num = Number.parseInt(String(value || '').trim(), 10)
+    return Number.isFinite(num) && num > 0 ? num : 0
+  }
+
   const stripMarkdownWrapper = (raw) =>
     String(raw || '')
       .replace(/^\*\*/, '')
@@ -13,10 +18,28 @@ export function parseQuestions(markdown) {
 
   const sanitizeQuestionTitle = (raw) =>
     stripMarkdownWrapper(raw)
-      .replace(/\s*[（(]\s*[　 ]*[√×][　 ]*[）)]\s*$/g, '')
+      .replace(/\s*[（(]\s*[　 ]*[√×对错TF][　 ]*[）)]\s*$/giu, '')
       .trim()
 
   const circledNumbers = '①②③④⑤⑥⑦⑧⑨⑩'
+  const sectionScoreDefaults = {
+    single: 2,
+    judge: 2,
+    code_completion: 5,
+  }
+
+  const normalizeJudgeAnswer = (raw) => {
+    const token = String(raw || '').trim().toUpperCase()
+    if (!token) return ''
+    if (['√', '对', 'T', 'TRUE', 'Y', 'YES'].includes(token)) return 'T'
+    if (['×', '错', 'F', 'FALSE', 'N', 'NO'].includes(token)) return 'F'
+    return ''
+  }
+
+  const extractSectionScore = (line, fallback) => {
+    const match = String(line || '').match(/每题\s*(\d+)\s*分/)
+    return parsePositiveInt(match?.[1]) || fallback
+  }
 
   const applyAnswerSummary = (summaryText, questions) => {
     if (!summaryText) return
@@ -40,11 +63,11 @@ export function parseQuestions(markdown) {
 
     const judgeMatch = summaryText.match(/\*\*判断题：\*\*([\s\S]*?)(?=\n\s*\*\*程序完善题：\*\*|$)/)
     if (judgeMatch) {
-      const pairs = Array.from(judgeMatch[1].matchAll(/(\d+)\.([√×])/g))
+      const pairs = Array.from(judgeMatch[1].matchAll(/(\d+)\.([√×对错TF])/giu))
       pairs.forEach(([, rawNo, symbol]) => {
         const index = Number(rawNo) - 1
         if (sectionQuestions.judge[index]) {
-          sectionQuestions.judge[index].answer = symbol === '√' ? 'T' : 'F'
+          sectionQuestions.judge[index].answer = normalizeJudgeAnswer(symbol)
         }
       })
     }
@@ -72,6 +95,7 @@ export function parseQuestions(markdown) {
   let inCodeBlock = false
   let codeBuffer = []
   let orderCounter = 0
+  let currentSectionScore = sectionScoreDefaults.single
 
   const pushCurrent = () => {
     if (!currentQ) return
@@ -130,16 +154,19 @@ export function parseQuestions(markdown) {
     if (line.includes('## 一、单选题')) {
       pushCurrent()
       currentSection = 'single'
+      currentSectionScore = extractSectionScore(line, sectionScoreDefaults.single)
       continue
     }
     if (line.includes('## 二、判断题')) {
       pushCurrent()
       currentSection = 'judge'
+      currentSectionScore = extractSectionScore(line, sectionScoreDefaults.judge)
       continue
     }
     if (line.includes('## 三、完善程序题') || line.includes('## 三、程序完善题')) {
       pushCurrent()
       currentSection = 'code_completion'
+      currentSectionScore = extractSectionScore(line, sectionScoreDefaults.code_completion)
       continue
     }
 
@@ -169,21 +196,19 @@ export function parseQuestions(markdown) {
     if (qMatch && currentSection !== 'code_completion') {
       pushCurrent()
       const rawTitle = qMatch[2]
-      let answer = ''
-      if (currentSection === 'judge') {
-        if (rawTitle.includes('（　√　）') || rawTitle.includes('(　√　)')) {
-          answer = 'T'
-        } else if (rawTitle.includes('（　×　）') || rawTitle.includes('(　×　)')) {
-          answer = 'F'
-        }
-      }
+      const judgeMarkerMatch = currentSection === 'judge'
+        ? rawTitle.match(/[（(]\s*[　 ]*([√×对错TF])[　 ]*[）)]/iu)
+        : null
+      const answer = currentSection === 'judge'
+        ? normalizeJudgeAnswer(judgeMarkerMatch?.[1] || '')
+        : ''
       currentQ = {
         id: Date.now() + '_' + Math.random().toString(36).slice(2, 11),
         title: sanitizeQuestionTitle(rawTitle),
         options: [],
         type: currentSection === 'judge' ? 'judge' : 'single',
         section: currentSection,
-        score: 2,
+        score: currentSectionScore,
         answer,
       }
       continue
@@ -200,7 +225,7 @@ export function parseQuestions(markdown) {
         options: [],
         type: 'single',
         section: 'code_completion',
-        score: 5,
+        score: currentSectionScore,
         answer: '',
         codeSnippet: lastCodeSnippet || '',
       }
@@ -218,10 +243,9 @@ export function parseQuestions(markdown) {
     }
 
     if (currentQ.type === 'judge') {
-      if (line.includes('（　√　）') || line.includes('(　√　)')) {
-        currentQ.answer = 'T'
-      } else if (line.includes('（　×　）') || line.includes('(　×　)')) {
-        currentQ.answer = 'F'
+      const judgeInlineMatch = line.match(/[（(]\s*[　 ]*([√×对错TF])[　 ]*[）)]/iu)
+      if (judgeInlineMatch) {
+        currentQ.answer = normalizeJudgeAnswer(judgeInlineMatch[1])
       }
       continue
     }
@@ -242,6 +266,18 @@ export function parseQuestions(markdown) {
   }
 
   pushCurrent()
+  if (!metadata.title) {
+    const titleLine = lines.slice(contentStart).find(item => item.trim().startsWith('# '))
+    if (titleLine) metadata.title = titleLine.trim().replace(/^#\s+/, '').trim()
+  }
+  if (!metadata.duration) {
+    const durationMatch = markdown.match(/考试时间[：:]\s*(\d+)\s*分钟?/)
+    if (durationMatch) metadata.duration = durationMatch[1]
+  }
+  if (!metadata.totalScore) {
+    const totalScoreMatch = markdown.match(/满分[：:]\s*(\d+)\s*分/)
+    if (totalScoreMatch) metadata.totalScore = totalScoreMatch[1]
+  }
   applyAnswerSummary(markdown.split(/##\s+参考答案汇总/)[1] || '', questions)
   return { metadata, questions }
 }

@@ -172,7 +172,6 @@ export default function AdminExams() {
     title: '',
     totalScore: 100,
     duration: 1800,
-    questionCount: '',
     levelRequireds: [DEFAULT_EXAM_LEVEL],
     startTime: '',
     endTime: '',
@@ -228,7 +227,6 @@ export default function AdminExams() {
     fd.append('totalScore', String(form.totalScore))
     fd.append('duration', String(form.duration))
     fd.append('levelRequireds', JSON.stringify(form.levelRequireds))
-    if (form.questionCount) fd.append('questionCount', String(form.questionCount))
     fd.append('startTime', toIso(form.startTime))
     fd.append('endTime', toIso(form.endTime))
     return fd
@@ -250,7 +248,11 @@ export default function AdminExams() {
       const data = await res.json()
       if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`)
       setUploadPreview(data)
-      setOk(`预检完成：共解析出 ${data.questionCount} 题`)
+      setForm(v => ({
+        ...v,
+        totalScore: String(data.totalScore || v.totalScore),
+      }))
+      setOk(`预检完成：共解析出 ${data.questionCount} 题，当前总分 ${data.totalScore}`)
     } catch (e) {
       setError(`预检失败：${e?.message || '网络错误'}`)
     } finally {
@@ -534,7 +536,9 @@ export default function AdminExams() {
           />
           <input type="number" value={form.totalScore} onChange={e => setForm(v => ({ ...v, totalScore: e.target.value }))} placeholder="总分" style={formInputStyle} />
           <input type="number" value={form.duration} onChange={e => setForm(v => ({ ...v, duration: e.target.value }))} placeholder="时长（分钟）" style={formInputStyle} />
-          <input type="number" value={form.questionCount} onChange={e => setForm(v => ({ ...v, questionCount: e.target.value }))} placeholder="题量（空=全量）" style={formInputStyle} />
+          <div style={{ ...formInputStyle, display: 'flex', alignItems: 'center', color: 'var(--text-muted)' }}>
+            {uploadPreview ? `按解析结果建卷：${uploadPreview.questionCount} 题` : '上传后按解析出的实际题量建卷'}
+          </div>
           <div style={{ ...formInputStyle, display: 'grid', gap: 8 }}>
             <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>可参加等级</div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -739,6 +743,8 @@ export default function AdminExams() {
               <span>标题：{uploadPreview.title}</span>
               <span>语言：{uploadPreview.language}</span>
               <span>总题数：{uploadPreview.questionCount}</span>
+              <span>总分：{uploadPreview.totalScore}</span>
+              <span>原始分值：{uploadPreview.rawTotalScore}</span>
               <span>单选：{uploadPreview.sectionCounts?.single || 0}</span>
               <span>判断：{uploadPreview.sectionCounts?.judge || 0}</span>
               <span>程序完善：{uploadPreview.sectionCounts?.code_completion || 0}</span>

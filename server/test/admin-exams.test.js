@@ -208,6 +208,26 @@ D. \`2 ** 3 * 2\`
   assert.match(questions[2].options[0].text, /2 \*\* 3 \*\* 2/)
 })
 
+test('parser infers actual question count and 对错答案 from uploaded markdown', () => {
+  const markdown = fs.readFileSync(
+    path.resolve(serverDir, '../exam_files/exams/backend_format_new.md'),
+    'utf-8'
+  )
+
+  const { metadata, questions } = parseQuestions(markdown)
+
+  assert.equal(metadata.title, '2026年03月 GESP C++2 单选判断解析')
+  assert.equal(metadata.duration, '60')
+  assert.equal(metadata.totalScore, '50')
+  assert.equal(questions.length, 25)
+  assert.equal(questions.filter(item => item.section === 'single').length, 15)
+  assert.equal(questions.filter(item => item.section === 'judge').length, 10)
+  assert.deepEqual(
+    questions.filter(item => item.section === 'judge').slice(0, 4).map(item => item.answer),
+    ['T', 'F', 'F', 'T']
+  )
+})
+
 test('parser maps code completion answers for circled blanks beyond ④', () => {
   const markdown = `
 ## 三、程序完善题（每题 5 分，共 20 分）
@@ -638,6 +658,8 @@ test('admin can preview exam markdown before creating the exam', async () => {
     const data = await res.json()
     assert.equal(data.title, '示例考试模板')
     assert.equal(data.questionCount > 0, true)
+    assert.equal(data.totalScore > 0, true)
+    assert.equal(data.rawTotalScore > 0, true)
     assert.equal(data.sectionCounts.single > 0, true)
     assert.equal(data.sectionCounts.judge > 0, true)
     assert.equal(data.sectionCounts.code_completion > 0, true)
@@ -648,6 +670,58 @@ test('admin can preview exam markdown before creating the exam', async () => {
     const examsAfter = JSON.parse(fs.readFileSync(examsFile, 'utf-8'))
     assert.equal(questionsAfter.length, 0)
     assert.equal(examsAfter.length, 0)
+  } finally {
+    await server.stop()
+    fs.writeFileSync(usersFile, backups.users)
+    fs.writeFileSync(examsFile, backups.exams)
+    fs.writeFileSync(questionsFile, backups.questions)
+    fs.writeFileSync(attemptsFile, backups.attempts)
+  }
+})
+
+test('uploaded exams use parsed question count and preserve custom total score', async () => {
+  const backups = {
+    users: fs.readFileSync(usersFile, 'utf-8'),
+    exams: fs.existsSync(examsFile) ? fs.readFileSync(examsFile, 'utf-8') : '[]',
+    questions: fs.existsSync(questionsFile) ? fs.readFileSync(questionsFile, 'utf-8') : '[]',
+    attempts: fs.existsSync(attemptsFile) ? fs.readFileSync(attemptsFile, 'utf-8') : '[]',
+  }
+
+  writeJson(usersFile, fixtures.users)
+  writeJson(examsFile, [])
+  writeJson(questionsFile, [])
+  writeJson(attemptsFile, [])
+
+  const server = await startServer()
+
+  try {
+    const auth = await login(server.baseUrl)
+    const markdown = fs.readFileSync(
+      path.resolve(serverDir, '../exam_files/exams/backend_format_new.md'),
+      'utf-8'
+    )
+    const form = new FormData()
+    form.append('file', new Blob([markdown], { type: 'text/markdown' }), 'backend_format_new.md')
+    form.append('title', '自定义总分试卷')
+    form.append('totalScore', '80')
+    form.append('duration', '3600')
+    form.append('questionCount', '3')
+    form.append('startTime', '2099-01-01T00:00:00.000Z')
+    form.append('endTime', '2099-01-01T02:00:00.000Z')
+
+    const res = await fetch(`${server.baseUrl}/admin/exams/upload`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+      },
+      body: form,
+    })
+
+    assert.equal(res.status, 201)
+    const data = await res.json()
+    assert.equal(data.parsedCount, 25)
+    assert.equal(data.exam.questionCount, 25)
+    assert.equal(data.exam.totalScore, 80)
   } finally {
     await server.stop()
     fs.writeFileSync(usersFile, backups.users)
