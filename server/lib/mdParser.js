@@ -21,6 +21,13 @@ export function parseQuestions(markdown) {
       .replace(/\s*[（(]\s*[　 ]*[√×对错TF][　 ]*[）)]\s*$/giu, '')
       .trim()
 
+  const appendQuestionTitle = (question, raw) => {
+    const extra = sanitizeQuestionTitle(raw)
+    if (!question || !extra) return
+    if (question.title.includes(extra)) return
+    question.title = `${question.title} ${extra}`.trim()
+  }
+
   const circledNumbers = '①②③④⑤⑥⑦⑧⑨⑩'
   const sectionScoreDefaults = {
     single: 2,
@@ -50,13 +57,21 @@ export function parseQuestions(markdown) {
       code_completion: questions.filter(item => item.section === 'code_completion'),
     }
 
+    const resolveSectionQuestion = (section, rawNo) => {
+      const number = Number(rawNo)
+      if (!Number.isInteger(number) || number <= 0) return null
+      return sectionQuestions[section][number - 1]
+        || sectionQuestions[section].find(item => item.order === number)
+        || null
+    }
+
     const singleMatch = summaryText.match(/\*\*单选题：\*\*([\s\S]*?)(?=\n\s*\*\*判断题：\*\*|$)/)
     if (singleMatch) {
       const pairs = Array.from(singleMatch[1].matchAll(/(\d+)\.([A-D])/g))
       pairs.forEach(([, rawNo, answer]) => {
-        const index = Number(rawNo) - 1
-        if (sectionQuestions.single[index]) {
-          sectionQuestions.single[index].answer = answer
+        const question = resolveSectionQuestion('single', rawNo)
+        if (question) {
+          question.answer = answer
         }
       })
     }
@@ -65,9 +80,9 @@ export function parseQuestions(markdown) {
     if (judgeMatch) {
       const pairs = Array.from(judgeMatch[1].matchAll(/(\d+)\.([√×对错TF])/giu))
       pairs.forEach(([, rawNo, symbol]) => {
-        const index = Number(rawNo) - 1
-        if (sectionQuestions.judge[index]) {
-          sectionQuestions.judge[index].answer = normalizeJudgeAnswer(symbol)
+        const question = resolveSectionQuestion('judge', rawNo)
+        if (question) {
+          question.answer = normalizeJudgeAnswer(symbol)
         }
       })
     }
@@ -242,6 +257,11 @@ export function parseQuestions(markdown) {
       }
     }
 
+    const optMatch = line.match(/^_?([A-D])\._?\s*(.+)$/)
+    if (currentSection !== 'code_completion' && !optMatch) {
+      appendQuestionTitle(currentQ, line)
+    }
+
     if (currentQ.type === 'judge') {
       const judgeInlineMatch = line.match(/[（(]\s*[　 ]*([√×对错TF])[　 ]*[）)]/iu)
       if (judgeInlineMatch) {
@@ -249,8 +269,6 @@ export function parseQuestions(markdown) {
       }
       continue
     }
-
-    const optMatch = line.match(/^_?([A-D])\._?\s*(.+)$/)
     if (optMatch) {
       const label = optMatch[1]
       const text = sanitizeOptionText(optMatch[2])

@@ -818,6 +818,27 @@ function buildExamPreview(payload = {}, metadata = {}, questions = []) {
   }
 }
 
+function getQuestionsMissingAnswers(questions = []) {
+  return (questions || [])
+    .filter(item => !String(item?.answer || '').trim())
+    .map((item, index) => ({
+      questionId: item.id,
+      questionNumber: Number.isFinite(item.order) ? item.order : index + 1,
+      section: item.section || item.type || '',
+      title: item.title || '',
+    }))
+}
+
+function buildMissingAnswerError(questions = []) {
+  const missing = getQuestionsMissingAnswers(questions)
+  if (!missing.length) return ''
+  const summary = missing
+    .slice(0, 5)
+    .map(item => `${item.questionNumber}${item.section === 'judge' ? '（判断）' : ''}`)
+    .join('、')
+  return `解析失败：有 ${missing.length} 道题未设置正确答案，请检查题号 ${summary}`
+}
+
 function buildUser(payload = {}) {
   const { username, password, nickname, role, level } = payload
 
@@ -1676,6 +1697,10 @@ app.post('/api/admin/exams/preview', requireAdmin, upload.single('file'), (req, 
     if (!questions.length) {
       return res.status(400).json({ error: '解析失败：未找到有效题目' })
     }
+    const missingAnswerError = buildMissingAnswerError(questions)
+    if (missingAnswerError) {
+      return res.status(400).json({ error: missingAnswerError })
+    }
 
     res.json(buildExamPreview(req.body || {}, metadata, questions))
   } catch (e) {
@@ -1704,6 +1729,10 @@ app.post('/api/admin/exams/upload', requireAdmin, upload.single('file'), asyncRo
     const { metadata, questions } = parseQuestions(content)
     if (!questions.length) {
       return res.status(400).json({ error: '解析失败：未找到有效题目' })
+    }
+    const missingAnswerError = buildMissingAnswerError(questions)
+    if (missingAnswerError) {
+      return res.status(400).json({ error: missingAnswerError })
     }
 
     const allQuestions = await readQuestions()

@@ -152,6 +152,38 @@ D. 程序报错
   assert.equal(questions[0].options[2].text, '"Hello, Python"')
 })
 
+test('parser preserves stem text that continues after a code block', () => {
+  const markdown = `
+## 一、单选题（每题 2 分，共 2 分）
+
+**1.** 已知下列代码：
+
+\`\`\`python
+a = "8"
+b = 8
+\`\`\`
+
+下列说法正确的是（　　）
+
+A. \`a\` 和 \`b\` 的数据类型相同
+B. \`a\` 是整数类型
+C. \`b\` 是字符串类型
+D. \`a\` 和 \`b\` 的数据类型不同
+
+## 参考答案汇总
+
+**单选题：**
+1.D
+`
+
+  const { questions } = parseQuestions(markdown)
+  assert.equal(questions.length, 1)
+  assert.match(questions[0].title, /已知下列代码/)
+  assert.match(questions[0].title, /下列说法正确的是/)
+  assert.match(questions[0].codeSnippet, /a = "8"/)
+  assert.equal(questions[0].answer, 'D')
+})
+
 test('parser supports answer summary, exponent operators, and 程序完善题 sections', () => {
   const markdown = `
 ## 一、单选题（每题 2 分，共 4 分）
@@ -223,8 +255,98 @@ test('parser infers actual question count and 对错答案 from uploaded markdow
   assert.equal(questions.filter(item => item.section === 'single').length, 15)
   assert.equal(questions.filter(item => item.section === 'judge').length, 10)
   assert.deepEqual(
-    questions.filter(item => item.section === 'judge').slice(0, 4).map(item => item.answer),
-    ['T', 'F', 'F', 'T']
+    questions.filter(item => item.section === 'judge').map(item => item.answer),
+    ['T', 'F', 'F', 'T', 'T', 'T', 'T', 'F', 'F', 'T']
+  )
+})
+
+test('parser supports global continuous numbering in question bodies and answer summary', () => {
+  const markdown = [
+    '---',
+    'title: 全局编号测试',
+    'language: Python',
+    'duration: 60',
+    '---',
+    '',
+    '# 全局编号测试',
+    '',
+    '考试时间：60 分钟　　满分：12 分',
+    '',
+    '## 一、单选题（每题 2 分，共 4 分）',
+    '',
+    '**1.** 第一题单选（　　）',
+    'A. 错',
+    'B. 对',
+    'C. 错',
+    'D. 错',
+    '',
+    '**2.** 第二题单选（　　）',
+    'A. 对',
+    'B. 错',
+    'C. 错',
+    'D. 错',
+    '',
+    '## 二、判断题（每题 2 分，共 4 分）',
+    '',
+    '**3.** Python 中 `range(3)` 会生成 0、1、2。（　　）',
+    '',
+    '**4.** `input()` 默认读取整数类型。（　　）',
+    '',
+    '## 三、程序完善题（每题 2 分，共 4 分）',
+    '',
+    '### 第5题：补全输出',
+    '',
+    '**题目描述：** 输出数字 1。',
+    '',
+    '```python',
+    'print(______①)',
+    '```',
+    '',
+    '**① 的备选项：**',
+    'A. `0`',
+    'B. `1`',
+    'C. `2`',
+    'D. `3`',
+    '',
+    '### 第6题：补全 range',
+    '',
+    '**题目描述：** 输出 0 1 2。',
+    '',
+    '```python',
+    'for i in ______②:',
+    '    print(i)',
+    '```',
+    '',
+    '**② 的备选项：**',
+    'A. `range(2)`',
+    'B. `range(1, 3)`',
+    'C. `range(3)`',
+    'D. `range(0, 2)`',
+    '',
+    '## 参考答案汇总',
+    '',
+    '**单选题：**',
+    '1.B　2.A',
+    '',
+    '**判断题：**',
+    '3.对　4.错',
+    '',
+    '**程序完善题：**',
+    '①B　②C',
+  ].join('\n')
+
+  const { questions } = parseQuestions(markdown)
+  assert.equal(questions.length, 6)
+  assert.deepEqual(
+    questions.map(item => ({ order: item.order, section: item.section, answer: item.answer })),
+    [
+      { order: 1, section: 'single', answer: 'B' },
+      { order: 2, section: 'single', answer: 'A' },
+      { order: 3, section: 'judge', answer: 'T' },
+      { order: 4, section: 'judge', answer: 'F' },
+      { order: 5, section: 'code_completion', answer: 'B' },
+      { order: 6, section: 'code_completion', answer: 'C' },
+    ]
   )
 })
 
@@ -670,6 +792,52 @@ test('admin can preview exam markdown before creating the exam', async () => {
     const examsAfter = JSON.parse(fs.readFileSync(examsFile, 'utf-8'))
     assert.equal(questionsAfter.length, 0)
     assert.equal(examsAfter.length, 0)
+  } finally {
+    await server.stop()
+    fs.writeFileSync(usersFile, backups.users)
+    fs.writeFileSync(examsFile, backups.exams)
+    fs.writeFileSync(questionsFile, backups.questions)
+    fs.writeFileSync(attemptsFile, backups.attempts)
+  }
+})
+
+test('admin preview rejects markdown when parsed questions miss correct answers', async () => {
+  const backups = {
+    users: fs.readFileSync(usersFile, 'utf-8'),
+    exams: fs.existsSync(examsFile) ? fs.readFileSync(examsFile, 'utf-8') : '[]',
+    questions: fs.existsSync(questionsFile) ? fs.readFileSync(questionsFile, 'utf-8') : '[]',
+    attempts: fs.existsSync(attemptsFile) ? fs.readFileSync(attemptsFile, 'utf-8') : '[]',
+  }
+
+  writeJson(usersFile, fixtures.users)
+  writeJson(examsFile, [])
+  writeJson(questionsFile, [])
+  writeJson(attemptsFile, [])
+
+  const server = await startServer()
+
+  try {
+    const auth = await login(server.baseUrl)
+    const brokenMarkdown = `
+## 二、判断题（每题 2 分，共 2 分）
+
+**1.** 这是一个没有答案的判断题。（　　）
+`
+
+    const form = new FormData()
+    form.append('file', new Blob([brokenMarkdown], { type: 'text/markdown' }), 'broken.md')
+
+    const res = await fetch(`${server.baseUrl}/admin/exams/preview`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${auth.token}`,
+      },
+      body: form,
+    })
+
+    assert.equal(res.status, 400)
+    const data = await res.json()
+    assert.match(data.error, /未设置正确答案/)
   } finally {
     await server.stop()
     fs.writeFileSync(usersFile, backups.users)
