@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url'
 import { parseQuestions } from './lib/mdParser.js'
 import { getExamMarkdownTemplate } from './lib/examTemplate.js'
 import { createDataStore } from './lib/dataStore.js'
+import { buildAiPromptItems, mergeAiAnalyses } from './lib/wrongQuestionAnalysis.js'
 import {
   COURSE_LEVELS,
   DEFAULT_EXAM_LEVEL,
@@ -271,17 +272,7 @@ function getAiAnalysisConfigs() {
 }
 
 async function requestAiAnalysesWithConfig(items, config) {
-  const promptItems = items.map(item => ({
-    questionId: item.questionId,
-    title: sanitizeQuestionText(item.title),
-    type: item.type,
-    options: (item.options || []).map(opt => ({
-      label: opt.label,
-      text: normalizeOptionText(opt.text),
-    })),
-    yourAnswer: item.yourAnswer || '未作答',
-    correctAnswer: item.correctAnswer || '未设置',
-  }))
+  const promptItems = buildAiPromptItems(items)
 
   const response = await fetch(config.endpoint, {
     method: 'POST',
@@ -298,7 +289,7 @@ async function requestAiAnalysesWithConfig(items, config) {
       messages: [
         {
           role: 'system',
-          content: '你是一名少儿编程考试助教。请仅返回 JSON，不要输出额外说明。每道题给出一句到两句中文解析，语气清晰、友好、简短。',
+          content: '你是一名少儿编程考试助教。请仅返回 JSON，不要输出额外说明。你必须严格保留每道题原样提供的 questionId，并结合题干、代码、选项、学生答案和正确答案逐题生成对应解析。每道题给出一句到两句中文解析，语气清晰、友好、简短。',
         },
         {
           role: 'user',
@@ -360,16 +351,7 @@ async function buildWrongQuestionAnalyses(items) {
   try {
     const remoteAnalyses = await requestDeepSeekAnalyses(items)
     if (Array.isArray(remoteAnalyses) && remoteAnalyses.length > 0) {
-      const analysisMap = new Map(
-        remoteAnalyses
-          .filter(item => item?.questionId && item?.analysis)
-          .map(item => [item.questionId, String(item.analysis).trim()])
-      )
-
-      return items.map(item => ({
-        ...item,
-        analysis: analysisMap.get(item.questionId) || buildFallbackAnalysis(item),
-      }))
+      return mergeAiAnalyses(items, remoteAnalyses, buildFallbackAnalysis)
     }
   } catch (error) {
     console.warn('[wrong-question-analysis] remote analysis failed, using fallback analysis')
